@@ -1,8 +1,9 @@
 const express = require("express");
 const {serverConfig, dbConnection} = require("./config");
+const apiRoutes =require("./routes");
+
 const app = express();
 dbConnection(); 
-const apiRoutes =require("./routes");
 
 app.use(express.json());
 app.get("/", (req, res) => res.send("Server is running..."));
