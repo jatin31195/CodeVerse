@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Chat</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        #chat-box {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+        }
+        .message {
+            padding: 5px;
+            cursor: pointer;
+            border-bottom: 1px solid #ddd;
+        }
+        .reply {
+            font-size: 0.9em;
+            color: gray;
+            margin-left: 20px;
+        }
+        .selected {
+            background-color: lightyellow;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Chat Room</h2>
+    <input type="text" id="username" placeholder="Enter your name">
+    <button onclick="joinChat()">Join</button>
+
+    <div id="chat-container" style="display: none;">
+        <h3>Live Chat</h3>
+        <div id="chat-box"></div>
+        
+        <div id="reply-info" style="display: none;">
+            Replying to: <span id="reply-text"></span>
+            <button onclick="cancelReply()">Cancel</button>
+        </div>
+
+        <input type="text" id="message-input" placeholder="Type your message...">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        const socket = io("ws://localhost:3000"); 
+        let username = "";
+        let selectedMessage = null;
+
+        function joinChat() {
+            username = document.getElementById("username").value.trim();
+            if (!username) return alert("Enter a username");
+            
+            socket.emit("join", username);
+            document.getElementById("chat-container").style.display = "block";
+        }
+
+        // Handle new chat messages
+        socket.on("chatMessage", (data) => {
+            const chatBox = document.getElementById("chat-box");
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("message");
+
+            // Show reply if it exists
+            if (data.replyTo) {
+                messageElement.innerHTML = `
+                    <p class="reply">Replying to: <strong>${data.replyTo.user}</strong>: ${data.replyTo.message}</p>
+                    <p><strong>${data.user}:</strong> ${data.message}</p>
+                `;
+            } else {
+                messageElement.innerHTML = `<p><strong>${data.user}:</strong> ${data.message}</p>`;
+            }
+
+            // Click to select message for reply
+            messageElement.onclick = () => selectMessage(data, messageElement);
+
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+        // Broadcast when a user joins
+        socket.on("userJoined", (data) => {
+            const chatBox = document.getElementById("chat-box");
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("message");
+            messageElement.style.color = "green";
+            messageElement.innerHTML = `<p><em>${data} joined the chat</em></p>`;
+            chatBox.appendChild(messageElement);
+        });
+
+        // Broadcast when a user disconnects
+        socket.on("userLeft", (data) => {
+            const chatBox = document.getElementById("chat-box");
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("message");
+            messageElement.style.color = "red";
+            messageElement.innerHTML = `<p><em>${data} left the chat</em></p>`;
+            chatBox.appendChild(messageElement);
+        });
+
+        function sendMessage() {
+            const message = document.getElementById("message-input").value.trim();
+            if (!message) return;
+
+            const messageData = { user: username, message };
+
+            // If replying, include reply data
+            if (selectedMessage) {
+                messageData.replyTo = { 
+                    user: selectedMessage.user, 
+                    message: selectedMessage.message 
+                };
+            }
+
+            socket.emit("sendMessage", messageData);
+            document.getElementById("message-input").value = "";
+            cancelReply(); // Reset reply selection
+        }
+
+        function selectMessage(message, element) {
+            // Remove previous selection
+            document.querySelectorAll(".message").forEach(msg => msg.classList.remove("selected"));
+            
+            // Highlight selected message
+            element.classList.add("selected");
+            selectedMessage = message;
+            
+            // Show reply info
+            document.getElementById("reply-text").innerText = `"${message.message}" by ${message.user}`;
+            document.getElementById("reply-info").style.display = "block";
+        }
+
+        function cancelReply() {
+            selectedMessage = null;
+            document.getElementById("reply-info").style.display = "none";
+            document.querySelectorAll(".message").forEach(msg => msg.classList.remove("selected"));
+        }
+    </script>
+
+</body>
+</html>
