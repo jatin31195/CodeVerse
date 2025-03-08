@@ -1,10 +1,11 @@
 const axios = require('axios');
+const { v4: uuidv4 } = require('uuid');
 
 async function fetchLeetCodePOTD() {
     try {
         const today = new Date();
         const year = today.getFullYear();
-        const month = today.getMonth() + 1; 
+        const month = today.getMonth() + 1; // GraphQL expects 1-based month index
         const query = `
             query dailyPOTD($year: Int!, $month: Int!) {
               dailyCodingChallengeV2(year: $year, month: $month) {
@@ -15,6 +16,10 @@ async function fetchLeetCodePOTD() {
                     questionFrontendId
                     title
                     titleSlug
+                    difficulty
+                    topicTags {
+                      name
+                    }
                   }
                 }
               }
@@ -28,11 +33,41 @@ async function fetchLeetCodePOTD() {
             { headers: { 'Content-Type': 'application/json' } }
         );
 
-        console.log("LeetCode API Response:", JSON.stringify(response.data, null, 2)); // Debug log
+        // Check for missing data
+        if (!response.data.data) {
+            console.error("No data received from LeetCode API:", response.data);
+            throw new Error("No data received from LeetCode API");
+        }
 
-        return response.data.data?.dailyCodingChallengeV2?.challenges || [];
+        // Extract challenges data
+        const challenges = response.data.data?.dailyCodingChallengeV2?.challenges || [];
+
+        if (challenges.length === 0) {
+            console.log('No challenge found for today.');
+            return [];
+        }
+
+        // Map the challenges to the required format
+        return challenges.map(challenge => {
+            const question = challenge.question;
+            const topicTags = question.topicTags.map(tag => tag.name).join(", "); // Join topics into a single string
+
+            return {
+                _id: uuidv4(),
+                platform: "LeetCode",
+                title: question.title,
+                link: `https://leetcode.com${challenge.link}`,
+                problem_id: question.questionFrontendId,
+                date: challenge.date,
+                difficulty: question.difficulty,
+                topics: topicTags,
+            };
+        });
+
     } catch (error) {
         console.error("LeetCode API Error:", error.message);
+        // Log full error object for debugging
+        console.error("Full error details:", error);
         throw new Error("Failed to fetch POTD from LeetCode.");
     }
 }

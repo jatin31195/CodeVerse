@@ -45,17 +45,21 @@ const fetchDailyProblem = async (req, res) => {
     const randomProblem = filteredProblems[Math.floor(Math.random() * filteredProblems.length)];
     
     const problemData = {
-        rating: rating,
-        name: randomProblem.name,
-        url: `https://codeforces.com/problemset/problem/${randomProblem.contestId}/${randomProblem.index}`,
-      };
+      rating: rating,
+      name: randomProblem.name,
+      url: `https://codeforces.com/problemset/problem/${randomProblem.contestId}/${randomProblem.index}`,
+      contestId: randomProblem.contestId,
+      index: randomProblem.index,
+      tags: randomProblem.tags,
+      points: randomProblem.points || 500, // Default points if not present
+    };
   
-      // Print the problem details to the terminal
-      console.log("Today's Codeforces Problem:");
-      console.log(problemData);
+    // Print the problem details to the terminal
+    console.log("Today's Codeforces Problem:");
+    console.log(problemData);
   
-      // Send response
-      return res.json(problemData);
+    // Send response
+    return res.json(problemData);
 
   } catch (error) {
     return res.status(500).json({ error: "Failed to fetch problems" });
