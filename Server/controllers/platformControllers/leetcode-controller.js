@@ -7,11 +7,11 @@ getPOTDByDate = async (req, res) => {
 
         // Fetch the challenges from LeetCode
         const challenges = await fetchLeetCodePOTD();
-        console.log("Fetched Challenges:", JSON.stringify(challenges, null, 2));  // Print full fetched data
+        // console.log("Fetched Challenges:", JSON.stringify(challenges, null, 2)); 
 
         // Find the challenge that matches the requested date
         const potd = challenges.find(challenge => challenge.date === date);
-        console.log("Matched POTD:", JSON.stringify(potd, null, 2));  // Debugging log
+        // console.log("Matched POTD:", JSON.stringify(potd, null, 2)); 
 
         // If no POTD is found for the requested date, return a 404
         if (!potd) {
