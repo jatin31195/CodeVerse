@@ -22,6 +22,7 @@ const QuestionSchema = new mongoose.Schema({
   date: {
     type: Date,
     required: true,
+    default: Date.now
   },
   // Other fields like difficulty, topics, rating, tags, points, etc.
 });

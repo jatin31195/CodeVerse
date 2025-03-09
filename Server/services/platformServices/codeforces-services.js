@@ -1,4 +1,5 @@
 const axios = require("axios");
+const Question = require("../../models/Question");
 
 // Codeforces API URL
 const API_URL = "https://codeforces.com/api/problemset.problems";
@@ -11,7 +12,7 @@ const difficultySchedule = [
   [1100, 1200, 1300]  // Week 4: Harder start
 ];
 
-// Function to determine the difficulty for today
+// Function to determine today's difficulty
 const getDifficultyForToday = () => {
   const today = new Date();
   const dayOfMonth = today.getDate();
@@ -26,7 +27,7 @@ const getDifficultyForToday = () => {
   return difficulty;
 };
 
-// Fetch a random Codeforces problem based on difficulty
+// Fetch and insert a unique Codeforces problem
 const fetchDailyProblem = async (req, res) => {
   const rating = getDifficultyForToday();
 
@@ -35,33 +36,51 @@ const fetchDailyProblem = async (req, res) => {
     const problems = response.data.result.problems;
 
     // Filter problems by today's difficulty
-    const filteredProblems = problems.filter((p) => p.rating === rating);
-    
+    let filteredProblems = problems.filter((p) => p.rating === rating);
+
     if (filteredProblems.length === 0) {
       return res.status(404).json({ message: `No problems found for rating ${rating}` });
     }
 
-    // Select a random problem
-    const randomProblem = filteredProblems[Math.floor(Math.random() * filteredProblems.length)];
-    
+    let randomProblem;
+    let exists = true;
+    let attempts = 0;
+
+    // Keep selecting a new problem until we find one that isn't in the database
+    while (exists && attempts < 10) { // Avoid infinite loops
+      randomProblem = filteredProblems[Math.floor(Math.random() * filteredProblems.length)];
+
+      const problemUrl = `https://codeforces.com/problemset/problem/${randomProblem.contestId}/${randomProblem.index}`;
+
+      exists = await Question.exists({ link: problemUrl });
+      attempts++;
+    }
+
+    if (exists) {
+      return res.status(500).json({ error: "Unable to find a unique problem after multiple attempts." });
+    }
+
     const problemData = {
-      rating: rating,
-      name: randomProblem.name,
-      url: `https://codeforces.com/problemset/problem/${randomProblem.contestId}/${randomProblem.index}`,
-      contestId: randomProblem.contestId,
-      index: randomProblem.index,
-      tags: randomProblem.tags,
-      points: randomProblem.points || 500, // Default points if not present
+      platform: "Codeforces",
+      title: randomProblem.name,
+      link: `https://codeforces.com/problemset/problem/${randomProblem.contestId}/${randomProblem.index}`,
+      problem_id: `${randomProblem.contestId}${randomProblem.index}`,
+      tags: randomProblem.tags || [],
+      addedAt: new Date(),
     };
-  
+
+    // Save the new question in the database
+    await Question.create(problemData);
+
     // Print the problem details to the terminal
     console.log("Today's Codeforces Problem:");
     console.log(problemData);
-  
+
     // Send response
     return res.json(problemData);
 
   } catch (error) {
+    console.error("Error fetching or inserting problem:", error);
     return res.status(500).json({ error: "Failed to fetch problems" });
   }
 };
