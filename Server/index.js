@@ -17,7 +17,7 @@ app.use("/api", apiRoutes);
 const cron = require("node-cron");
 const { fetchAndStorePOTD } = require("./services/potdServices/fetchPOTDService");
 
-// cron.schedule("*/30 * * * * *", async () => {
+// cron.schedule("*/ * * * * *", async () => {
 //     console.log("Fetching POTD every 30 seconds...");
 //     await fetchAndStorePOTD();
 // });

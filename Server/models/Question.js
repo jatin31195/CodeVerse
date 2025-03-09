@@ -20,13 +20,14 @@ const QuestionSchema = new mongoose.Schema({
     required: true,
   },
   date: {
-    type: String,
+    type: Date,
     required: true,
+    default: Date.now
   },
   // Other fields like difficulty, topics, rating, tags, points, etc.
 });
 
 // Create a compound index on date and platform
-QuestionSchema.index({ date: 1, platform: 1 }, { unique: true });
+QuestionSchema.index({ date: 1, platform: 1, problem_id: 1 }, { unique: true });
 
 module.exports = mongoose.model("Question", QuestionSchema);
