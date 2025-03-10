@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import io from 'socket.io-client';
 
 // Helper to reliably extract a user ID from a user object
 const getUserId = (user) => {
@@ -9,6 +10,9 @@ const getUserId = (user) => {
   if (user.$oid) return user.$oid.toString();
   return "";
 };
+
+// Initialize socket connection outside the component
+const socket = io('http://localhost:8080');
 
 const RaiseTicket = () => {
   // States for questions
@@ -44,6 +48,18 @@ const RaiseTicket = () => {
     fetchQuestions();
     fetchMyTickets();
     fetchOtherTickets();
+  }, []);
+
+  // Listen for real-time updates from the server
+  useEffect(() => {
+    socket.on("ticketsUpdated", () => {
+      console.log("Received ticketsUpdated event from server");
+      refreshTickets();
+    });
+
+    return () => {
+      socket.off("ticketsUpdated");
+    };
   }, []);
 
   // Filter questions by search term
@@ -201,7 +217,7 @@ const RaiseTicket = () => {
 
   // ---- RENDER HELPERS ----
 
-  // Render for tickets raised by the current user
+  // Render for tickets raised by the current user (My Tickets)
   const renderMyTicketCard = (ticket) => {
     return (
       <div key={ticket._id} style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '10px' }}>
@@ -221,7 +237,7 @@ const RaiseTicket = () => {
                 {solution.accepted ? (
                   <p style={{ color: 'green' }}>Accepted</p>
                 ) : (
-                  // Show one OK button to accept and close the ticket
+                  // For open tickets, show a single OK button to accept & close the ticket
                   ticket.status === 'open' && (
                     <button onClick={() => handleAcceptAndCloseTicket(ticket._id, solution._id)}>
                       OK
@@ -238,7 +254,7 @@ const RaiseTicket = () => {
     );
   };
 
-  // Render for tickets raised by others
+  // Render for tickets raised by others (Other Tickets)
   const renderOtherTicketCard = (ticket) => {
     return (
       <div key={ticket._id} style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '10px' }}>

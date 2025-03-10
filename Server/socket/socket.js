@@ -37,6 +37,11 @@ const initializeSocket = (server) => {
         });
     });
 
+    // Helper method: emit real-time ticket update event
+    io.emitTicketsUpdated = () => {
+        io.emit("ticketsUpdated");
+    };
+
     return io;
 };
 
