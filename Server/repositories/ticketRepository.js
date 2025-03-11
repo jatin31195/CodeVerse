@@ -6,11 +6,11 @@ const createTicket = async (ticketData) => {
   return await ticket.save();
 };
 
-const getOpenTickets = async (excludeUserId) => {
-  // Only show tickets that are open and not raised by the current user.
-  return await Ticket.find({ status: 'open', raisedBy: { $ne: excludeUserId } })
-    .populate('questionId raisedBy');
+const getOpenTickets = async (userId) => {
+  return await Ticket.find({ status: 'open', raisedBy: { $ne: userId } }) 
+    .populate('questionId raisedBy solutions.providedBy');
 };
+
 
 const getTicketById = async (ticketId) => {
   return await Ticket.findById(ticketId);

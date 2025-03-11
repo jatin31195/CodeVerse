@@ -10,22 +10,22 @@ const server = http.createServer(app);
 
 dbConnection();
 
-// ✅ Apply CORS BEFORE routes
 app.use(cors({
-    origin: "http://localhost:5173", // Allow frontend
+    origin: "http://localhost:5173", 
     methods: "GET, POST, PUT, DELETE",
-    allowedHeaders: "Content-Type, Authorization"
+    allowedHeaders: "Content-Type, Authorization",
+    credentials: true
 }));
 
 app.use(express.json()); 
 
-// ✅ Now define your routes
+
 app.use("/api", apiRoutes);
 
 const cron = require("node-cron");
 const { fetchAndStorePOTD } = require("./services/potdServices/fetchPOTDService");
 
-// cron.schedule("*/1000 * * * * *", async () => {
+// cron.schedule("*/10 * * * * *", async () => {
 //     console.log("Fetching POTD every 30 seconds...");
 //     await fetchAndStorePOTD();
 // });
