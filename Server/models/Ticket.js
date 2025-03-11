@@ -15,10 +15,12 @@ const VideoMeetRequestSchema = new mongoose.Schema({
 const TicketSchema = new mongoose.Schema({
   questionId: { type: String, required: true },
   raisedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  solutions: { type: [SolutionSchema], default: [] },  // New field for multiple solutions
+  solutions: { type: [SolutionSchema], default: [] },
   videoMeetLink: { type: String, default: '' },
   videoMeetRequest: VideoMeetRequestSchema,
-  status: { type: String, enum: ['open', 'solved', 'closed'], default: 'open' },
+  // New field added for storing the meeting room ID
+  videoMeetRoom: { type: String, default: '' },
+  status: { type: String, enum: ['open', 'solved', 'closed', 'video-pending', 'video-accepted'], default: 'open' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Ticket', TicketSchema);

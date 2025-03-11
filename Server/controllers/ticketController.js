@@ -1,4 +1,4 @@
-
+// controllers/ticketController.js
 const TicketService = require('../services/ticketService');
 
 const raiseTicket = async (req, res, next) => {
@@ -30,7 +30,6 @@ const provideTextSolution = async (req, res, next) => {
     const { solutionText } = req.body;
     const ticketId = req.params.ticketId;
     const ticket = await TicketService.provideTextSolution(ticketId, solutionText, solverUserId);
-
     const io = req.app.get('socketio');
     io.emitTicketsUpdated();
     res.status(200).json({ success: true, ticket });
@@ -41,38 +40,26 @@ const provideTextSolution = async (req, res, next) => {
 
 const acceptSolution = async (req, res, next) => {
   try {
-    // console.log("🛠️ Received Request:", req.body); 
-
     const raiserUserId = req.user.userId;
     const { ticketId, solutionId } = req.body;
-
     if (!ticketId || !solutionId) {
       throw new Error("Missing ticketId or solutionId");
     }
-
     const ticket = await TicketService.acceptSolution(ticketId, solutionId, raiserUserId);
-
-    // Emit real-time update
     const io = req.app.get('socketio');
     io.emitTicketsUpdated();
-
     res.status(200).json({ success: true, ticket });
   } catch (error) {
-    console.error("🔥 Error in acceptSolution controller:", error.message);
     next(error);
   }
 };
 
-
-
-
-
+// ----- Video Meet Endpoints -----
 const requestVideoMeet = async (req, res, next) => {
   try {
     const solverUserId = req.user.userId;
     const ticketId = req.params.ticketId;
     const ticket = await TicketService.requestVideoMeet(ticketId, solverUserId);
-    // Emit real-time update
     const io = req.app.get('socketio');
     io.emitTicketsUpdated();
     res.status(200).json({ success: true, ticket });
@@ -85,8 +72,20 @@ const acceptVideoMeetRequest = async (req, res, next) => {
   try {
     const raiserUserId = req.user.userId;
     const ticketId = req.params.ticketId;
-    const { meetingLink } = req.body;
-    const ticket = await TicketService.acceptVideoMeetRequest(ticketId, raiserUserId, meetingLink);
+    const ticket = await TicketService.acceptVideoMeetRequest(ticketId, raiserUserId);
+    const io = req.app.get('socketio');
+    io.emitTicketsUpdated();
+    res.status(200).json({ success: true, ticket });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const closeVideoMeet = async (req, res, next) => {
+  try {
+    const raiserUserId = req.user.userId;
+    const ticketId = req.params.ticketId;
+    const ticket = await TicketService.closeVideoMeet(ticketId, raiserUserId);
     const io = req.app.get('socketio');
     io.emitTicketsUpdated();
     res.status(200).json({ success: true, ticket });
@@ -111,6 +110,7 @@ module.exports = {
   provideTextSolution,
   requestVideoMeet,
   acceptVideoMeetRequest,
+  closeVideoMeet,
   acceptSolution,
   getMyTickets,
 };
