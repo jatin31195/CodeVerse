@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client';
 
-// Helper to reliably extract a user ID from a user object
 const getUserId = (user) => {
   if (!user) return "";
   if (typeof user === "string") return user;
@@ -11,8 +10,12 @@ const getUserId = (user) => {
   return "";
 };
 
-// Initialize socket connection outside the component
-const socket = io('http://localhost:8080');
+const socket = io('http://localhost:8080',
+  {
+    transports: ["websocket", "polling"],
+    withCredentials: true 
+}
+);
 
 const RaiseTicket = () => {
   // States for questions
@@ -22,35 +25,35 @@ const RaiseTicket = () => {
   const [selectedQuestion, setSelectedQuestion] = useState('');
 
   // States for tickets
-  const [myTickets, setMyTickets] = useState([]);       // Tickets raised by current user
-  const [otherTickets, setOtherTickets] = useState([]);   // Tickets raised by others
+  const [myTickets, setMyTickets] = useState([]);       
+  const [otherTickets, setOtherTickets] = useState([]);  
 
-  // Additional states
+ 
   const [ticketRaised, setTicketRaised] = useState(false);
   const [solutionText, setSolutionText] = useState('');
   const [currentTicket, setCurrentTicket] = useState(null);
 
-  // Current user ID (stored in sessionStorage by your auth logic)
   const currentUserId = sessionStorage.getItem('userId');
 
-  // Retrieve token from sessionStorage and add it to headers
+  
   const getAuthConfig = () => {
     const token = sessionStorage.getItem('token');
     return {
       headers: {
         Authorization: token,
+        "Content-Type": "application/json"
       },
     };
   };
 
-  // Fetch questions and tickets on component mount
+ 
   useEffect(() => {
     fetchQuestions();
     fetchMyTickets();
     fetchOtherTickets();
   }, []);
 
-  // Listen for real-time updates from the server
+  
   useEffect(() => {
     socket.on("ticketsUpdated", () => {
       console.log("Received ticketsUpdated event from server");
@@ -62,7 +65,6 @@ const RaiseTicket = () => {
     };
   }, []);
 
-  // Filter questions by search term
   useEffect(() => {
     if (!searchTerm) {
       setFilteredQuestions(questions);
@@ -74,11 +76,15 @@ const RaiseTicket = () => {
     }
   }, [searchTerm, questions]);
 
-  // ---- BACKEND CALLS ----
+ 
 
   const fetchQuestions = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/questions', getAuthConfig());
+      const res = await axios.get('http://localhost:8080/api/questions',{
+        ...getAuthConfig(),
+        withCredentials: true, 
+        headers: { 'Content-Type': 'application/json' }
+      });
       let fetchedQuestions = [];
       if (Array.isArray(res.data)) {
         fetchedQuestions = res.data;
@@ -92,10 +98,10 @@ const RaiseTicket = () => {
     }
   };
 
-  // Fetch tickets raised by the current user
+  
   const fetchMyTickets = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/ticket-Raise/my', getAuthConfig());
+      const res = await axios.get('http://localhost:8080/api/ticket-Raise/my',getAuthConfig());
       let myTix = [];
       if (Array.isArray(res.data.tickets)) {
         myTix = res.data.tickets;
@@ -109,17 +115,19 @@ const RaiseTicket = () => {
     }
   };
 
-  // Fetch tickets raised by others
+ 
   const fetchOtherTickets = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/ticket-Raise', getAuthConfig());
+      const res = await axios.get('http://localhost:8080/api/ticket-Raise', {
+        ...getAuthConfig(),
+       
+      });
       let tickets = [];
       if (Array.isArray(res.data)) {
         tickets = res.data;
       } else if (res.data.tickets) {
         tickets = res.data.tickets;
       }
-      // Filter out tickets raised by the current user
       const otherTix = tickets.filter((t) => getUserId(t.raisedBy) !== currentUserId);
       console.log('Fetched Other Tickets:', otherTix);
       setOtherTickets(otherTix);
@@ -133,7 +141,7 @@ const RaiseTicket = () => {
     await fetchOtherTickets();
   };
 
-  // Raise a new ticket for the selected question
+  
   const handleRaiseTicket = async (e) => {
     e.preventDefault();
     if (!selectedQuestion) {
@@ -144,7 +152,8 @@ const RaiseTicket = () => {
       await axios.post(
         'http://localhost:8080/api/ticket-Raise/raise',
         { questionIdentifier: selectedQuestion },
-        getAuthConfig()
+        {
+          ...getAuthConfig(),        }
       );
       setTicketRaised(true);
       alert('Ticket raised successfully');
@@ -155,7 +164,6 @@ const RaiseTicket = () => {
     }
   };
 
-  // For non-raisers: provide a text solution
   const handleProvideTextSolution = async (ticketId) => {
     if (!solutionText) {
       alert('Enter a solution text');
@@ -165,7 +173,10 @@ const RaiseTicket = () => {
       await axios.post(
         `http://localhost:8080/api/ticket-Raise/${ticketId}/solution`,
         { solutionText },
-        getAuthConfig()
+        {
+          ...getAuthConfig(),
+          
+        }
       );
       alert('Solution submitted successfully');
       setSolutionText('');
@@ -177,13 +188,16 @@ const RaiseTicket = () => {
     }
   };
 
-  // For non-raisers: request a video meet
+ 
   const handleRequestVideoMeet = async (ticketId) => {
     try {
       await axios.post(
         `http://localhost:8080/api/ticket-Raise/${ticketId}/request-video`,
         {},
-        getAuthConfig()
+        {
+          ...getAuthConfig(),
+         
+        }
       );
       alert('Video meet request sent');
       refreshTickets();
@@ -193,31 +207,25 @@ const RaiseTicket = () => {
     }
   };
 
-  // For raisers: accept solution and then immediately close the ticket
   const handleAcceptAndCloseTicket = async (ticketId, solutionId) => {
     try {
-      await axios.post(
-        'http://localhost:8080/api/ticket-Raise/accept-solution',
-        { ticketId, solutionId },
-        getAuthConfig()
-      );
-      // Immediately close the ticket after accepting the solution
-      await axios.put(
-        `http://localhost:8080/api/ticket-Raise/${ticketId}/close`,
-        {},
-        getAuthConfig()
-      );
-      alert('Ticket closed successfully.');
-      refreshTickets();
-    } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.message || 'Error processing ticket');
+        console.log("🛠️ Sending PUT request with:", { ticketId, solutionId });
+
+        const response = await axios.put(
+            `http://localhost:8080/api/ticket-Raise/${ticketId}/accept-solution`, 
+            { ticketId, solutionId }, 
+            getAuthConfig()
+        );
+
+        // console.log("✅ Ticket closed successfully:", response.data);
+    } catch (error) {
+        console.error("Error in handleAcceptAndCloseTicket:", error.response?.data?.message || error);
     }
-  };
+};
 
-  // ---- RENDER HELPERS ----
 
-  // Render for tickets raised by the current user (My Tickets)
+
+  
   const renderMyTicketCard = (ticket) => {
     return (
       <div key={ticket._id} style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '10px' }}>
@@ -237,7 +245,6 @@ const RaiseTicket = () => {
                 {solution.accepted ? (
                   <p style={{ color: 'green' }}>Accepted</p>
                 ) : (
-                  // For open tickets, show a single OK button to accept & close the ticket
                   ticket.status === 'open' && (
                     <button onClick={() => handleAcceptAndCloseTicket(ticket._id, solution._id)}>
                       OK
@@ -254,7 +261,6 @@ const RaiseTicket = () => {
     );
   };
 
-  // Render for tickets raised by others (Other Tickets)
   const renderOtherTicketCard = (ticket) => {
     return (
       <div key={ticket._id} style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '10px' }}>
@@ -313,7 +319,6 @@ const RaiseTicket = () => {
     );
   };
 
-  // ---- MAIN RENDER ----
   return (
     <div>
       <h2>Raise Ticket</h2>
