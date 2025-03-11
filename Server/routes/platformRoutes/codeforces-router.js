@@ -4,5 +4,6 @@ const router = express.Router();
 
 
 router.get("/problem", codeforcesController.fetchDailyProblem);
+router.get('/today',codeforcesController.currentQues);
 
 module.exports = router;

@@ -12,7 +12,10 @@ const LiveChat = () => {
 
   useEffect(() => {
     // Connect to the Socket.IO server
-    socketRef.current = io("ws://localhost:3000");
+    socketRef.current = io("ws://localhost:8080",{
+      transports: ["websocket", "polling"],
+  withCredentials: true 
+    });
 
     // Listen for chat messages
     socketRef.current.on("chatMessage", (data) => {
