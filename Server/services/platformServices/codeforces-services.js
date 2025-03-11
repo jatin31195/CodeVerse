@@ -4,6 +4,33 @@ const Question = require("../../models/Question");
 // Codeforces API URL
 const API_URL = "https://codeforces.com/api/problemset.problems";
 
+const getTodayCodeforcesQuestions = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setUTCDate(today.getUTCDate() + 1);
+
+    console.log("Fetching Codeforces questions from:", today, "to", tomorrow);
+
+    const questions = await Question.find({
+      platform: "Codeforces",
+      date: { $gte: today, $lt: tomorrow },
+    });
+
+    console.log("Questions fetched:", questions.length);
+
+    // Send response properly
+    return res.status(200).json({ success: true, questions });
+
+  } catch (error) {
+    console.error("Error fetching today's Codeforces questions:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
 // Weekly difficulty structure
 const difficultySchedule = [
   [800, 900, 1000],   // Week 1: Easy start
@@ -85,4 +112,4 @@ const fetchDailyProblem = async (req, res) => {
   }
 };
 
-module.exports = { fetchDailyProblem };
+module.exports = { fetchDailyProblem , getTodayCodeforcesQuestions};

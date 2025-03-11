@@ -12,6 +12,7 @@ const SolutionRoute = require('./potdRoutes/solution-routes');
 
 const getAllQuestions=require('.././controllers/questionsController');
 const ticketRaise=require('./ticketRoutes');
+
 router.use("/ticket-Raise",ticketRaise);
 router.use("/ques", platformRoutes);
 router.use("/auth", authRoutes);
