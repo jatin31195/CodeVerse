@@ -10,12 +10,10 @@ const getUserId = (user) => {
   return "";
 };
 
-const socket = io('http://localhost:8080',
-  {
-    transports: ["websocket", "polling"],
-    withCredentials: true 
-}
-);
+const socket = io('http://localhost:8080', {
+  transports: ["websocket", "polling"],
+  withCredentials: true 
+});
 
 const RaiseTicket = () => {
   // States for questions
@@ -28,14 +26,12 @@ const RaiseTicket = () => {
   const [myTickets, setMyTickets] = useState([]);       
   const [otherTickets, setOtherTickets] = useState([]);  
 
- 
   const [ticketRaised, setTicketRaised] = useState(false);
   const [solutionText, setSolutionText] = useState('');
   const [currentTicket, setCurrentTicket] = useState(null);
 
   const currentUserId = sessionStorage.getItem('userId');
 
-  
   const getAuthConfig = () => {
     const token = sessionStorage.getItem('token');
     return {
@@ -46,20 +42,17 @@ const RaiseTicket = () => {
     };
   };
 
- 
   useEffect(() => {
     fetchQuestions();
     fetchMyTickets();
     fetchOtherTickets();
   }, []);
 
-  
   useEffect(() => {
     socket.on("ticketsUpdated", () => {
       console.log("Received ticketsUpdated event from server");
       refreshTickets();
     });
-
     return () => {
       socket.off("ticketsUpdated");
     };
@@ -76,11 +69,9 @@ const RaiseTicket = () => {
     }
   }, [searchTerm, questions]);
 
- 
-
   const fetchQuestions = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/questions',{
+      const res = await axios.get('http://localhost:8080/api/questions', {
         ...getAuthConfig(),
         withCredentials: true, 
         headers: { 'Content-Type': 'application/json' }
@@ -98,10 +89,9 @@ const RaiseTicket = () => {
     }
   };
 
-  
   const fetchMyTickets = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/ticket-Raise/my',getAuthConfig());
+      const res = await axios.get('http://localhost:8080/api/ticket-Raise/my', getAuthConfig());
       let myTix = [];
       if (Array.isArray(res.data.tickets)) {
         myTix = res.data.tickets;
@@ -115,13 +105,9 @@ const RaiseTicket = () => {
     }
   };
 
- 
   const fetchOtherTickets = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/ticket-Raise', {
-        ...getAuthConfig(),
-       
-      });
+      const res = await axios.get('http://localhost:8080/api/ticket-Raise', getAuthConfig());
       let tickets = [];
       if (Array.isArray(res.data)) {
         tickets = res.data;
@@ -141,7 +127,6 @@ const RaiseTicket = () => {
     await fetchOtherTickets();
   };
 
-  
   const handleRaiseTicket = async (e) => {
     e.preventDefault();
     if (!selectedQuestion) {
@@ -152,8 +137,7 @@ const RaiseTicket = () => {
       await axios.post(
         'http://localhost:8080/api/ticket-Raise/raise',
         { questionIdentifier: selectedQuestion },
-        {
-          ...getAuthConfig(),        }
+        getAuthConfig()
       );
       setTicketRaised(true);
       alert('Ticket raised successfully');
@@ -173,10 +157,7 @@ const RaiseTicket = () => {
       await axios.post(
         `http://localhost:8080/api/ticket-Raise/${ticketId}/solution`,
         { solutionText },
-        {
-          ...getAuthConfig(),
-          
-        }
+        getAuthConfig()
       );
       alert('Solution submitted successfully');
       setSolutionText('');
@@ -188,16 +169,13 @@ const RaiseTicket = () => {
     }
   };
 
- 
+  // --- Video Meet Handlers ---
   const handleRequestVideoMeet = async (ticketId) => {
     try {
       await axios.post(
         `http://localhost:8080/api/ticket-Raise/${ticketId}/request-video`,
         {},
-        {
-          ...getAuthConfig(),
-         
-        }
+        getAuthConfig()
       );
       alert('Video meet request sent');
       refreshTickets();
@@ -207,25 +185,47 @@ const RaiseTicket = () => {
     }
   };
 
-  const handleAcceptAndCloseTicket = async (ticketId, solutionId) => {
+  const handleAcceptVideoMeet = async (ticketId) => {
     try {
-        console.log("🛠️ Sending PUT request with:", { ticketId, solutionId });
-
-        const response = await axios.put(
-            `http://localhost:8080/api/ticket-Raise/${ticketId}/accept-solution`, 
-            { ticketId, solutionId }, 
-            getAuthConfig()
-        );
-
-        // console.log("✅ Ticket closed successfully:", response.data);
-    } catch (error) {
-        console.error("Error in handleAcceptAndCloseTicket:", error.response?.data?.message || error);
+      await axios.put(
+        `http://localhost:8080/api/ticket-Raise/${ticketId}/accept-video`,
+        {},
+        getAuthConfig()
+      );
+      alert('Video meet accepted. Meeting room created.');
+      refreshTickets();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Error accepting video meet request');
     }
-};
+  };
+
+  const handleCloseVideoMeet = async (ticketId) => {
+    try {
+      await axios.put(
+        `http://localhost:8080/api/ticket-Raise/${ticketId}/close-video`,
+        {},
+        getAuthConfig()
+      );
+      alert('Video meet closed and ticket updated.');
+      refreshTickets();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Error closing video meet');
+    }
+  };
+
+  const handleJoinVideoMeet = (ticket) => {
+    console.log("Updated Ticket:", ticket);
+if (ticket.videoMeetRoom) {
+  window.location.href = `/video-meeting/${ticket.videoMeetRoom}`;
+} else {
+  alert('Meeting room not available');
+}
+
+  };
 
 
-
-  
   const renderMyTicketCard = (ticket) => {
     return (
       <div key={ticket._id} style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '10px' }}>
@@ -235,6 +235,15 @@ const RaiseTicket = () => {
         <p>
           <strong>Status:</strong> {ticket.status}
         </p>
+        {ticket.videoMeetRequest && ticket.videoMeetRequest.status === 'pending' && (
+          <button onClick={() => handleAcceptVideoMeet(ticket._id)}>Accept Video Meet</button>
+        )}
+        {ticket.status === 'video-accepted' && (
+          <>
+            <button onClick={() => handleJoinVideoMeet(ticket)}>Join Video Meet</button>
+            <button onClick={() => handleCloseVideoMeet(ticket._id)}>Close Video Meet</button>
+          </>
+        )}
         <div>
           <h4>Solutions:</h4>
           {ticket.solutions && ticket.solutions.length > 0 ? (
@@ -246,9 +255,7 @@ const RaiseTicket = () => {
                   <p style={{ color: 'green' }}>Accepted</p>
                 ) : (
                   ticket.status === 'open' && (
-                    <button onClick={() => handleAcceptAndCloseTicket(ticket._id, solution._id)}>
-                      OK
-                    </button>
+                    <button onClick={() => handleAcceptAndCloseTicket(ticket._id, solution._id)}>OK</button>
                   )
                 )}
               </div>
@@ -260,19 +267,14 @@ const RaiseTicket = () => {
       </div>
     );
   };
+  
 
   const renderOtherTicketCard = (ticket) => {
     return (
       <div key={ticket._id} style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '10px' }}>
-        <p>
-          <strong>Question:</strong> {ticket.questionId.title || ticket.questionId}
-        </p>
-        <p>
-          <strong>Raised By:</strong> {ticket.raisedBy.username || getUserId(ticket.raisedBy)}
-        </p>
-        <p>
-          <strong>Status:</strong> {ticket.status}
-        </p>
+        <p><strong>Question:</strong> {ticket.questionId.title || ticket.questionId}</p>
+        <p><strong>Raised By:</strong> {ticket.raisedBy.username || getUserId(ticket.raisedBy)}</p>
+        <p><strong>Status:</strong> {ticket.status}</p>
         <div>
           <h4>Solutions:</h4>
           {ticket.solutions && ticket.solutions.length > 0 ? (
@@ -297,23 +299,14 @@ const RaiseTicket = () => {
                   value={solutionText}
                   onChange={(e) => setSolutionText(e.target.value)}
                 ></textarea>
-                <button onClick={() => handleProvideTextSolution(ticket._id)}>
-                  Submit Solution
-                </button>
+                <button onClick={() => handleProvideTextSolution(ticket._id)}>Submit Solution</button>
               </div>
             )}
-            <button onClick={() => handleRequestVideoMeet(ticket._id)}>
-              Request Video Meet
-            </button>
+            <button onClick={() => handleRequestVideoMeet(ticket._id)}>Request Video Meet</button>
           </>
         )}
-        {ticket.videoMeetRequest && ticket.videoMeetRequest.status === 'accepted' && (
-          <p>
-            <strong>Video Meet Link:</strong>{' '}
-            <a href={ticket.videoMeetLink} target="_blank" rel="noopener noreferrer">
-              {ticket.videoMeetLink}
-            </a>
-          </p>
+        {ticket.status === 'video-accepted' && (
+          <button onClick={() => handleJoinVideoMeet(ticket)}>Join Video Meet</button>
         )}
       </div>
     );
@@ -342,9 +335,7 @@ const RaiseTicket = () => {
               <option value="">--Select a Question--</option>
               {filteredQuestions && filteredQuestions.length > 0 ? (
                 filteredQuestions.map((q) => (
-                  <option key={q._id} value={q._id}>
-                    {q.title}
-                  </option>
+                  <option key={q._id} value={q._id}>{q.title}</option>
                 ))
               ) : (
                 <option disabled>No questions found</option>
@@ -356,18 +347,14 @@ const RaiseTicket = () => {
       ) : (
         <p>You have already raised a ticket.</p>
       )}
-
       <hr />
-
       <h2>My Tickets</h2>
       {myTickets && myTickets.length > 0 ? (
         myTickets.map((ticket) => renderMyTicketCard(ticket))
       ) : (
         <p>No tickets raised by you.</p>
       )}
-
       <hr />
-
       <h2>Other Tickets</h2>
       {otherTickets && otherTickets.length > 0 ? (
         otherTickets.map((ticket) => renderOtherTicketCard(ticket))
