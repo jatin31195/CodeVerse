@@ -20,7 +20,7 @@ const isBeforeLeetCodeChangeTime = (now) => {
 async function fetchAndStorePOTD() {
   const now = new Date();
   
-  // For LeetCode: if local time is before 5:30 AM, use yesterday’s date
+  // LeetCode date adjustment for before 5:30 AM
   let leetCodeDate;
   if (isBeforeLeetCodeChangeTime(now)) {
     const yesterday = new Date(now);
@@ -30,18 +30,17 @@ async function fetchAndStorePOTD() {
     leetCodeDate = now;
   }
 
-  // For GFG: the date changes at midnight (12 AM), so use today
-  const today = now;
+  // Format dates
+  const leetCodeDateFormatted = getLocalDateString(leetCodeDate);
+  const todayFormatted = getLocalDateString(now);
 
-  // Format dates using local time
-  const leetCodeDateFormatted = getLocalDateString(leetCodeDate); // LeetCode uses its own rollover time
-  const todayFormatted = getLocalDateString(today); // GFG and Codeforces
-
+  console.log("Fetching and storing POTD...");
+  console.log("Local time:", now);
   console.log("LeetCode date (local):", leetCodeDateFormatted);
   console.log("Today (local):", todayFormatted);
 
   try {
-    // Store LeetCode POTD if not already stored (unique by date & platform)
+    // ✅ Fetch & Store LeetCode POTD
     const existingLeetCode = await Question.findOne({ date: leetCodeDateFormatted, platform: "LeetCode" });
     if (existingLeetCode) {
       console.log("LeetCode POTD for today already exists, skipping...");
@@ -62,79 +61,88 @@ async function fetchAndStorePOTD() {
       console.log("LeetCode POTD stored.");
     }
 
-// Store GFG POTD if not already stored
-const gfgData = await axios.get(`http://localhost:8080/api/ques/gfg/potd/${todayFormatted}`);
+    // ✅ Fetch & Store GFG POTD
+    const gfgData = await axios.get(`http://localhost:8080/api/ques/gfg/potd/${todayFormatted}`);
 
-// Extract the required fields from the GFG data
-const { problem_name, problem_url, problem_id, date } = gfgData.data.data;
+    // Extract required fields
+    let { problem_name, problem_url, problem_id, date } = gfgData.data.data;
 
-// Validate that both `problem_name` and `problem_url` are present
-if (!problem_name || !problem_url) {
-  console.log("Missing required GFG fields: problem_name or problem_url.");
-  return;
-}
+    // Convert GFG date format to YYYY-MM-DD
+    date = date.split(" ")[0]; 
 
-// Validate the date to be stored is in the format "YYYY-MM-DD HH:mm:ss"
-console.log("GFG Date from response:", date); // Ensure the date is in the correct format
+    console.log("GFG Date from response:", date);
+    
+    // Check if GFG POTD already exists
+    const existingGfgQuestion = await Question.findOne({ date: date, platform: "GFG" });
+    console.log("Existing GFG Question:", existingGfgQuestion);
 
-// Check if the GFG problem for this date already exists in the database
-const existingGfgQuestion = await Question.findOne({ date: date, platform: "GFG" });
-console.log('Existing GFG Question:', existingGfgQuestion);
-
-if (existingGfgQuestion) {
-  console.log("GFG POTD for today already exists, skipping...");
-} else {
-  console.log("Storing GFG POTD...");
-
-  // Create the question object for GFG
-  const gfgQuestion = {
-    _id: uuidv4(),
-    platform: "GFG",
-    title: problem_name,
-    link: problem_url,
-    problem_id: problem_id,
-    date: date,  // Use the date as returned in the response
-  };console.log("Fetching and storing POTD...");
-console.log("Local time:", now);
-console.log("LeetCode date (local):", leetCodeDateFormatted);
-console.log("Today (local):", todayFormatted);
-console.log("GFG Date from response:", date);
-console.log('Existing GFG Question:', existingGfgQuestion);
-console.log('Existing LeetCode Question:', existingLeetCode);
-console.log('Existing Codeforces Question:', existingCodeforces);
-
-  // Insert the question into the database
-  await Question.insertMany([gfgQuestion]);
-  console.log("GFG POTD stored.");
-}
-
-
-
-    // Store Codeforces POTD if not already stored
-    const existingCodeforces = await Question.findOne({ date: todayFormatted, platform: "Codeforces" });
-    if (existingCodeforces) {
-      console.log("Codeforces POTD for today already exists, skipping...");
+    if (existingGfgQuestion) {
+      console.log("GFG POTD for today already exists, skipping...");
     } else {
-      console.log("Storing Codeforces POTD...");
-      const codeforcesData = await axios.get(`http://localhost:8080/api/ques/codeforces/problem`);
-      // Extract fields from Codeforces response
-      const { rating, name, url, contestId, index, tags, points } = codeforcesData.data;
-      // Create unique problem_id using contestId and index
-      const problem_id = `${contestId}_${index}`;
-      const codeforcesQuestion = {
-        _id: uuidv4(),
-        platform: "Codeforces",
-        title: name,
-        link: url,
-        problem_id: problem_id,
-        date: todayFormatted,
-        rating: rating,
-        tags: tags,
-        points: points,
-      };
-      await Question.insertMany([codeforcesQuestion]);
-      console.log("Codeforces POTD stored.");
+      console.log("Storing GFG POTD...");
+      
+      if (!problem_name || !problem_url) {
+        console.log("Warning: Missing required GFG fields (problem_name or problem_url). Skipping storage.");
+      } else {
+        const gfgQuestion = {
+          _id: uuidv4(),
+          platform: "GFG",
+          title: problem_name,
+          link: problem_url,
+          problem_id: problem_id,
+          date: date,
+        };
+        await Question.insertMany([gfgQuestion]);
+        console.log("GFG POTD stored.");
+      }
     }
+
+    // ✅ Fetch & Store Codeforces POTD
+    // Fetch Codeforces POTD if not already stored
+const existingCodeforces = await Question.findOne({ date: todayFormatted, platform: "Codeforces" });
+
+if (existingCodeforces) {
+  console.log("Codeforces POTD for today already exists, skipping...");
+} else {
+  console.log("Fetching Codeforces POTD...");
+
+  try {
+    // Fetch Codeforces problem data
+    const codeforcesResponse = await axios.get(`http://localhost:8080/api/ques/codeforces/problem`);
+    console.log("Raw Codeforces API Response:", JSON.stringify(codeforcesResponse.data, null, 2));
+
+    // Extract required fields
+    const { title, link, problem_id, tags, addedAt } = codeforcesResponse.data || {};
+
+    // Validate required fields
+    if (!title || !link || !problem_id) {
+      console.error("❌ Missing required Codeforces fields: title, link, or problem_id.");
+      return;
+    }
+
+    // Prepare Codeforces question object
+    const codeforcesQuestion = {
+      _id: uuidv4(),
+      platform: "Codeforces",
+      title: title,
+      link: link,
+      problem_id: problem_id,
+      date: new Date(todayFormatted), // Ensure it's stored as Date
+      tags: tags || [],
+      addedAt: addedAt ? new Date(addedAt) : new Date(), // Store added time if available
+    };
+
+    console.log("✅ Storing Codeforces Question:", codeforcesQuestion);
+
+    // Insert into database
+    await Question.insertMany([codeforcesQuestion]);
+    console.log("✅ Codeforces POTD stored successfully.");
+
+  } catch (error) {
+    console.error("❌ Error fetching and storing Codeforces POTD:", error.message);
+  }
+}
+
 
   } catch (error) {
     console.error("Error fetching and storing POTD:", error.message);
