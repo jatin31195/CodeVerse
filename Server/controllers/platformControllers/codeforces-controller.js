@@ -1,6 +1,8 @@
-const { codeforcesService } = require('../../services/platformServices');
-const fun = codeforcesService.fetchDailyProblem;
+const { codeforcesService, } = require('../../services/platformServices');
+const fetchDailyProblem = codeforcesService.fetchDailyProblem;
+const currentQues = codeforcesService.getTodayCodeforcesQuestions
 
 module.exports = {
-    fetchDailyProblem: fun 
+    fetchDailyProblem ,
+    currentQues
 };
