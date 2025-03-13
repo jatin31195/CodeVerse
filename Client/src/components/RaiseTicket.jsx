@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import Header from '../components/Header';
+import TicketCard from '../components/TicketCard';
 
 const getUserId = (user) => {
   if (!user) return "";
@@ -12,19 +16,19 @@ const getUserId = (user) => {
 
 const socket = io('http://localhost:8080', {
   transports: ["websocket", "polling"],
-  withCredentials: true 
+  withCredentials: true,
 });
 
 const RaiseTicket = () => {
-  // States for questions
+  const navigate = useNavigate();
+
   const [questions, setQuestions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredQuestions, setFilteredQuestions] = useState([]);
   const [selectedQuestion, setSelectedQuestion] = useState('');
 
-  // States for tickets
-  const [myTickets, setMyTickets] = useState([]);       
-  const [otherTickets, setOtherTickets] = useState([]);  
+  const [myTickets, setMyTickets] = useState([]);
+  const [otherTickets, setOtherTickets] = useState([]);
 
   const [ticketRaised, setTicketRaised] = useState(false);
   const [solutionText, setSolutionText] = useState('');
@@ -37,7 +41,7 @@ const RaiseTicket = () => {
     return {
       headers: {
         Authorization: token,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
     };
   };
@@ -56,7 +60,7 @@ const RaiseTicket = () => {
     return () => {
       socket.off("ticketsUpdated");
     };
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (!searchTerm) {
@@ -73,8 +77,8 @@ const RaiseTicket = () => {
     try {
       const res = await axios.get('http://localhost:8080/api/questions', {
         ...getAuthConfig(),
-        withCredentials: true, 
-        headers: { 'Content-Type': 'application/json' }
+        withCredentials: true,
+        headers: { 'Content-Type': 'application/json' },
       });
       let fetchedQuestions = [];
       if (Array.isArray(res.data)) {
@@ -169,7 +173,7 @@ const RaiseTicket = () => {
     }
   };
 
-  // --- Video Meet Handlers ---
+  
   const handleRequestVideoMeet = async (ticketId) => {
     try {
       await axios.post(
@@ -187,7 +191,7 @@ const RaiseTicket = () => {
 
   const handleAcceptVideoMeet = async (ticketId) => {
     try {
-      await axios.put(
+      const res = await axios.put(
         `http://localhost:8080/api/ticket-Raise/${ticketId}/accept-video`,
         {},
         getAuthConfig()
@@ -215,152 +219,160 @@ const RaiseTicket = () => {
     }
   };
 
-  const handleJoinVideoMeet = (ticket) => {
-    console.log("Updated Ticket:", ticket);
-if (ticket.videoMeetRoom) {
-  window.location.href = `/video-meeting/${ticket.videoMeetRoom}`;
-} else {
-  alert('Meeting room not available');
-}
-
-  };
-
-
-  const renderMyTicketCard = (ticket) => {
-    return (
-      <div key={ticket._id} style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '10px' }}>
-        <p>
-          <strong>Question:</strong> {ticket.questionId.title || ticket.questionId}
-        </p>
-        <p>
-          <strong>Status:</strong> {ticket.status}
-        </p>
-        {ticket.videoMeetRequest && ticket.videoMeetRequest.status === 'pending' && (
-          <button onClick={() => handleAcceptVideoMeet(ticket._id)}>Accept Video Meet</button>
-        )}
-        {ticket.status === 'video-accepted' && (
-          <>
-            <button onClick={() => handleJoinVideoMeet(ticket)}>Join Video Meet</button>
-            <button onClick={() => handleCloseVideoMeet(ticket._id)}>Close Video Meet</button>
-          </>
-        )}
-        <div>
-          <h4>Solutions:</h4>
-          {ticket.solutions && ticket.solutions.length > 0 ? (
-            ticket.solutions.map((solution) => (
-              <div key={solution._id} style={{ border: '1px dashed #ccc', padding: '5px', marginBottom: '5px' }}>
-                <p>{solution.text}</p>
-                <p>Provided By: {solution.providedBy.username || getUserId(solution.providedBy)}</p>
-                {solution.accepted ? (
-                  <p style={{ color: 'green' }}>Accepted</p>
-                ) : (
-                  ticket.status === 'open' && (
-                    <button onClick={() => handleAcceptAndCloseTicket(ticket._id, solution._id)}>OK</button>
-                  )
-                )}
-              </div>
-            ))
-          ) : (
-            <p>No solutions submitted yet.</p>
-          )}
-        </div>
-      </div>
-    );
-  };
   
+  const handleJoinOrCreateVideoMeet = async (ticket, isMyTicket) => {
+    if (ticket.videoMeetRoom && ticket.videoMeetRoom.trim() !== "") {
+     
+      window.location.href = `/video-meeting/${ticket.videoMeetRoom}`;
+      return;
+    }
+    
+    if (isMyTicket) {
+      try {
+        const res = await axios.put(
+          `http://localhost:8080/api/ticket-Raise/${ticket._id}/accept-video`,
+          {},
+          getAuthConfig()
+        );
+        const updatedTicket = res.data.ticket || res.data;
+        if (updatedTicket.videoMeetRoom && updatedTicket.videoMeetRoom.trim() !== "") {
+          window.location.href = `/video-meeting/${updatedTicket.videoMeetRoom}`;
+        } else {
+          alert("Failed to create meeting room. Please try again later.");
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Error creating meeting room.");
+      }
+    } else {
+     
+      alert("Meeting room not available. Please wait for the ticket raiser to accept the video meet request.");
+    }
+  };
 
-  const renderOtherTicketCard = (ticket) => {
-    return (
-      <div key={ticket._id} style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '10px' }}>
-        <p><strong>Question:</strong> {ticket.questionId.title || ticket.questionId}</p>
-        <p><strong>Raised By:</strong> {ticket.raisedBy.username || getUserId(ticket.raisedBy)}</p>
-        <p><strong>Status:</strong> {ticket.status}</p>
-        <div>
-          <h4>Solutions:</h4>
-          {ticket.solutions && ticket.solutions.length > 0 ? (
-            ticket.solutions.map((solution) => (
-              <div key={solution._id} style={{ border: '1px dashed #ccc', padding: '5px', marginBottom: '5px' }}>
-                <p>{solution.text}</p>
-                <p>Provided By: {solution.providedBy.username || getUserId(solution.providedBy)}</p>
-                {solution.accepted && <p style={{ color: 'green' }}>Accepted</p>}
-              </div>
-            ))
-          ) : (
-            <p>No solutions submitted yet.</p>
-          )}
-        </div>
-        {ticket.status === 'open' && (
-          <>
-            <button onClick={() => setCurrentTicket(ticket)}>Provide Text Solution</button>
-            {currentTicket && currentTicket._id === ticket._id && (
-              <div>
-                <textarea
-                  placeholder="Enter text solution"
-                  value={solutionText}
-                  onChange={(e) => setSolutionText(e.target.value)}
-                ></textarea>
-                <button onClick={() => handleProvideTextSolution(ticket._id)}>Submit Solution</button>
-              </div>
-            )}
-            <button onClick={() => handleRequestVideoMeet(ticket._id)}>Request Video Meet</button>
-          </>
-        )}
-        {ticket.status === 'video-accepted' && (
-          <button onClick={() => handleJoinVideoMeet(ticket)}>Join Video Meet</button>
-        )}
-      </div>
-    );
+  
+  const handleOpenTextSolution = (ticket) => {
+    setCurrentTicket(ticket);
   };
 
   return (
-    <div>
-      <h2>Raise Ticket</h2>
-      {!ticketRaised ? (
-        <form onSubmit={handleRaiseTicket}>
-          <div>
-            <label>Search Question: </label>
-            <input
-              type="text"
-              placeholder="Search question by name"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div>
-            <label>Select Question: </label>
-            <select
-              value={selectedQuestion}
-              onChange={(e) => setSelectedQuestion(e.target.value)}
-            >
-              <option value="">--Select a Question--</option>
-              {filteredQuestions && filteredQuestions.length > 0 ? (
-                filteredQuestions.map((q) => (
-                  <option key={q._id} value={q._id}>{q.title}</option>
-                ))
-              ) : (
-                <option disabled>No questions found</option>
-              )}
-            </select>
-          </div>
-          <button type="submit">Raise Ticket</button>
-        </form>
-      ) : (
-        <p>You have already raised a ticket.</p>
-      )}
-      <hr />
-      <h2>My Tickets</h2>
-      {myTickets && myTickets.length > 0 ? (
-        myTickets.map((ticket) => renderMyTicketCard(ticket))
-      ) : (
-        <p>No tickets raised by you.</p>
-      )}
-      <hr />
-      <h2>Other Tickets</h2>
-      {otherTickets && otherTickets.length > 0 ? (
-        otherTickets.map((ticket) => renderOtherTicketCard(ticket))
-      ) : (
-        <p>No tickets available.</p>
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-[#1A1F2C] to-[#000] text-white">
+     
+      <div 
+        className="fixed inset-0 bg-[url('code1.png')] bg-center opacity-5 bg-no-repeat pointer-events-none" 
+        aria-hidden="true"
+      ></div>
+      <Header onNewTicket={() => {}} />
+      <main className="container pb-12 max-w-4xl mx-auto transition-all duration-500 ease-out">
+        {/*Raise Ticket Section */}
+        <motion.section 
+          className="mb-8 animate-slide-up" 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.4 }}
+        >
+          <h2 className="text-2xl font-bold bg-codeverse-gradient bg-clip-text text-transparent mb-4">
+            Raise Ticket
+          </h2>
+          {!ticketRaised ? (
+            <form onSubmit={handleRaiseTicket} className="bg-black/30 p-6 rounded-lg backdrop-blur-sm border border-white/10">
+              <div className="mb-4">
+                <label className="block text-gray-300 mb-1">Search Question: </label>
+                <input
+                  type="text"
+                  placeholder="Search question by name"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full p-2 rounded-md bg-black/20 border border-white/10 text-white"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-300 mb-1">Select Question: </label>
+                <select
+                  value={selectedQuestion}
+                  onChange={(e) => setSelectedQuestion(e.target.value)}
+                  className="w-full p-2 rounded-md bg-black/20 border border-white/10 text-white"
+                >
+                  <option value="">--Select a Question--</option>
+                  {filteredQuestions && filteredQuestions.length > 0 ? (
+                    filteredQuestions.map((q) => (
+                      <option key={q._id} value={q._id}>{q.title}</option>
+                    ))
+                  ) : (
+                    <option disabled>No questions found</option>
+                  )}
+                </select>
+              </div>
+              <button 
+                type="submit"
+                className="bg-gradient-to-r from-codeverse-cyan to-codeverse-purple text-white px-4 py-2 rounded-md font-medium hover:scale-105 transition-transform duration-300"
+              >
+                Raise Ticket
+              </button>
+            </form>
+          ) : (
+            <p className="bg-black/30 p-4 rounded-lg text-gray-300">You have already raised a ticket.</p>
+          )}
+        </motion.section>
+
+        {/* My Tickets Section */}
+        <motion.section 
+          className="mb-8 animate-slide-up" 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
+          <h2 className="text-2xl font-bold bg-codeverse-gradient bg-clip-text text-transparent mb-4">
+            My Tickets
+          </h2>
+          {myTickets && myTickets.length > 0 ? (
+            myTickets.map((ticket) => (
+              <TicketCard 
+                key={ticket._id}
+                ticket={ticket}
+                isMyTicket={true}
+                onAcceptMeet={() => handleAcceptVideoMeet(ticket._id)}
+                onJoinMeet={() => handleJoinOrCreateVideoMeet(ticket, true)}
+                onCloseMeet={() => handleCloseVideoMeet(ticket._id)}
+              />
+            ))
+          ) : (
+            <p className="bg-black/30 p-4 rounded-lg text-gray-300">No tickets raised by you.</p>
+          )}
+        </motion.section>
+
+        {/* Community Tickets Section */}
+        <motion.section 
+          className="animate-slide-up" 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.4, delay: 0.4 }}
+        >
+          <h2 className="text-2xl font-bold bg-codeverse-gradient bg-clip-text text-transparent mb-4">
+            Community Tickets
+          </h2>
+          {otherTickets && otherTickets.length > 0 ? (
+            otherTickets.map((ticket) => (
+              <TicketCard 
+                key={ticket._id}
+                ticket={ticket}
+                isMyTicket={false}
+                onAcceptMeet={() => handleAcceptVideoMeet(ticket._id)}
+                onJoinMeet={() => handleJoinOrCreateVideoMeet(ticket, false)}
+                onCloseMeet={() => handleCloseVideoMeet(ticket._id)}
+                onOpenTextSolution={handleOpenTextSolution}
+                currentTicket={currentTicket}
+                solutionText={solutionText}
+                onSolutionTextChange={(e) => setSolutionText(e.target.value)}
+                onSubmitSolution={handleProvideTextSolution}
+                onRequestMeet={handleRequestVideoMeet}
+              />
+            ))
+          ) : (
+            <p className="bg-black/30 p-4 rounded-lg text-gray-300">No tickets available.</p>
+          )}
+        </motion.section>
+      </main>
     </div>
   );
 };
