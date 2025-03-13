@@ -1,4 +1,4 @@
-// controllers/ticketController.js
+
 const TicketService = require('../services/ticketService');
 
 const raiseTicket = async (req, res, next) => {
