@@ -18,8 +18,6 @@ app.use(cors({
 }));
 
 app.use(express.json()); 
-
-
 app.use("/api", apiRoutes);
 
 const cron = require("node-cron");
