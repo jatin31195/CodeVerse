@@ -15,6 +15,26 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  dateOfBirth: {
+    type: Date,
+    required: true,
+  },
+  gender: {
+    type: String,
+    enum: ["Male", "Female"],
+    required: true,
+  },
+
+  otp: {
+    type: String,
+  },
+  otpExpires: {
+    type: Date,
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
   tasks: [{ type: mongoose.Schema.Types.ObjectId, ref: "DailyTask" }], 
   favoriteLists: [{ type: mongoose.Schema.Types.ObjectId, ref: "FavoriteList" }] 
 });

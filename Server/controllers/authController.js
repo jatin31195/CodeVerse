@@ -1,4 +1,4 @@
-const authService=require('../services/authService');
+const authService = require('../services/authService');
 
 const register = async (req, res) => {
   try {
@@ -18,4 +18,14 @@ const login = async (req, res) => {
   }
 };
 
-module.exports={ register, login };
+const verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const response = await authService.verifyEmail(email, otp);
+    res.status(response.status).json(response);
+  } catch (error) {
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+};
+
+module.exports = { register, login, verifyOTP };

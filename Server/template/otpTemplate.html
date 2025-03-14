@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>CodeVerse Email Verification</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; color: #333; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 40px auto; background: #fff; padding: 20px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .header { text-align: center; }
+    .otp-code { font-size: 2.5em; font-weight: bold; color: #2c3e50; text-align: center; margin: 20px 0; }
+    .footer { margin-top: 30px; font-size: 0.9em; color: #777; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Welcome to CodeVerse!</h1>
+    </div>
+    <p>Hello,</p>
+    <p>Thank you for joining <strong>CodeVerse</strong>, the ultimate platform to train your coding skills. To complete your registration, please use the OTP code below:</p>
+    <p class="otp-code">{{OTP_CODE}}</p>
+    <p>This code is valid for 10 minutes. If you did not request this, please ignore this email.</p>
+    <p>Happy coding!</p>
+    <div class="footer">
+      <p>&copy; 2025 CodeVerse. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
