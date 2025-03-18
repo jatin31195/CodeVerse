@@ -12,4 +12,7 @@ const createUser = async (userData) => {
   return await UserModel.create(userData);
 };
 
-module.exports = { findUserByEmail, findUserByUsername, createUser };
+const findUserById=async(id)=>{
+  return await UserModel.findById(id);
+};
+module.exports = { findUserByEmail, findUserByUsername, createUser ,findUserById};

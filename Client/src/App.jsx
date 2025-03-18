@@ -7,6 +7,7 @@ import VideoMeeting from "./components/VideoMeeting";
 import LandingPage from "./components/LandingPage";
 import SignUpPage from "./components/SignupPage";
 import LoginPage from "./components/LoginPage";
+import Home from "./components/Home";
 function App() {
     return (
         <Router>
@@ -14,10 +15,10 @@ function App() {
                 <Route path="/" element={<LandingPage/>}/>
                 <Route path="/login" element={<LoginPage/>} />
                 <Route path="/signup" element={<SignUpPage/>} />
-
+                <Route path='/home' element={<Home/>}/>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/live-chat" element={<LiveChat />} />
-                <Route path="/raise-ticket" element={<RaiseTicket />} />
+                <Route path="/community" element={<RaiseTicket />} />
                 <Route path="/video-meeting/:meetingRoom" element={<VideoMeeting />} />
             </Routes>
         </Router>
