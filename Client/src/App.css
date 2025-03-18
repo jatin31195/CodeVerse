@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --radius: 0.75rem;
+  --codeverse-cyan: #33C3F0;
+  --codeverse-purple: #A374FF;
+}
+
+/* Use these definitions for btn-primary and gradient-text */
+.btn-primary {
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+  --tw-gradient-from: #33C3F0 var(--tw-gradient-from-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  --tw-gradient-to: #A374FF var(--tw-gradient-to-position);
+  font-weight: 500;
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity));
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 0.3s;
+  animation-duration: 0.3s;
+  border-radius: var(--radius);
+}
+
+.gradient-text {
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+  --tw-gradient-from: #33C3F0 var(--tw-gradient-from-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  --tw-gradient-to: #A374FF var(--tw-gradient-to-position);
+  background-clip: text;
+  color: transparent;
+}
+
+/* Keyframes for float animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(20px); }
+}
