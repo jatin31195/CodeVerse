@@ -124,5 +124,20 @@ const verifyEmail = async (email, otp) => {
 
   return { status: 200, message: 'Email verified successfully. Welcome!' };
 };
+const getUsernameById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await authRepository.findUserById(id); // ensure your repository has this function
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    // Return only the username (and any other public fields you want to expose)
+    return res.status(200).json({ username: user.username });
+  } catch (error) {
+    console.error("Error retrieving user:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 module.exports = { registerUser, loginUser, verifyEmail };

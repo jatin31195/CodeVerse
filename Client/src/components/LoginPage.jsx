@@ -41,7 +41,7 @@ const LoginPage = () => {
         // The server should set an httpOnly cookie with the token.
         alert("Login successful!");
         sessionStorage.setItem('token',data.token);
-        navigate('/dashboard');
+        navigate('/home');
       } else {
         const data = await response.json();
         alert(data.message || "Authentication failed");
