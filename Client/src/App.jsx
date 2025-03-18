@@ -4,11 +4,17 @@ import Dashboard from "./components/Dashboard";
 import LiveChat from "./components/LiveChat";
 import RaiseTicket from "./components/RaiseTicket";
 import VideoMeeting from "./components/VideoMeeting";
+import LandingPage from "./components/LandingPage";
+import SignUpPage from "./components/SignupPage";
+import LoginPage from "./components/LoginPage";
 function App() {
     return (
         <Router>
             <Routes>
-                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/" element={<LandingPage/>}/>
+                <Route path="/login" element={<LoginPage/>} />
+                <Route path="/signup" element={<SignUpPage/>} />
+
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/live-chat" element={<LiveChat />} />
                 <Route path="/raise-ticket" element={<RaiseTicket />} />
