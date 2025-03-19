@@ -57,12 +57,12 @@ const Sidebar = ({ className }) => {
       <nav className="py-4 flex flex-col h-[calc(100%-140px)]">
         <ul className="space-y-2 flex-grow">
           {[
-            { path: "/", icon: HomeIcon, label: "Home" },
+            { path: "/home", icon: HomeIcon, label: "Home" },
             { path: "/custom-potd", icon: Code, label: "Custom POTD" },
             { path: "/favorites", icon: Heart, label: "Favorite List" },
             { path: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-            { path: "/daily-tasks", icon: CheckSquare, label: "Daily Tasks" },
-            { path: "/timetable", icon: Calendar, label: "Time Table" },
+            { path: "/task", icon: CheckSquare, label: "Daily Tasks" },
+            { path: "/schedule", icon: Calendar, label: "Time Table" },
             {path: "/community", icon:HelpCircle, label: "Community Support"}
             
           ].map((item) => (

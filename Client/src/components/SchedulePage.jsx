@@ -138,14 +138,85 @@ const TimeTableEntry = ({ entry, onEdit }) => {
   const cardRef = useRef(null);
   const startXRef = useRef(null);
 
-  const handleAddToTasks = (e) => {
-    e.stopPropagation();
-    if (isSwiped) return;
-    toast.success(`Added "${activity}" (${startTime}-${endTime}) to your daily tasks`);
-    setIsSwiped(true);
+  
+  const getTodayDateString = () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
   };
 
-  const handleCardClick = () => {
+  
+  const buildEndDateTime = (dateString, timeString) => {
+    
+    const [hour, minute] = timeString.split(":").map(Number);
+    const date = new Date(dateString); 
+    
+    date.setUTCHours(hour, minute, 0, 0);
+    return date.toISOString();
+  };
+  
+  
+
+  
+  const addTaskToDailyTasks = async () => {
+ 
+    const getTodayDateString = () => {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, "0");
+      const dd = String(today.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
+    };
+  
+    const dateString = getTodayDateString();
+    
+    const endDateTimeISO = buildEndDateTime(dateString, endTime);
+  
+    const payload = {
+      task: activity, 
+      date: dateString,
+      endDateTime: endDateTimeISO,
+    };
+  
+    const token = sessionStorage.getItem("token");
+    try {
+      const response = await fetch("http://localhost:8080/api/tasks/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": token,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        toast.success(`Task "${activity}" added successfully.`);
+      } else {
+        toast.error("Failed to add task.");
+      }
+    } catch (err) {
+      console.error("Error adding task:", err);
+      toast.error("Failed to add task.");
+    }
+  };
+  
+
+ 
+  const handleAddToTasks = async (e) => {
+    e.stopPropagation();
+    if (isSwiped) return;
+    await addTaskToDailyTasks();
+    setIsSwiped(true);
+    
+    setTimeout(() => {
+      setSwipeOffset(0);
+    }, 300);
+  };
+
+  
+  const handleEdit = (e) => {
+    e.stopPropagation();
     if (onEdit) onEdit(entry);
   };
 
@@ -177,7 +248,6 @@ const TimeTableEntry = ({ entry, onEdit }) => {
       ref={cardRef}
       className={`relative group cursor-pointer overflow-hidden rounded-xl bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg p-8 transition-all duration-300 hover:shadow-xl mx-auto w-full max-w-xl ${isSwiped ? "opacity-70" : ""}`}
       style={{ transform: `translateX(${swipeOffset}px)`, transition: "transform 0.3s ease-out" }}
-      onClick={handleCardClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -221,13 +291,20 @@ const TimeTableEntry = ({ entry, onEdit }) => {
       >
         <CheckCircle className="h-4 w-4" />
       </div>
-     
-      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      
+      <div
+        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={handleEdit} 
+      >
         <Pencil className="h-4 w-4 text-gray-400" />
       </div>
     </div>
   );
 };
+
+
+
+
 
 
 const EditTimeTableModal = ({ isOpen, onClose, entry, onSave }) => {
