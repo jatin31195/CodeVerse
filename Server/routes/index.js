@@ -4,7 +4,7 @@ const authRoutes = require("./authRoutes");
 const platformRoutes = require("./platformRoutes");
 const taskRoutes = require("./taskRoutes");
 const customPOTDRoute = require('./potdRoutes');
-
+const contestRoute=require('./contestRoute')
 const leetcodeUserRouter=require('./platformRoutes/leetcode-user-route');
 const gfgUserRouter=require("./platformRoutes/gfg-user-routes");
 const codeforcesUserRouter=require('./platformRoutes/codeforces-user-routes');
@@ -12,7 +12,7 @@ const SolutionRoute = require('./potdRoutes/solution-routes');
 const favouriteListRoute=require('./favouriteListRoute');
 const getAllQuestions=require('.././controllers/questionsController');
 const ticketRaise=require('./ticketRoutes');
-
+const schedule=require('../controllers/scheduleController');
 router.use("/ticket-Raise",ticketRaise);
 router.use("/ques", platformRoutes);
 router.use("/auth", authRoutes);
@@ -24,5 +24,6 @@ router.use('/gfg-user',gfgUserRouter);
 router.use('/codeforces-user',codeforcesUserRouter);
 router.use('/fav',favouriteListRoute)
 router.use('/solutions',SolutionRoute);
-
+router.use('/contest',contestRoute);
+router.post('/schedule', schedule.createTimetable);
 module.exports = router;
