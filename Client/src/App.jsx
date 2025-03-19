@@ -8,6 +8,7 @@ import LandingPage from "./components/LandingPage";
 import SignUpPage from "./components/SignupPage";
 import LoginPage from "./components/LoginPage";
 import Home from "./components/Home";
+import SchedulePage from "./components/SchedulePage";
 function App() {
     return (
         <Router>
@@ -19,6 +20,7 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/live-chat" element={<LiveChat />} />
                 <Route path="/community" element={<RaiseTicket />} />
+                <Route path="/schedule" element={<SchedulePage/>} />
                 <Route path="/video-meeting/:meetingRoom" element={<VideoMeeting />} />
             </Routes>
         </Router>
