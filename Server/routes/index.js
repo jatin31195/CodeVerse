@@ -13,6 +13,7 @@ const favouriteListRoute=require('./favouriteListRoute');
 const getAllQuestions=require('.././controllers/questionsController');
 const ticketRaise=require('./ticketRoutes');
 const schedule=require('../controllers/scheduleController');
+const timeTable=require('./timetableRoute');
 router.use("/ticket-Raise",ticketRaise);
 router.use("/ques", platformRoutes);
 router.use("/auth", authRoutes);
@@ -25,5 +26,6 @@ router.use('/codeforces-user',codeforcesUserRouter);
 router.use('/fav',favouriteListRoute)
 router.use('/solutions',SolutionRoute);
 router.use('/contest',contestRoute);
-router.post('/schedule', schedule.createTimetable);
+router.use('/tt',timeTable);
+// router.post('/schedule', schedule.createTimetable);
 module.exports = router;

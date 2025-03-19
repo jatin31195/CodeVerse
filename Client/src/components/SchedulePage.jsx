@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -18,8 +18,6 @@ import {
   RefreshCw,
   ArrowRightLeft,
 } from "lucide-react";
-
-
 
 function convertTo24Hour(timeStr) {
   const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
@@ -64,7 +62,6 @@ function getIconFromClass(scheduleClass) {
 }
 
 function getGradientClass(icon) {
-  
   switch (icon) {
     case "Coffee":
       return "from-amber-400 to-orange-500";
@@ -107,6 +104,7 @@ function renderIcon(icon) {
 }
 
 function calculateDuration(startTime, endTime) {
+  if (!startTime || !endTime) return "";
   const [startHour, startMinute] = startTime.split(":").map(Number);
   const [endHour, endMinute] = endTime.split(":").map(Number);
   let durationMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
@@ -118,7 +116,21 @@ function calculateDuration(startTime, endTime) {
   return `${minutes}m`;
 }
 
-//TimeTable
+
+function transformTimetableData(timetableArray) {
+  return timetableArray.map((item, index) => {
+    const { startTime, endTime } = parseTimeRange(item.time);
+    return {
+      id: item._id || index + 1,
+      startTime,
+      endTime,
+      activity: item.description,
+      icon: getIconFromClass(item.class),
+    };
+  });
+}
+
+
 const TimeTableEntry = ({ entry, onEdit }) => {
   const { id, startTime, endTime, activity, icon } = entry;
   const [swipeOffset, setSwipeOffset] = useState(0);
@@ -163,9 +175,7 @@ const TimeTableEntry = ({ entry, onEdit }) => {
   return (
     <div
       ref={cardRef}
-      className={`relative group cursor-pointer overflow-hidden rounded-xl bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg p-8 transition-all duration-300 hover:shadow-xl mx-auto w-full max-w-xl ${
-        isSwiped ? "opacity-70" : ""
-      }`}
+      className={`relative group cursor-pointer overflow-hidden rounded-xl bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg p-8 transition-all duration-300 hover:shadow-xl mx-auto w-full max-w-xl ${isSwiped ? "opacity-70" : ""}`}
       style={{ transform: `translateX(${swipeOffset}px)`, transition: "transform 0.3s ease-out" }}
       onClick={handleCardClick}
       onTouchStart={handleTouchStart}
@@ -177,11 +187,7 @@ const TimeTableEntry = ({ entry, onEdit }) => {
       onMouseLeave={handleTouchEnd}
     >
       <div className="flex items-start gap-4">
-        <div
-          className={`flex-shrink-0 flex items-center justify-center rounded-full p-2.5 bg-gradient-to-r ${getGradientClass(
-            icon
-          )} text-white`}
-        >
+        <div className={`flex-shrink-0 flex items-center justify-center rounded-full p-2.5 bg-gradient-to-r ${getGradientClass(icon)} text-white`}>
           {renderIcon(icon)}
         </div>
         <div className="flex-1 min-w-0">
@@ -215,7 +221,7 @@ const TimeTableEntry = ({ entry, onEdit }) => {
       >
         <CheckCircle className="h-4 w-4" />
       </div>
-  
+     
       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <Pencil className="h-4 w-4 text-gray-400" />
       </div>
@@ -317,7 +323,9 @@ const EditTimeTableModal = ({ isOpen, onClose, entry, onSave }) => {
             >
               Cancel
             </button>
-            <button type="submit" className="px-4 py-2 rounded-md bg-gradient-to-r text-white hover:opacity-90"
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-md bg-gradient-to-r text-white hover:opacity-90"
               style={{ background: "linear-gradient(to right, #0ea5e9, #9b87f5)" }}
             >
               Save Changes
@@ -337,6 +345,51 @@ const SchedulePage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentEditEntry, setCurrentEditEntry] = useState(null);
 
+  const token = sessionStorage.getItem("token");
+
+  
+  const fetchTimetable = async () => {
+    if (!token) return;
+    try {
+      setIsLoading(true);
+      const response = await fetch("http://localhost:8080/api/tt/schedule", {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": token,
+        },
+      });
+      if (response.ok) {
+        const jsonData = await response.json();
+        if (jsonData.timetable) {
+          let timetableArray = jsonData.timetable;
+         
+          if (typeof timetableArray === "string") {
+            const regex = /```json\s*([\s\S]*?)\s*```/;
+            const match = timetableArray.match(regex);
+            if (!match || !match[1]) {
+              throw new Error("Could not extract timetable JSON from response");
+            }
+            timetableArray = JSON.parse(match[1]);
+          }
+          const transformedData = transformTimetableData(timetableArray);
+          setTimetableData(transformedData);
+          setIsSubmitted(true);
+        } else {
+          setTimetableData([]);
+          setIsSubmitted(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching timetable:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTimetable();
+  }, [token]);
+
   const handlePromptChange = (e) => setPrompt(e.target.value);
 
   const handleSubmit = async () => {
@@ -346,34 +399,36 @@ const SchedulePage = () => {
     }
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:8080/api/schedule", {
+      const response = await fetch("http://localhost:8080/api/tt/schedule", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": token,
+        },
         body: JSON.stringify({ dailySchedule: prompt }),
       });
       if (!response.ok) throw new Error("Network response was not ok");
       const jsonData = await response.json();
-
-      const timetableString = jsonData.timetable;
-      const regex = /```json\s*([\s\S]*?)\s*```/;
-      const match = timetableString.match(regex);
-      if (!match || !match[1]) {
-        throw new Error("Could not extract timetable JSON from response");
+      let timetableArray;
+      
+      if (typeof jsonData.timetable === "string") {
+        const regex = /```json\s*([\s\S]*?)\s*```/;
+        const match = jsonData.timetable.match(regex);
+        if (!match || !match[1]) {
+          throw new Error("Could not extract timetable JSON from response");
+        }
+        timetableArray = JSON.parse(match[1]);
+      } else if (Array.isArray(jsonData.timetable)) {
+        timetableArray = jsonData.timetable;
+      } else {
+        throw new Error("Unexpected timetable format");
       }
-      const timetableArray = JSON.parse(match[1]);
-      const transformedData = timetableArray.map((item, index) => {
-        const { startTime, endTime } = parseTimeRange(item.time);
-        return {
-          id: index + 1,
-          startTime,
-          endTime,
-          activity: item.description,
-          icon: getIconFromClass(item.class),
-        };
-      });
+      const transformedData = transformTimetableData(timetableArray);
       setTimetableData(transformedData);
       setIsSubmitted(true);
       toast.success("Your timetable has been generated!");
+      
+      fetchTimetable();
     } catch (error) {
       toast.error("Failed to generate timetable");
       console.error("Error in handleSubmit:", error);
@@ -382,10 +437,26 @@ const SchedulePage = () => {
     }
   };
 
-  const handleReset = () => {
-    setPrompt("");
-    setTimetableData([]);
-    setIsSubmitted(false);
+  const handleReset = async () => {
+    if (!token) return;
+    try {
+      const response = await fetch("http://localhost:8080/api/tt/schedule", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": token,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to delete timetable");
+      toast.success("Timetable removed");
+      setPrompt("");
+      setTimetableData([]);
+      setIsSubmitted(false);
+      fetchTimetable();
+    } catch (error) {
+      toast.error("Failed to remove timetable");
+      console.error("Error in handleReset:", error);
+    }
   };
 
   const handleEditEntry = (entry) => {
@@ -431,7 +502,7 @@ const SchedulePage = () => {
             <CalendarClock className="h-8 w-8 text-white" />
           </div>
           <h1
-            className="text-4xl font-bold mb-3 bg-clip-text text-transparent linear-gradient(to right, #0ea5e9, #9b87f5)"
+            className="text-4xl font-bold mb-3 bg-clip-text text-transparent"
             style={{
               background: "linear-gradient(to right, #0ea5e9, #9b87f5)",
               WebkitBackgroundClip: "text",
@@ -445,7 +516,7 @@ const SchedulePage = () => {
           </p>
         </div>
 
-    
+      
         <div className="max-w-4xl mx-auto mb-8 p-6 rounded-2xl shadow-xl bg-white/50 border border-gray-200 backdrop-blur-md">
           <h2 className="text-2xl font-semibold mb-2">Create Your Timetable</h2>
           <p className="text-sm text-gray-600 mb-4">
@@ -464,7 +535,7 @@ const SchedulePage = () => {
                 onClick={handleReset}
                 className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 flex items-center gap-3 mr-5"
               >
-                <RefreshCw className="h-5 w-5 " />
+                <RefreshCw className="h-5 w-5" />
                 Reset
               </button>
             )}
@@ -489,7 +560,7 @@ const SchedulePage = () => {
           </div>
         </div>
 
-       
+     
         {isSubmitted && (
           <div className="mt-10">
             <h2
@@ -508,8 +579,8 @@ const SchedulePage = () => {
                 <span>Swipe cards left to add to daily tasks or click to edit</span>
               </div>
               <div className="w-full">
-                {timetableData.map((entry) => (
-                  <div key={entry.id} className="mb-6">
+                {timetableData.map((entry, index) => (
+                  <div key={entry.id || index} className="mb-6">
                     <TimeTableEntry entry={entry} onEdit={handleEditEntry} />
                   </div>
                 ))}
@@ -519,7 +590,7 @@ const SchedulePage = () => {
         )}
       </main>
 
-      
+    
       {currentEditEntry && (
         <EditTimeTableModal
           isOpen={isEditModalOpen}
