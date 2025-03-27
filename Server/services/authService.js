@@ -6,7 +6,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const authRepository = require('../repositories/authRepository');
 const { generateOTP } = require('../utils/otpHelper');
-
+const User = require("../models/User");
 
 const transporter = nodemailer.createTransport({
   service: 'Gmail', 
@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-//load and fill an HTML template
+
 const loadTemplate = async (templateName, data) => {
   const templatePath = path.join(__dirname, '..', 'template', templateName);
   let content = await fs.readFile(templatePath, 'utf8');
@@ -40,7 +40,6 @@ const registerUser = async (userData) => {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // Generate OTP 
   const otp = generateOTP();
   const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -55,7 +54,7 @@ const registerUser = async (userData) => {
     isVerified: false
   });
 
-  // Load OTP email template 
+ 
   const otpHtml = await loadTemplate('otpTemplate.html', {
     OTP_CODE: otp
   });
@@ -127,17 +126,44 @@ const verifyEmail = async (email, otp) => {
 const getUsernameById = async (req, res) => {
   const { id } = req.params;
   try {
-    const user = await authRepository.findUserById(id); // ensure your repository has this function
+    const user = await authRepository.findUserById(id); 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    // Return only the username (and any other public fields you want to expose)
+    
     return res.status(200).json({ username: user.username });
   } catch (error) {
     console.error("Error retrieving user:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };
-
-
-module.exports = { registerUser, loginUser, verifyEmail };
+updatePlatformUsernameService = async (userId, platform, username) => {
+  const validPlatforms = ['leetcode', 'codeforces', 'gfg'];
+  if (!validPlatforms.includes(platform)) {
+    throw new Error("Invalid platform specified.");
+  }
+  
+  
+  const fieldName = `${platform}Username`;
+  
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { [fieldName]: username },
+    { new: true, runValidators: true }
+  );
+  
+  if (!updatedUser) {
+    throw new Error("User not found.");
+  }
+  
+  return updatedUser;
+};
+const getUserProfileService = async (userId) => {
+  
+  const user = await authRepository.getUserProfile(userId);
+  if (!user) {
+    throw new Error("User not found.");
+  }
+  return user;
+}
+module.exports = { registerUser, loginUser,getUserProfileService, verifyEmail,getUsernameById,updatePlatformUsernameService };
