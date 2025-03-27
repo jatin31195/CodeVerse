@@ -24,102 +24,93 @@ import {
   ResponsiveContainer as ReResponsiveContainer,
 } from 'recharts';
 
-
-
-const DashboardLayout = ({ children, activeTab, onTabChange }) => {
-  return (
-    <div className="min-h-screen flex flex-col">
-
-      <header className="w-full border-b backdrop-blur-sm bg-white/80 fixed top-0 z-10">
-        <div className="container mx-auto flex h-16 items-center justify-between py-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-white font-semibold">CV</span>
-            </div>
-            <h1 className="text-xl font-bold">CodeVerse</h1>
+const DashboardLayout = ({ children, activeTab, onTabChange }) => (
+  <div className="min-h-screen flex flex-col">
+    <header className="w-full border-b backdrop-blur-sm bg-white/80 fixed top-0 z-10">
+      <div className="container mx-auto flex h-16 items-center justify-between py-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+            <span className="text-white font-semibold">CV</span>
           </div>
+          <h1 className="text-xl font-bold">CodeVerse</h1>
         </div>
-      </header>
-   
-      <main className="flex-1 container mx-auto py-20">
-        <div className="w-full flex flex-col items-center space-y-8">
-    
-          <div className="w-full flex justify-center mb-4 mt-6">
-            <div className="w-full max-w-4xl">
-              <div className="grid grid-cols-4">
-                {['all', 'leetcode', 'codeforces', 'gfg'].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => onTabChange(tab)}
-                    className={`py-2 transition-all duration-200 ${
-                      activeTab === tab ? 'border-b-2 border-primary text-primary' : 'text-gray-600'
-                    }`}
-                  >
-                    {tab === 'all'
-                      ? 'All'
-                      : tab === 'leetcode'
-                      ? 'LeetCode'
-                      : tab === 'codeforces'
-                      ? 'CodeForces'
-                      : 'GeeksForGeeks'}
-                  </button>
-                ))}
-              </div>
+      </div>
+    </header>
+    <main className="flex-1 container mx-auto py-20">
+      <div className="w-full flex flex-col items-center space-y-8">
+        <div className="w-full flex justify-center mb-4 mt-6">
+          <div className="w-full max-w-4xl">
+            <div className="grid grid-cols-4">
+              {['all', 'leetcode', 'codeforces', 'gfg'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => onTabChange(tab)}
+                  className={`py-2 transition-all duration-200 ${
+                    activeTab === tab ? 'border-b-2 border-primary text-primary' : 'text-gray-600'
+                  }`}
+                >
+                  {tab === 'all'
+                    ? 'All'
+                    : tab === 'leetcode'
+                    ? 'LeetCode'
+                    : tab === 'codeforces'
+                    ? 'CodeForces'
+                    : 'GeeksForGeeks'}
+                </button>
+              ))}
             </div>
           </div>
-          {children}
         </div>
-      </main>
+        {children}
+      </div>
+    </main>
+  </div>
+);
+
+
+const UserProfileCard = ({ name, email, dob, gender, avatarUrl }) => (
+  <motion.div
+    className="w-full bg-white rounded-lg shadow p-4 hover:shadow-xl"
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+  >
+    <div className="flex items-center justify-between">
+      <div className="flex items-center space-x-4">
+        <div className="w-16 h-16 rounded-full border-2 border-primary flex items-center justify-center overflow-hidden bg-gray-100">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-lg font-bold text-primary">
+              {name.split(' ').map((n) => n[0]).join('')}
+            </span>
+          )}
+        </div>
+        <div>
+          <h2 className="text-xl font-bold">{name}</h2>
+          <div className="flex items-center mt-1 text-sm text-gray-500">
+            <Mail className="h-4 w-4 mr-1" />
+            <span>{email}</span>
+          </div>
+        </div>
+      </div>
+      <button className="hidden sm:block border border-primary text-primary px-3 py-1 rounded hover:bg-primary hover:text-primary transition-colors">
+        Edit Profile
+      </button>
     </div>
-  );
-};
-
-
-const UserProfileCard = ({ name, email, dob, gender, avatarUrl }) => {
-  return (
-    <motion.div
-      className="w-full bg-white rounded-lg shadow p-4 hover:shadow-lg"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 rounded-full border-2 border-primary flex items-center justify-center overflow-hidden bg-gray-100">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-lg font-bold text-primary">
-                {name.split(' ').map((n) => n[0]).join('')}
-              </span>
-            )}
-          </div>
-          <div>
-            <h2 className="text-xl font-bold">{name}</h2>
-            <div className="flex items-center mt-1 text-sm text-gray-500">
-              <Mail className="h-4 w-4 mr-1" />
-              <span>{email}</span>
-            </div>
-          </div>
-        </div>
-        <button className="hidden sm:block border border-primary text-primary px-3 py-1 rounded hover:bg-primary hover:text-white transition-colors">
-          Edit Profile
-        </button>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 text-sm">
+      <div className="flex items-center space-x-2">
+        <CalendarIcon2 className="h-4 w-4 text-gray-500" />
+        <span className="text-gray-500">DOB:</span>
+        <span>{dob}</span>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 text-sm">
-        <div className="flex items-center space-x-2">
-          <CalendarIcon2 className="h-4 w-4 text-gray-500" />
-          <span className="text-gray-500">DOB:</span>
-          <span>{dob}</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <User className="h-4 w-4 text-gray-500" />
-          <span className="text-gray-500">Gender:</span>
-          <span>{gender}</span>
-        </div>
+      <div className="flex items-center space-x-2">
+        <User className="h-4 w-4 text-gray-500" />
+        <span className="text-gray-500">Gender:</span>
+        <span>{gender}</span>
       </div>
-    </motion.div>
-  );
-};
+    </div>
+  </motion.div>
+);
 
 
 const PlatformCard = ({ platform, username, onSave, isConnected }) => {
@@ -143,16 +134,37 @@ const PlatformCard = ({ platform, username, onSave, isConnected }) => {
     },
   };
   const { name, logo, color } = platformDetails[platform];
-  const handleSave = () => {
+
+  const handleSave = async () => {
     if (newUsername.trim()) {
-      onSave(newUsername);
-      setIsOpen(false);
-      alert(`Connected to ${name}!`);
+      try {
+        const token = sessionStorage.getItem('token');
+        const res = await fetch('http://localhost:8080/api/auth/update-platform', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: token,
+          },
+          body: JSON.stringify({ platform, username: newUsername }),
+        });
+        const result = await res.json();
+        if (res.ok) {
+          onSave(newUsername);
+          setIsOpen(false);
+          alert(`Connected to ${name}!`);
+        } else {
+          alert(result.message || 'Update failed');
+        }
+      } catch (error) {
+        console.error(error);
+        alert('Error updating platform username');
+      }
     }
   };
+
   return (
     <motion.div
-      className={`w-full bg-white rounded-lg shadow hover:shadow-lg transition hover:-translate-y-1 border ${
+      className={`w-full bg-white rounded-lg shadow transition-transform hover:shadow-xl hover:-translate-y-1 border ${
         isConnected ? 'border-green-300' : 'border-gray-300'
       }`}
       initial={{ opacity: 0, y: 10 }}
@@ -171,11 +183,7 @@ const PlatformCard = ({ platform, username, onSave, isConnected }) => {
         </div>
         <button
           onClick={() => setIsOpen(true)}
-          className={`px-3 py-1 rounded ${
-            isConnected
-              ? 'border border-primary text-primary hover:bg-primary hover:text-white'
-              : 'bg-primary text-white hover:bg-primary/90'
-          }`}
+          className="px-3 py-1 rounded bg-gray-600 text-white hover:bg-primary/90 transition"
         >
           {isConnected ? 'Update' : 'Connect'}
         </button>
@@ -197,11 +205,14 @@ const PlatformCard = ({ platform, username, onSave, isConnected }) => {
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setIsOpen(false)}
-                className="px-4 py-2 border rounded hover:bg-gray-100 transition"
+                className="px-4 py-2 border rounded hover:bg-red-200 transition"
               >
                 Cancel
               </button>
-              <button onClick={handleSave} className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition">
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-green-500/90 transition"
+              >
                 Save
               </button>
             </div>
@@ -212,46 +223,42 @@ const PlatformCard = ({ platform, username, onSave, isConnected }) => {
   );
 };
 
-const StatisticsCard = ({ totalQuestions, activeDays, totalContests, platform }) => {
-  return (
-    <motion.div
-      className="w-full bg-white rounded-lg shadow p-4 hover:shadow-lg transition hover:-translate-y-1"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <h3 className="text-lg font-bold mb-1">
-        {platform ? `${platform} Statistics` : 'Overall Statistics'}
-      </h3>
-      <p className="text-sm text-gray-500 mb-4">Your coding journey in numbers</p>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="flex flex-col items-center p-4 bg-gray-50 rounded">
-          <CheckCircle className="h-8 w-8 text-primary mb-2" />
-          <span className="text-2xl font-bold">{totalQuestions}</span>
-          <span className="text-sm text-gray-500">Problems Solved</span>
-        </div>
-        <div className="flex flex-col items-center p-4 bg-gray-50 rounded">
-          <CalendarIcon className="h-8 w-8 text-primary mb-2" />
-          <span className="text-2xl font-bold">{activeDays}</span>
-          <span className="text-sm text-gray-500">Active Days</span>
-        </div>
-        <div className="flex flex-col items-center p-4 bg-gray-50 rounded">
-          <Award className="h-8 w-8 text-primary mb-2" />
-          <span className="text-2xl font-bold">{totalContests}</span>
-          <span className="text-sm text-gray-500">Contests</span>
-        </div>
+const StatisticsCard = ({ totalQuestions, activeDays, totalContests, platform }) => (
+  <motion.div
+    className="w-full bg-white rounded-lg shadow p-4 hover:shadow-xl transition-transform"
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+  >
+    <h3 className="text-lg font-bold mb-1">
+      {platform ? `${platform} Statistics` : 'Overall Statistics'}
+    </h3>
+    <p className="text-sm text-gray-500 mb-4">Your coding journey in numbers</p>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="flex flex-col items-center p-4 bg-gray-50 rounded">
+        <CheckCircle className="h-8 w-8 text-primary mb-2" />
+        <span className="text-2xl font-bold">{totalQuestions}</span>
+        <span className="text-sm text-gray-500">Problems Solved</span>
       </div>
-    </motion.div>
-  );
-};
-
+      <div className="flex flex-col items-center p-4 bg-gray-50 rounded">
+        <CalendarIcon className="h-8 w-8 text-primary mb-2" />
+        <span className="text-2xl font-bold">{activeDays}</span>
+        <span className="text-sm text-gray-500">Active Days</span>
+      </div>
+      <div className="flex flex-col items-center p-4 bg-gray-50 rounded">
+        <Award className="h-8 w-8 text-primary mb-2" />
+        <span className="text-2xl font-bold">{totalContests}</span>
+        <span className="text-sm text-gray-500">Contests</span>
+      </div>
+    </div>
+  </motion.div>
+);
 
 const ActivityHeatmap = ({ data, platform }) => {
   const currentYear = new Date().getFullYear();
   const availableYears = [currentYear, currentYear - 1, currentYear - 2];
   const [selectedYear, setSelectedYear] = useState(currentYear);
-  
+
   const generateGrid = () => {
-   
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const startDate = new Date(selectedYear, 0, 1);
     const endDate = new Date(selectedYear, 11, 31);
@@ -270,7 +277,6 @@ const ActivityHeatmap = ({ data, platform }) => {
       const row = dayOfWeek + 2;
       const dateStr = currentDate.toISOString().split('T')[0];
       const cellData = data.find((d) => d.date === dateStr);
-    
       let bgColor = 'bg-gray-100';
       if (cellData) {
         if (cellData.count >= 1 && cellData.count < 3) bgColor = 'bg-green-300';
@@ -286,10 +292,7 @@ const ActivityHeatmap = ({ data, platform }) => {
           className={`w-3 h-3 rounded-sm transition-colors duration-200 ${
             isFuture ? 'bg-gray-50 border border-gray-100' : bgColor
           }`}
-          style={{
-            gridColumn: column,
-            gridRow: row,
-          }}
+          style={{ gridColumn: column, gridRow: row }}
           title={isFuture ? 'Future date' : cellData ? `${cellData.count} submissions on ${dateStr}` : `No submissions on ${dateStr}`}
         ></div>
       );
@@ -297,7 +300,6 @@ const ActivityHeatmap = ({ data, platform }) => {
       if (dayOfWeek === 6) weekNum++;
       currentDate.setDate(currentDate.getDate() + 1);
     }
-   
     const monthLabels = months.map((m, index) => (
       <div key={m} className="text-xs text-gray-500" style={{ gridColumn: index * 5 + 2, gridRow: 1 }}>
         {m}
@@ -308,7 +310,7 @@ const ActivityHeatmap = ({ data, platform }) => {
 
   return (
     <motion.div
-      className="w-full bg-white rounded-lg shadow p-4 hover:shadow-lg transition hover:-translate-y-1"
+      className="w-full bg-white rounded-lg shadow p-4 hover:shadow-xl transition-transform"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
     >
@@ -332,10 +334,7 @@ const ActivityHeatmap = ({ data, platform }) => {
       <div className="overflow-x-auto pb-2">
         <div
           className="grid gap-1 min-w-[800px]"
-          style={{
-            gridTemplateColumns: 'auto repeat(65, 1fr)',
-            gridTemplateRows: 'auto repeat(7, 1fr)',
-          }}
+          style={{ gridTemplateColumns: 'auto repeat(65, 1fr)', gridTemplateRows: 'auto repeat(7, 1fr)' }}
         >
           {generateGrid()}
         </div>
@@ -343,108 +342,105 @@ const ActivityHeatmap = ({ data, platform }) => {
     </motion.div>
   );
 };
+
 const CombinedContestTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload; 
-      return (
-        <div className="bg-white p-2 border rounded shadow">
-          <p className="font-bold">Contests on {label}</p>
-          {data.contests.map((contest, index) => (
-            <p key={index} className="text-xs">
-              {contest.name} ({contest.platform})
-            </p>
-          ))}
-          <p className="mt-1 text-sm">
-            <span className="font-bold">Total Rating:</span> {data.rating}
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white p-2 border rounded shadow">
+        <p className="font-bold">Contests on {label}</p>
+        {data.contests.map((contest, index) => (
+          <p key={index} className="text-xs">
+            {contest.name} ({contest.platform})
           </p>
-        </div>
-      );
-    }
-    return null;
-  };
+        ))}
+        <p className="mt-1 text-sm">
+          <span className="font-bold">Total Rating:</span> {data.rating}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 const ContestRatingChart = ({ data, platform }) => {
-    const colors = {
-      leetcode: '#FFA116',
-      codeforces: '#318CE7',
-    };
-  
-    
-    const filteredData = platform
-      ? data.filter((item) => item.platform === platform.toLowerCase())
-      : data;
-  
-    if (filteredData.length === 0) {
-      return (
-        <motion.div
-          className="w-full bg-white rounded-lg shadow p-4 text-center"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h3 className="text-lg font-bold">Contest Ratings</h3>
-          <p className="text-sm text-gray-500">No contest rating data available</p>
-        </motion.div>
-      );
-    }
-  
+  const colors = {
+    leetcode: '#FFA116',
+    codeforces: '#318CE7',
+  };
+
+  const filteredData = platform
+    ? data.filter((item) => item.platform === platform.toLowerCase())
+    : data;
+
+  if (filteredData.length === 0) {
     return (
       <motion.div
-        className="w-full bg-white rounded-lg shadow p-4 hover:shadow-lg transition hover:-translate-y-1"
+        className="w-full bg-white rounded-lg shadow p-4 text-center"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h3 className="text-lg font-bold mb-1">
-          {platform ? `${platform} Contest Ratings` : 'Contest Ratings'}
-        </h3>
-        <p className="text-sm text-gray-500 mb-4">Your performance over time</p>
-        <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={filteredData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis
-                dataKey="date"
-                tickFormatter={(date) => new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                tick={{ fontSize: 12 }}
-              />
-              <YAxis tick={{ fontSize: 12 }} />
-              {platform ? (
-                <ReTooltip
-                  contentStyle={{ borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                  formatter={(value) => [value, 'Rating']}
-                />
-              ) : (
-                <ReTooltip content={<CombinedContestTooltip />} />
-              )}
-              {platform ? (
-                <Area
-                  type="monotone"
-                  dataKey="rating"
-                  stroke={colors[platform.toLowerCase()]}
-                  fill={`${colors[platform.toLowerCase()]}20`}
-                  strokeWidth={2}
-                  activeDot={{ r: 6 }}
-                />
-              ) : (
-                <Area
-                  type="monotone"
-                  dataKey="rating"
-                  name="Combined"
-                  stroke={colors.leetcode}
-                  fill={`${colors.leetcode}20`}
-                  strokeWidth={2}
-                  activeDot={{ r: 6 }}
-                  connectNulls
-                />
-              )}
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        <h3 className="text-lg font-bold">Contest Ratings</h3>
+        <p className="text-sm text-gray-500">No contest rating data available</p>
       </motion.div>
     );
-  };
-  
-  
+  }
 
+  return (
+    <motion.div
+      className="w-full bg-white rounded-lg shadow p-4 hover:shadow-xl transition-transform"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <h3 className="text-lg font-bold mb-1">
+        {platform ? `${platform} Contest Ratings` : 'Contest Ratings'}
+      </h3>
+      <p className="text-sm text-gray-500 mb-4">Your performance over time</p>
+      <div className="h-[300px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={filteredData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+            <XAxis
+              dataKey="date"
+              tickFormatter={(date) => new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+              tick={{ fontSize: 12 }}
+            />
+            <YAxis tick={{ fontSize: 12 }} />
+            {platform ? (
+              <ReTooltip
+                contentStyle={{ borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                formatter={(value) => [value, 'Rating']}
+              />
+            ) : (
+              <ReTooltip content={<CombinedContestTooltip />} />
+            )}
+            {platform ? (
+              <Area
+                type="monotone"
+                dataKey="rating"
+                stroke={colors[platform.toLowerCase()]}
+                fill={`${colors[platform.toLowerCase()]}20`}
+                strokeWidth={2}
+                activeDot={{ r: 6 }}
+              />
+            ) : (
+              <Area
+                type="monotone"
+                dataKey="rating"
+                name="Combined"
+                stroke={colors.leetcode}
+                fill={`${colors.leetcode}20`}
+                strokeWidth={2}
+                activeDot={{ r: 6 }}
+                connectNulls
+              />
+            )}
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </motion.div>
+  );
+};
 
 const ProblemTypeStats = ({ dsaCount, cpCount, platform }) => {
   const data = [
@@ -456,7 +452,7 @@ const ProblemTypeStats = ({ dsaCount, cpCount, platform }) => {
   const cpPercentage = total ? Math.round((cpCount / total) * 100) : 0;
   return (
     <motion.div
-      className="w-full bg-white rounded-lg shadow p-4 hover:shadow-lg transition hover:-translate-y-1"
+      className="w-full bg-white rounded-lg shadow p-4 hover:shadow-xl transition-transform"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
     >
@@ -500,7 +496,6 @@ const ProblemTypeStats = ({ dsaCount, cpCount, platform }) => {
   );
 };
 
-
 const ContestRankingTable = ({ rankings, platform }) => {
   const filteredRankings = platform
     ? rankings.filter((r) => r.platform === platform.toLowerCase())
@@ -529,7 +524,7 @@ const ContestRankingTable = ({ rankings, platform }) => {
   };
   return (
     <motion.div
-      className="w-full bg-white rounded-lg shadow p-4 hover:shadow-lg transition hover:-translate-y-1 overflow-x-auto"
+      className="w-full bg-white rounded-lg shadow p-4 hover:shadow-xl transition-transform overflow-x-auto"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
     >
@@ -588,15 +583,14 @@ const ContestRankingTable = ({ rankings, platform }) => {
   );
 };
 
-
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('all');
 
- 
-  const [leetcodeData, setLeetcodeData] = useState(null);
-  const [codeforcesData, setCodeforcesData] = useState(null);
-  const [gfgData, setGfgData] = useState(null);
-
+  const [platforms, setPlatforms] = useState({
+    leetcode: null,
+    codeforces: null,
+    gfg: null,
+  });
 
   const [userData, setUserData] = useState({
     name: 'John Doe',
@@ -606,31 +600,51 @@ const Dashboard = () => {
     avatarUrl: '',
   });
 
-  
-  const [platforms, setPlatforms] = useState({
-    leetcode: null,
-    codeforces: null,
-    gfg: null,
-  });
-
-
+ 
   const [leetcodeStats, setLeetcodeStats] = useState({ totalQuestions: 0, activeDays: 0, totalContests: 0 });
   const [leetcodeContest, setLeetcodeContest] = useState([]);
   const [leetcodeHeatmap, setLeetcodeHeatmap] = useState([]);
   const [leetcodeProblems, setLeetcodeProblems] = useState({ dsaCount: 0, cpCount: 0 });
 
-  
   const [cfStats, setCfStats] = useState({ totalQuestions: 0, activeDays: 0, totalContests: 0 });
   const [cfContest, setCfContest] = useState([]);
   const [cfHeatmap, setCfHeatmap] = useState([]);
   const [cfCpCount, setCfCpCount] = useState(0);
 
-  
   const [gfgStats, setGfgStats] = useState({ totalQuestions: 0, activeDays: 0, totalContests: 0 });
   const [gfgHeatmap, setGfgHeatmap] = useState([]);
   const [gfgProblems, setGfgProblems] = useState({ dsaCount: 0 });
+  const [gfgData, setGfgData] = useState(null);
 
- 
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      fetch("http://localhost:8080/api/auth/profile", {
+        headers: { Authorization: token },
+      })
+        .then((res) => res.json())
+        .then((json) => {
+          if (json.status === "success") {
+            const user = json.data.user;
+            setUserData({
+              name: user.name,
+              email: user.email,
+              dob: new Date(user.dateOfBirth).toLocaleDateString(),
+              gender: user.gender,
+              avatarUrl: user.profilePic,
+            });
+            setPlatforms({
+              leetcode: user.leetcodeUsername || null,
+              codeforces: user.codeforcesUsername || null,
+              gfg: user.gfgUsername || null,
+            });
+          }
+        })
+        .catch((err) => console.error(err));
+    }
+  }, []);
+
+  
   useEffect(() => {
     if (platforms.leetcode) {
       fetch(`http://localhost:8080/api/leetcode-user/${platforms.leetcode}`)
@@ -638,11 +652,6 @@ const Dashboard = () => {
         .then((json) => {
           if (json.status === 'success') {
             const data = json.data;
-            setUserData((prev) => ({
-              ...prev,
-              name: data.username,
-              avatarUrl: data.profilePic,
-            }));
             const allSubs = Number(
               data.submissions.difficultyBreakdown.find((d) => d.difficulty === 'All')?.count
             ) || 0;
@@ -669,19 +678,17 @@ const Dashboard = () => {
               count: Number(count),
             }));
             setLeetcodeHeatmap(heatmap);
-            
             setLeetcodeProblems({
               dsaCount: allSubs,
               cpCount: 0,
             });
-            setLeetcodeData(data);
           }
         })
         .catch((err) => console.error(err));
     }
   }, [platforms.leetcode]);
 
- 
+  
   useEffect(() => {
     if (platforms.codeforces) {
       fetch(`http://localhost:8080/api/codeforces-user/${platforms.codeforces}`)
@@ -689,7 +696,6 @@ const Dashboard = () => {
         .then((json) => {
           if (json.status === 'success') {
             const data = json.data;
-            setCodeforcesData(data);
             const solved =
               (data.difficultyWiseSolved.easy || 0) +
               (data.difficultyWiseSolved.medium || 0) +
@@ -721,7 +727,7 @@ const Dashboard = () => {
     }
   }, [platforms.codeforces]);
 
-
+ 
   useEffect(() => {
     if (platforms.gfg) {
       fetch(`http://localhost:8080/api/gfg-user/${platforms.gfg}`)
@@ -751,25 +757,18 @@ const Dashboard = () => {
         .catch((err) => console.error(err));
     }
   }, [platforms.gfg]);
- 
- 
-const getCombinedData = () => {
-  
+
+
+  const getCombinedData = () => {
     const lcContests = leetcodeContest && leetcodeContest.length > 0 ? leetcodeContest : [];
-  
     const cfContests = cfContest && cfContest.length > 0 ? cfContest : [];
-  
     const gfgContests =
       gfgData && gfgData.contest && Number(gfgData.contest.totalContests) > 0
-        ? []
+        ? [] 
         : [];
-  
-    
     const combinedContests = [...lcContests, ...cfContests, ...gfgContests].filter(
       (contest) => contest && contest.date && contest.rating !== undefined
     );
-  
-   
     let combinedSeries = [];
     if (combinedContests.length > 0) {
       const combinedMap = {};
@@ -792,14 +791,13 @@ const getCombinedData = () => {
         }))
         .sort((a, b) => new Date(a.date) - new Date(b.date));
     }
-  
     return {
       statistics: {
         totalQuestions: leetcodeStats.totalQuestions + cfStats.totalQuestions + gfgStats.totalQuestions,
         activeDays: leetcodeStats.activeDays + cfStats.activeDays + gfgStats.activeDays,
         totalContests: leetcodeStats.totalContests + cfStats.totalContests + gfgStats.totalContests,
       },
-     
+      
       problemTypes: {
         dsaCount: Number(leetcodeProblems.dsaCount) + Number(gfgProblems.dsaCount || 0),
         cpCount: cfCpCount,
@@ -811,10 +809,6 @@ const getCombinedData = () => {
       heatmapData: [...leetcodeHeatmap, ...cfHeatmap, ...gfgHeatmap],
     };
   };
-  
-  
-  
-  
 
   const getFilteredData = () => {
     if (activeTab === 'all') {
@@ -856,7 +850,6 @@ const getCombinedData = () => {
       ? 'CodeForces'
       : 'GeeksForGeeks';
 
-
   const isPlatformConnected = activeTab === 'all' || platforms[activeTab] !== null;
 
   const handleSavePlatform = (platform, username) => {
@@ -869,7 +862,6 @@ const getCombinedData = () => {
   return (
     <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab}>
       <div className="w-full max-w-6xl mx-auto space-y-8">
-       
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-4">
             <UserProfileCard
@@ -898,9 +890,7 @@ const getCombinedData = () => {
             onSave={(username) => handleSavePlatform('gfg', username)}
             isConnected={platforms.gfg !== null}
           />
-          
         </div>
-
         {isPlatformConnected ? (
           <>
             <StatisticsCard
@@ -909,7 +899,6 @@ const getCombinedData = () => {
               totalContests={filteredData.statistics.totalContests}
               platform={platformName}
             />
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <ProblemTypeStats
                 dsaCount={filteredData.problemTypes.dsaCount}
@@ -918,7 +907,6 @@ const getCombinedData = () => {
               />
               <ContestRatingChart data={filteredData.contestData} platform={platformName} />
             </div>
-
             <ActivityHeatmap data={filteredData.heatmapData} platform={platformName} />
             <ContestRankingTable rankings={filteredData.contestRankings} platform={platformName} />
           </>
