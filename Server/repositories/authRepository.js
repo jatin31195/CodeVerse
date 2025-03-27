@@ -15,4 +15,9 @@ const createUser = async (userData) => {
 const findUserById=async(id)=>{
   return await UserModel.findById(id);
 };
-module.exports = { findUserByEmail, findUserByUsername, createUser ,findUserById};
+const getUserProfile = async (userId) => {
+ 
+  return await UserModel.findById(userId).select('-password');
+};
+
+module.exports = { findUserByEmail, findUserByUsername, createUser ,findUserById,getUserProfile};

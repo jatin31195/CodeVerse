@@ -1,11 +1,17 @@
-const express =require('express');
-const {register,login,verifyOTP,getUsernameById} =require('../controllers/authController.js');
-const { validateRegister, validateLogin }=require('../utils/validation.js');
 
+const express = require('express');
 const router = express.Router();
+const authController = require('../controllers/authController.js'); 
+const { validateRegister, validateLogin } = require('../utils/validation.js');
+const authMiddleware = require('../middlewares/authMiddlewares.js'); // make sure this path is correct
+const upload = require('../config/multer-config.js');
+const {uploadProfilePic}=require('../controllers/authController.js')
+router.post('/register', validateRegister, authController.register);
+router.post('/login', validateLogin, authController.login);
+router.post('/verify-otp', authController.verifyOTP);
+router.get("/profile", authMiddleware, authController.getUserProfile);
+router.patch("/update-platform", authMiddleware, authController.updatePlatformUsername);
+router.post('/upload-profile-pic', authMiddleware, upload.single('profilePic'), uploadProfilePic);
+router.get('/:id', authController.getUsernameById);
 
-router.post('/register', validateRegister,register);
-router.post('/login', validateLogin,login);
-router.post('/verify-otp', verifyOTP);
-router.get('/:id',getUsernameById);
-module.exports=router;
+module.exports = router;

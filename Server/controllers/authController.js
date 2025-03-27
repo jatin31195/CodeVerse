@@ -1,5 +1,6 @@
 const authService = require('../services/authService');
 const authRepository=require('../repositories/authRepository');
+const User=require('../models/User');
 const register = async (req, res) => {
   try {
     const response = await authService.registerUser(req.body);
@@ -34,13 +35,51 @@ const getUsernameById = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    // Return only the username (and any other public fields you want to expose)
+   
     return res.status(200).json({ username: user.username });
   } catch (error) {
     console.error("Error retrieving user:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };
-
-
-module.exports = { register, login, verifyOTP ,getUsernameById};
+const updatePlatformUsername = async (req, res) => {
+  try {
+    const { platform, username } = req.body;
+    
+    const userId = req.user.userId;
+    const updatedUser = await authService.updatePlatformUsernameService(userId, platform, username);
+    res.status(200).json({ status: "success", data: { user: updatedUser } });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+};
+const getUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId; 
+    
+    const user = await authService.getUserProfileService(userId);
+    res.status(200).json({ status: "success", data: { user } });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+};
+const uploadProfilePic = async (req, res) => {
+  try {
+   
+    if (!req.file) {
+      return res.status(400).json({ status: 'fail', message: 'No file uploaded.' });
+    }
+ 
+    const profilePicUrl = req.file.path;
+    
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.userId,
+      { profilePic: profilePicUrl },
+      { new: true, runValidators: true }
+    );
+    res.status(200).json({ status: 'success', data: { user: updatedUser } });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+};
+module.exports = { register, login, verifyOTP,uploadProfilePic ,getUsernameById,updatePlatformUsername,getUserProfile};
