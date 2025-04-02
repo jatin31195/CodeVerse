@@ -7,5 +7,6 @@ router.post('/create', authMiddleware, favoriteListController.createFavoriteList
 router.get('/lists', authMiddleware, favoriteListController.getUserFavoriteLists);
 router.post('/add-question', authMiddleware, favoriteListController.addQuestionToList);
 router.post('/remove-question', authMiddleware, favoriteListController.removeQuestionFromList);
-
+router.get('/search',authMiddleware, favoriteListController.searchQuestions);
+router.get('/list/:listId', authMiddleware,favoriteListController.getQuestionsByListId);
 module.exports = router;
