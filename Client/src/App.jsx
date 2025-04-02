@@ -10,6 +10,8 @@ import LoginPage from "./components/LoginPage";
 import Home from "./components/Home";
 import SchedulePage from "./components/SchedulePage";
 import TasksPage from "./components/TasksPage";
+import FavouriteList from "./components/FavouriteList";
+import ListView from "./components/ListView";
 function App() {
     return (
         <Router>
@@ -23,6 +25,8 @@ function App() {
                 <Route path="/community" element={<RaiseTicket />} />
                 <Route path="/schedule" element={<SchedulePage/>} />
                 <Route path="/task" element={<TasksPage/>} />
+                <Route path="/fav" element={<FavouriteList/>} />
+                <Route path="/list/:id" element={<ListView/>} />
                 <Route path="/video-meeting/:meetingRoom" element={<VideoMeeting />} />
             </Routes>
         </Router>
