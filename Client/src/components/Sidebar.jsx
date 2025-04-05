@@ -25,7 +25,7 @@ export function Sidebar({ toggleSidebar }) {
     { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
     { title: "Daily Tasks", icon: BookOpen, path: "/task" },
     { title: "Time Table", icon: Clock, path: "/schedule" },
-    { title: "Community", icon: Users, path: "/community" },
+    { title: "Doubt Support", icon: Users, path: "/community" },
   ];
 
  
@@ -59,7 +59,7 @@ export function Sidebar({ toggleSidebar }) {
       
       <div className="flex-1 overflow-y-auto scrollbar-thin">
         <div className="mt-4">
-          <p className="px-4 text-gray-500 uppercase text-xs mb-2">Navigation</p>
+         
           <ul>
             {navigationItems.map((item) => (
               <li key={item.title}>
@@ -75,22 +75,7 @@ export function Sidebar({ toggleSidebar }) {
           </ul>
         </div>
         
-        <div className="mt-6">
-          <p className="px-4 text-gray-500 uppercase text-xs mb-2">Resources</p>
-          <ul>
-            {resourceItems.map((item) => (
-              <li key={item.title}>
-                <Link 
-                  to={item.path} 
-                  className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-primary hover:bg-gray-50"
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.title}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+     
       </div>
       
   
