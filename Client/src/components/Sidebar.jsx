@@ -1,4 +1,4 @@
-import React from 'react';
+import React,{useState} from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -11,11 +11,12 @@ import {
   LayoutDashboard,
   Clock,
   BookOpen,
-  PlusCircle
+  PlusCircle,
+  PanelLeftClose
 } from "lucide-react";
 
-export function Sidebar() {
-  
+export function Sidebar({ toggleSidebar }) {
+  const [isOpen, setIsOpen] = useState(true);
   const navigationItems = [
     { title: "Home", icon: Home, path: "/home" },
     { title: "POTD", icon: Calendar, path: "/potd" },
@@ -41,13 +42,19 @@ export function Sidebar() {
       transition={{ duration: 0.3 }}
     >
      
-      <div className="flex items-center gap-2 px-4 py-2 bg-white border-b border-gray-200">
-        <img src="/org_codeverse.png" alt="CodeVerse Logo" className="w-10 h-10" />
-        <div>
-          <h3 className="font-semibold text-gray-800">CodeVerse</h3>
-          <p className="text-xs text-gray-500">Improve your coding skills</p>
+     <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <img src="/org_codeverse.png" alt="CodeVerse Logo" className="w-10 h-10" />
+          <div>
+            <h3 className="font-semibold text-gray-800">CodeVerse</h3>
+            <p className="text-xs text-gray-500">Improve your coding skills</p>
+          </div>
         </div>
+        <button onClick={toggleSidebar} className="text-gray-600 hover:text-black transition">
+          <PanelLeftClose className="w-5 h-5" />
+        </button>
       </div>
+
       
       
       <div className="flex-1 overflow-y-auto scrollbar-thin">

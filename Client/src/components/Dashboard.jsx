@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion,AnimatePresence } from 'framer-motion';
 import {
   CheckCircle,
   Calendar as CalendarIcon,
   Award,
   Mail,
   User,
+  PanelRight,
   Calendar as CalendarIcon2,
 } from 'lucide-react';
+import Sidebar from './Sidebar';
 import {
   AreaChart,
   Area,
@@ -24,17 +26,46 @@ import {
   ResponsiveContainer as ReResponsiveContainer,
 } from 'recharts';
 
-const DashboardLayout = ({ children, activeTab, onTabChange }) => (
+const DashboardLayout = ({ children, activeTab, onTabChange , sidebarOpen,  toggleSidebar}) => (
+  
   <div className="min-h-screen flex flex-col">
-    <header className="w-full border-b backdrop-blur-sm bg-white/80 fixed top-0 z-10">
-      <div className="container mx-auto flex h-16 items-center justify-between py-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-            <span className="text-white font-semibold">CV</span>
-          </div>
+    <header className="sticky top-0 z-50 border-b bg-white bg-opacity-95 backdrop-blur-sm">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+       
+        <div className="flex items-center gap-3">
+          <button onClick={toggleSidebar} className="p-2">
+            {!sidebarOpen && <PanelRight className="h-6 w-6" />}
+          </button>
           <h1 className="text-xl font-bold">CodeVerse</h1>
         </div>
       </div>
+
+   
+      <AnimatePresence>
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-20">
+          
+            <motion.div
+              className="absolute inset-0 bg-black opacity-50"
+              onClick={toggleSidebar}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            />
+         
+            <motion.div
+              className="absolute left-0 top-0 bottom-0 w-64 bg-white shadow-lg z-30"
+              initial={{ x: -256 }}
+              animate={{ x: 0 }}
+              exit={{ x: -256 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Sidebar toggleSidebar={toggleSidebar} />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </header>
     <main className="flex-1 container mx-auto py-20">
       <div className="w-full flex flex-col items-center space-y-8">
@@ -585,7 +616,9 @@ const ContestRankingTable = ({ rankings, platform }) => {
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('all');
-
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const toggleSidebar = () => setSidebarOpen(prev => !prev);
+  
   const [platforms, setPlatforms] = useState({
     leetcode: null,
     codeforces: null,
@@ -860,7 +893,7 @@ const Dashboard = () => {
   };
 
   return (
-    <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab}>
+    <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab} sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar}>
       <div className="w-full max-w-6xl mx-auto space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-4">
