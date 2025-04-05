@@ -12,6 +12,10 @@ import SchedulePage from "./components/SchedulePage";
 import TasksPage from "./components/TasksPage";
 import FavouriteList from "./components/FavouriteList";
 import ListView from "./components/ListView";
+import POTD from "./components/POTD";
+import LeetCode from "./components/Leetcode";
+import GFG from "./components/GFG";
+import Codeforces from "./components/Codeforces";
 function App() {
     return (
         <Router>
@@ -28,6 +32,10 @@ function App() {
                 <Route path="/fav" element={<FavouriteList/>} />
                 <Route path="/list/:id" element={<ListView/>} />
                 <Route path="/video-meeting/:meetingRoom" element={<VideoMeeting />} />
+                <Route path="/potd" element={<POTD/>} />
+                <Route path="/leetcode" element={<LeetCode/>} />
+                <Route path="/gfg" element={<GFG/>} />
+                <Route path="/codeforces" element={<Codeforces/>} />
             </Routes>
         </Router>
     );
