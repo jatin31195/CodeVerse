@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import Sidebar from './Sidebar';
+import { PanelRight} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight, 
   Star, 
@@ -139,23 +141,41 @@ function Home() {
   return (
     <div className="min-h-screen bg-gray-50 relative">
   
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-20">
-          <div className="absolute inset-0 bg-black opacity-50" onClick={toggleSidebar} />
-          <div className="absolute left-0 top-0 bottom-0 w-64 bg-white shadow-lg z-30">
-            <Sidebar />
+  <AnimatePresence>
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-20">
+         
+            <motion.div
+              className="absolute inset-0 bg-black opacity-50"
+              onClick={toggleSidebar}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            />
+            
+            <motion.div
+              className="absolute left-0 top-0 bottom-0 w-64 bg-white shadow-lg z-30"
+              initial={{ x: -256 }}
+              animate={{ x: 0 }}
+              exit={{ x: -256 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Sidebar toggleSidebar={toggleSidebar} />
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
-   
+    
       <header className="sticky top-0 z-10 flex items-center justify-between bg-white p-4 border-b">
         <button onClick={toggleSidebar} className="p-2">
-          {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {!sidebarOpen && <PanelRight className="h-6 w-6" />}
         </button>
         <h1 className="text-xl font-bold">CodeVerse</h1>
         <div></div>
       </header>
+
 
    
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">

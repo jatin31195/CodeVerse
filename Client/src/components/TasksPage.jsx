@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion,AnimatePresence } from 'framer-motion';
 import {
   Bell,
   Plus,
   List,
   Edit,
   Calendar,
-  SquareCheck
+  SquareCheck,
+  PanelRight,
 } from 'lucide-react';
-
+import Sidebar from './Sidebar'; 
 
 const ToggleSwitch = ({ enabled, onChange }) => {
   return (
@@ -301,7 +302,8 @@ const TasksPage = () => {
   const [addTaskOpen, setAddTaskOpen] = useState(false);
   const [editTask, setEditTask] = useState(null);
   const [dueSoonCount, setDueSoonCount] = useState(0);
-
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const toggleSidebar = () => setSidebarOpen(prev => !prev);
   const loadTasks = async () => {
     const token = sessionStorage.getItem('token');
     const res = await fetch('http://localhost:8080/api/tasks/', {
@@ -342,28 +344,52 @@ const TasksPage = () => {
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
-  
-      <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <img
-            src="/code1.png"
-            alt="Codeverse Logo"
-            className="w-10 h-10 rounded-full"
-          />
-          <div>
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">
-              Codeverse
-            </h1>
-            <p className="text-xs text-gray-500 -mt-1">Task Management</p>
+  <AnimatePresence>
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-20">
+           
+            <motion.div
+              className="absolute inset-0 bg-black opacity-50"
+              onClick={toggleSidebar}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            />
+           
+            <motion.div
+              className="absolute left-0 top-0 bottom-0 w-64 bg-white shadow-lg z-30"
+              initial={{ x: -256 }}
+              animate={{ x: 0 }}
+              exit={{ x: -256 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Sidebar toggleSidebar={toggleSidebar} />
+            </motion.div>
           </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="flex items-center gap-2 text-sm bg-yellow-100 text-yellow-700 px-3 py-2 rounded-md hover:bg-yellow-200 transition-all">
-            <Bell className="w-4 h-4" />
-            {dueSoonCount} task{dueSoonCount !== 1 && 's'} due soon
-          </button>
-        </div>
-      </header>
+        )}
+      </AnimatePresence>
+  <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
+  <div className="flex items-center gap-3">
+    <button onClick={toggleSidebar} className="p-2 rounded hover:bg-gray-100 transition">
+      <PanelRight className="w-6 h-6 text-gray-700" />
+    </button>
+    <div>
+      <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">
+        Codeverse
+      </h1>
+      <p className="text-xs text-gray-500 -mt-1">Task Management</p>
+    </div>
+  </div>
+  <div className="flex items-center gap-4">
+    <button className="flex items-center gap-2 text-sm bg-yellow-100 text-yellow-700 px-3 py-2 rounded-md hover:bg-yellow-200 transition-all">
+      <Bell className="w-4 h-4" />
+      {dueSoonCount} task{dueSoonCount !== 1 && 's'} due soon
+    </button>
+  </div>
+</header>
+
+
 
     
       <main className="max-w-6xl mx-auto px-6 py-8">
