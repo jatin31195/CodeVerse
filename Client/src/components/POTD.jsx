@@ -10,11 +10,17 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import Navbar from './Navbar';
-
+import MainLayout from './MainLayout';
+const navLinks = [
+  { name: 'LeetCode', path: '/leetcode' },
+  { name: 'CodeForces', path: '/codeforces' },
+  { name: 'Geeks for Geeks', path: '/gfg' },
+  // Add more links as needed
+];
 const POTD = () => {
   return (
     <>
-    <Navbar/>
+    <MainLayout  navLinks={navLinks}>
     <div className="min-h-screen bg-white text-gray-950">
       <main className="flex-1">
       
@@ -120,7 +126,9 @@ const POTD = () => {
         
       </main>
     </div>
+    </MainLayout>
     </>
+
   );
 };
 

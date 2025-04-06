@@ -20,7 +20,7 @@ export function Sidebar({ toggleSidebar }) {
   const navigationItems = [
     { title: "Home", icon: Home, path: "/home" },
     { title: "POTD", icon: Calendar, path: "/potd" },
-    { title: "Custom POTD", icon: PlusCircle, path: "/custom-potd" },
+    { title: "Custom POTD", icon: PlusCircle, path: "/custom" },
     { title: "Favorites", icon: Star, path: "/fav" },
     { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
     { title: "Daily Tasks", icon: BookOpen, path: "/task" },
