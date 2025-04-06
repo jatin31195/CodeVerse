@@ -6,6 +6,13 @@ import SolutionCard from './SolutionCard';
 import POTDCalendar from './POTDCalendar';
 import POTD from './POTD';
 import Navbar from './Navbar';
+import MainLayout from './MainLayout';
+const navLinks = [
+  { name: 'LeetCode', path: '/leetcode' },
+  { name: 'CodeForces', path: '/codeforces' },
+  { name: 'Geeks for Geeks', path: '/gfg' },
+
+];
 const Codeforces = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [chatOpen, setChatOpen] = useState(false);
@@ -91,7 +98,7 @@ const Codeforces = () => {
 
   return (
     <>
-    <Navbar/>
+     <MainLayout  navLinks={navLinks}>
     <div className="container mx-auto py-8 px-4 max-w-screen-xl">
       <h1 className="text-3xl font-bold text-center mb-6">Codeforces Problem of the Day</h1>
       
@@ -151,6 +158,7 @@ const Codeforces = () => {
         )}
       </AnimatePresence>
     </div>
+    </MainLayout>
     </>
   );
 };
