@@ -16,6 +16,9 @@ import POTD from "./components/POTD";
 import LeetCode from "./components/Leetcode";
 import GFG from "./components/GFG";
 import Codeforces from "./components/Codeforces";
+import CustomPOTD from "./components/CustomPOTD";
+import MyProblem from "./components/MyProblem";
+import AddProblem from "./components/AddProblem";
 function App() {
     return (
         <Router>
@@ -36,6 +39,10 @@ function App() {
                 <Route path="/leetcode" element={<LeetCode/>} />
                 <Route path="/gfg" element={<GFG/>} />
                 <Route path="/codeforces" element={<Codeforces/>} />
+                <Route path="/custom" element={<CustomPOTD/>} />
+                <Route path="/my-problems" element={<MyProblem/>} />
+                <Route path="/add-problem" element={<AddProblem/>} />
+                
             </Routes>
         </Router>
     );
