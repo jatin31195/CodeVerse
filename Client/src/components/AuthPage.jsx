@@ -27,7 +27,7 @@ const AuthPage = () => {
             const data = await response.json();
             if (response.ok) {
                 sessionStorage.setItem("token", data.token);
-                navigate("/dashboard"); // Redirect to dashboard after login
+                navigate("/dashboard");
             } else {
                 alert(data.message || "Authentication failed");
             }

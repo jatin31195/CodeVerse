@@ -1,624 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { motion,AnimatePresence } from 'framer-motion';
-import {
-  CheckCircle,
-  Calendar as CalendarIcon,
-  Award,
-  Mail,
-  User,
-  PanelRight,
-  Calendar as CalendarIcon2,
-} from 'lucide-react';
-import Sidebar from './Sidebar';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip as ReTooltip,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-  Tooltip as ReTooltip2,
-  ResponsiveContainer as ReResponsiveContainer,
-} from 'recharts';
-
-const DashboardLayout = ({ children, activeTab, onTabChange , sidebarOpen,  toggleSidebar}) => (
-  
-  <div className="min-h-screen flex flex-col">
-    <header className="sticky top-0 z-50 border-b bg-white bg-opacity-95 backdrop-blur-sm">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-       
-        <div className="flex items-center gap-3">
-          <button onClick={toggleSidebar} className="p-2">
-            {!sidebarOpen && <PanelRight className="h-6 w-6" />}
-          </button>
-          <h1 className="text-xl font-bold">CodeVerse</h1>
-        </div>
-      </div>
-
-   
-      <AnimatePresence>
-        {sidebarOpen && (
-          <div className="fixed inset-0 z-20">
-          
-            <motion.div
-              className="absolute inset-0 bg-black opacity-50"
-              onClick={toggleSidebar}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            />
-         
-            <motion.div
-              className="absolute left-0 top-0 bottom-0 w-64 bg-white shadow-lg z-30"
-              initial={{ x: -256 }}
-              animate={{ x: 0 }}
-              exit={{ x: -256 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Sidebar toggleSidebar={toggleSidebar} />
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </header>
-    <main className="flex-1 container mx-auto py-20">
-      <div className="w-full flex flex-col items-center space-y-8">
-        <div className="w-full flex justify-center mb-4 mt-6">
-          <div className="w-full max-w-4xl">
-            <div className="grid grid-cols-4">
-              {['all', 'leetcode', 'codeforces', 'gfg'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => onTabChange(tab)}
-                  className={`py-2 transition-all duration-200 ${
-                    activeTab === tab ? 'border-b-2 border-primary text-primary' : 'text-gray-600'
-                  }`}
-                >
-                  {tab === 'all'
-                    ? 'All'
-                    : tab === 'leetcode'
-                    ? 'LeetCode'
-                    : tab === 'codeforces'
-                    ? 'CodeForces'
-                    : 'GeeksForGeeks'}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        {children}
-      </div>
-    </main>
-  </div>
-);
-
-
-const UserProfileCard = ({ name, email, dob, gender, avatarUrl }) => (
-  <motion.div
-    className="w-full bg-white rounded-lg shadow p-4 hover:shadow-xl"
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-  >
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-4">
-        <div className="w-16 h-16 rounded-full border-2 border-primary flex items-center justify-center overflow-hidden bg-gray-100">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-lg font-bold text-primary">
-              {name.split(' ').map((n) => n[0]).join('')}
-            </span>
-          )}
-        </div>
-        <div>
-          <h2 className="text-xl font-bold">{name}</h2>
-          <div className="flex items-center mt-1 text-sm text-gray-500">
-            <Mail className="h-4 w-4 mr-1" />
-            <span>{email}</span>
-          </div>
-        </div>
-      </div>
-      <button className="hidden sm:block border border-primary text-primary px-3 py-1 rounded hover:bg-primary hover:text-primary transition-colors">
-        Edit Profile
-      </button>
-    </div>
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 text-sm">
-      <div className="flex items-center space-x-2">
-        <CalendarIcon2 className="h-4 w-4 text-gray-500" />
-        <span className="text-gray-500">DOB:</span>
-        <span>{dob}</span>
-      </div>
-      <div className="flex items-center space-x-2">
-        <User className="h-4 w-4 text-gray-500" />
-        <span className="text-gray-500">Gender:</span>
-        <span>{gender}</span>
-      </div>
-    </div>
-  </motion.div>
-);
-
-
-const PlatformCard = ({ platform, username, onSave, isConnected }) => {
-  const [newUsername, setNewUsername] = useState(username || '');
-  const [isOpen, setIsOpen] = useState(false);
-  const platformDetails = {
-    leetcode: {
-      name: 'LeetCode',
-      logo: 'https://upload.wikimedia.org/wikipedia/commons/1/19/LeetCode_logo_black.png',
-      color: 'from-yellow-400 to-orange-500',
-    },
-    codeforces: {
-      name: 'CodeForces',
-      logo: 'https://codeforces.org/s/0/favicon-32x32.png',
-      color: 'from-blue-400 to-indigo-500',
-    },
-    gfg: {
-      name: 'GeeksForGeeks',
-      logo: 'https://media.geeksforgeeks.org/gfg-gg-logo.svg',
-      color: 'from-green-400 to-emerald-500',
-    },
-  };
-  const { name, logo, color } = platformDetails[platform];
-
-  const handleSave = async () => {
-    if (newUsername.trim()) {
-      try {
-        const token = sessionStorage.getItem('token');
-        const res = await fetch('http://localhost:8080/api/auth/update-platform', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: token,
-          },
-          body: JSON.stringify({ platform, username: newUsername }),
-        });
-        const result = await res.json();
-        if (res.ok) {
-          onSave(newUsername);
-          setIsOpen(false);
-          alert(`Connected to ${name}!`);
-        } else {
-          alert(result.message || 'Update failed');
-        }
-      } catch (error) {
-        console.error(error);
-        alert('Error updating platform username');
-      }
-    }
-  };
-
-  return (
-    <motion.div
-      className={`w-full bg-white rounded-lg shadow transition-transform hover:shadow-xl hover:-translate-y-1 border ${
-        isConnected ? 'border-green-300' : 'border-gray-300'
-      }`}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <div className={`h-1 w-full bg-gradient-to-r ${color}`}></div>
-      <div className="p-4 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded overflow-hidden bg-white">
-            <img src={logo} alt={name} className="w-6 h-6 object-contain" />
-          </div>
-          <div>
-            <h3 className="font-medium">{name}</h3>
-            {username && <p className="text-xs text-gray-500">@{username}</p>}
-          </div>
-        </div>
-        <button
-          onClick={() => setIsOpen(true)}
-          className="px-3 py-1 rounded bg-gray-600 text-white hover:bg-primary/90 transition"
-        >
-          {isConnected ? 'Update' : 'Connect'}
-        </button>
-      </div>
-      {isOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6">
-            <h3 className="text-lg font-bold mb-2">Connect {name}</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Enter your {name} username to connect your account.
-            </p>
-            <input
-              type="text"
-              value={newUsername}
-              onChange={(e) => setNewUsername(e.target.value)}
-              placeholder={`Enter your ${name} username`}
-              className="w-full border rounded px-3 py-2 mb-4"
-            />
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={() => setIsOpen(false)}
-                className="px-4 py-2 border rounded hover:bg-red-200 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-green-500/90 transition"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </motion.div>
-  );
-};
-
-const StatisticsCard = ({ totalQuestions, activeDays, totalContests, platform }) => (
-  <motion.div
-    className="w-full bg-white rounded-lg shadow p-4 hover:shadow-xl transition-transform"
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-  >
-    <h3 className="text-lg font-bold mb-1">
-      {platform ? `${platform} Statistics` : 'Overall Statistics'}
-    </h3>
-    <p className="text-sm text-gray-500 mb-4">Your coding journey in numbers</p>
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div className="flex flex-col items-center p-4 bg-gray-50 rounded">
-        <CheckCircle className="h-8 w-8 text-primary mb-2" />
-        <span className="text-2xl font-bold">{totalQuestions}</span>
-        <span className="text-sm text-gray-500">Problems Solved</span>
-      </div>
-      <div className="flex flex-col items-center p-4 bg-gray-50 rounded">
-        <CalendarIcon className="h-8 w-8 text-primary mb-2" />
-        <span className="text-2xl font-bold">{activeDays}</span>
-        <span className="text-sm text-gray-500">Active Days</span>
-      </div>
-      <div className="flex flex-col items-center p-4 bg-gray-50 rounded">
-        <Award className="h-8 w-8 text-primary mb-2" />
-        <span className="text-2xl font-bold">{totalContests}</span>
-        <span className="text-sm text-gray-500">Contests</span>
-      </div>
-    </div>
-  </motion.div>
-);
-
-const ActivityHeatmap = ({ data, platform }) => {
-  const currentYear = new Date().getFullYear();
-  const availableYears = [currentYear, currentYear - 1, currentYear - 2];
-  const [selectedYear, setSelectedYear] = useState(currentYear);
-
-  const generateGrid = () => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const startDate = new Date(selectedYear, 0, 1);
-    const endDate = new Date(selectedYear, 11, 31);
-    let currentDate = new Date(startDate);
-    let weekNum = 0;
-    let lastMonth = -1;
-    const cells = [];
-    const today = new Date();
-    while (currentDate <= endDate) {
-      const dayOfWeek = currentDate.getDay();
-      const currentMonth = currentDate.getMonth();
-      if (lastMonth !== -1 && currentMonth !== lastMonth) {
-        weekNum++;
-      }
-      const column = weekNum + 2;
-      const row = dayOfWeek + 2;
-      const dateStr = currentDate.toISOString().split('T')[0];
-      const cellData = data.find((d) => d.date === dateStr);
-      let bgColor = 'bg-gray-100';
-      if (cellData) {
-        if (cellData.count >= 1 && cellData.count < 3) bgColor = 'bg-green-300';
-        else if (cellData.count >= 3 && cellData.count < 5) bgColor = 'bg-green-400';
-        else if (cellData.count >= 5 && cellData.count < 7) bgColor = 'bg-green-500';
-        else if (cellData.count >= 7 && cellData.count < 9) bgColor = 'bg-green-600';
-        else if (cellData.count >= 9) bgColor = 'bg-green-700';
-      }
-      const isFuture = currentDate > today;
-      cells.push(
-        <div
-          key={dateStr}
-          className={`w-3 h-3 rounded-sm transition-colors duration-200 ${
-            isFuture ? 'bg-gray-50 border border-gray-100' : bgColor
-          }`}
-          style={{ gridColumn: column, gridRow: row }}
-          title={isFuture ? 'Future date' : cellData ? `${cellData.count} submissions on ${dateStr}` : `No submissions on ${dateStr}`}
-        ></div>
-      );
-      lastMonth = currentMonth;
-      if (dayOfWeek === 6) weekNum++;
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    const monthLabels = months.map((m, index) => (
-      <div key={m} className="text-xs text-gray-500" style={{ gridColumn: index * 5 + 2, gridRow: 1 }}>
-        {m}
-      </div>
-    ));
-    return [...monthLabels, ...cells];
-  };
-
-  return (
-    <motion.div
-      className="w-full bg-white rounded-lg shadow p-4 hover:shadow-xl transition-transform"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h3 className="text-lg font-bold">{platform ? `${platform} Activity` : 'Coding Activity'}</h3>
-          <p className="text-sm text-gray-500">Daily contribution heatmap</p>
-        </div>
-        <select
-          value={selectedYear}
-          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-          className="border rounded px-2 py-1"
-        >
-          {availableYears.map((yr) => (
-            <option key={yr} value={yr}>
-              {yr}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="overflow-x-auto pb-2">
-        <div
-          className="grid gap-1 min-w-[800px]"
-          style={{ gridTemplateColumns: 'auto repeat(65, 1fr)', gridTemplateRows: 'auto repeat(7, 1fr)' }}
-        >
-          {generateGrid()}
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-const CombinedContestTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="bg-white p-2 border rounded shadow">
-        <p className="font-bold">Contests on {label}</p>
-        {data.contests.map((contest, index) => (
-          <p key={index} className="text-xs">
-            {contest.name} ({contest.platform})
-          </p>
-        ))}
-        <p className="mt-1 text-sm">
-          <span className="font-bold">Total Rating:</span> {data.rating}
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
-
-const ContestRatingChart = ({ data, platform }) => {
-  const colors = {
-    leetcode: '#FFA116',
-    codeforces: '#318CE7',
-  };
-
-  const filteredData = platform
-    ? data.filter((item) => item.platform === platform.toLowerCase())
-    : data;
-
-  if (filteredData.length === 0) {
-    return (
-      <motion.div
-        className="w-full bg-white rounded-lg shadow p-4 text-center"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h3 className="text-lg font-bold">Contest Ratings</h3>
-        <p className="text-sm text-gray-500">No contest rating data available</p>
-      </motion.div>
-    );
-  }
-
-  return (
-    <motion.div
-      className="w-full bg-white rounded-lg shadow p-4 hover:shadow-xl transition-transform"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <h3 className="text-lg font-bold mb-1">
-        {platform ? `${platform} Contest Ratings` : 'Contest Ratings'}
-      </h3>
-      <p className="text-sm text-gray-500 mb-4">Your performance over time</p>
-      <div className="h-[300px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={filteredData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis
-              dataKey="date"
-              tickFormatter={(date) => new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-              tick={{ fontSize: 12 }}
-            />
-            <YAxis tick={{ fontSize: 12 }} />
-            {platform ? (
-              <ReTooltip
-                contentStyle={{ borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                formatter={(value) => [value, 'Rating']}
-              />
-            ) : (
-              <ReTooltip content={<CombinedContestTooltip />} />
-            )}
-            {platform ? (
-              <Area
-                type="monotone"
-                dataKey="rating"
-                stroke={colors[platform.toLowerCase()]}
-                fill={`${colors[platform.toLowerCase()]}20`}
-                strokeWidth={2}
-                activeDot={{ r: 6 }}
-              />
-            ) : (
-              <Area
-                type="monotone"
-                dataKey="rating"
-                name="Combined"
-                stroke={colors.leetcode}
-                fill={`${colors.leetcode}20`}
-                strokeWidth={2}
-                activeDot={{ r: 6 }}
-                connectNulls
-              />
-            )}
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-    </motion.div>
-  );
-};
-
-const ProblemTypeStats = ({ dsaCount, cpCount, platform }) => {
-  const data = [
-    { name: 'DSA', value: dsaCount, color: '#10b981' },
-    { name: 'CP', value: cpCount, color: '#3b82f6' },
-  ];
-  const total = dsaCount + cpCount;
-  const dsaPercentage = total ? Math.round((dsaCount / total) * 100) : 0;
-  const cpPercentage = total ? Math.round((cpCount / total) * 100) : 0;
-  return (
-    <motion.div
-      className="w-full bg-white rounded-lg shadow p-4 hover:shadow-xl transition-transform"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <h3 className="text-lg font-bold mb-1">
-        {platform ? `${platform} Problem Types` : 'Problem Types'}
-      </h3>
-      <p className="text-sm text-gray-500 mb-4">DSA vs Competitive Programming</p>
-      <div className="h-[250px] w-full">
-        <ReResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie data={data} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={2} dataKey="value">
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-            <ReTooltip2
-              formatter={(value) => [`${value} problems`, '']}
-              contentStyle={{ borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-            />
-            <Legend />
-          </PieChart>
-        </ReResponsiveContainer>
-      </div>
-      <div className="grid grid-cols-2 gap-4 mt-2">
-        <div className="flex flex-col items-center p-2 bg-gray-100 rounded">
-          <span className="text-sm text-gray-500">DSA Problems</span>
-          <div className="flex items-baseline">
-            <span className="text-xl font-bold mr-2">{dsaCount}</span>
-            <span className="text-xs text-gray-500">({dsaPercentage}%)</span>
-          </div>
-        </div>
-        <div className="flex flex-col items-center p-2 bg-gray-100 rounded">
-          <span className="text-sm text-gray-500">CP Problems</span>
-          <div className="flex items-baseline">
-            <span className="text-xl font-bold mr-2">{cpCount}</span>
-            <span className="text-xs text-gray-500">({cpPercentage}%)</span>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-const ContestRankingTable = ({ rankings, platform }) => {
-  const filteredRankings = platform
-    ? rankings.filter((r) => r.platform === platform.toLowerCase())
-    : rankings;
-  const sortedRankings = [...filteredRankings].sort((a, b) => new Date(b.date) - new Date(a.date));
-  const getPlatformColor = (platform) => {
-    switch (platform) {
-      case 'leetcode':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'codeforces':
-        return 'bg-blue-100 text-blue-800';
-      case 'gfg':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-  const getRankingBadge = (rank, participants) => {
-    const percentile = 100 - (rank / participants) * 100;
-    if (percentile >= 99) return { text: 'Top 1%', className: 'bg-purple-100 text-purple-800' };
-    if (percentile >= 95) return { text: 'Top 5%', className: 'bg-indigo-100 text-indigo-800' };
-    if (percentile >= 90) return { text: 'Top 10%', className: 'bg-blue-100 text-blue-800' };
-    if (percentile >= 75) return { text: 'Top 25%', className: 'bg-green-100 text-green-800' };
-    if (percentile >= 50) return { text: 'Top 50%', className: 'bg-yellow-100 text-yellow-800' };
-    return { text: 'Participated', className: 'bg-gray-100 text-gray-800' };
-  };
-  return (
-    <motion.div
-      className="w-full bg-white rounded-lg shadow p-4 hover:shadow-xl transition-transform overflow-x-auto"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <h3 className="text-lg font-bold mb-1">
-        {platform ? `${platform} Contest Rankings` : 'Contest Rankings'}
-      </h3>
-      <p className="text-sm text-gray-500 mb-4">Your performance in competitive contests</p>
-      <table className="min-w-full">
-        <thead>
-          <tr className="border-b">
-            <th className="px-4 py-2 text-left">Contest</th>
-            {!platform && <th className="px-4 py-2 text-left">Platform</th>}
-            <th className="px-4 py-2 text-left">Date</th>
-            <th className="px-4 py-2 text-right">Rank</th>
-            <th className="px-4 py-2 text-right">Performance</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedRankings.length > 0 ? (
-            sortedRankings.map((contest) => {
-              const badge = getRankingBadge(contest.rank, contest.participants);
-              return (
-                <tr key={contest.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-2 font-medium">{contest.name}</td>
-                  {!platform && (
-                    <td className="px-4 py-2">
-                      <span className={`px-2 py-1 rounded text-xs ${getPlatformColor(contest.platform)}`}>
-                        {contest.platform === 'leetcode'
-                          ? 'LeetCode'
-                          : contest.platform === 'codeforces'
-                          ? 'CodeForces'
-                          : 'GeeksForGeeks'}
-                      </span>
-                    </td>
-                  )}
-                  <td className="px-4 py-2">{new Date(contest.date).toLocaleDateString()}</td>
-                  <td className="px-4 py-2 text-right">
-                    {contest.rank}/{contest.participants}
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    <span className={`px-2 py-1 rounded text-xs ${badge.className}`}>{badge.text}</span>
-                  </td>
-                </tr>
-              );
-            })
-          ) : (
-            <tr>
-              <td colSpan={platform ? 4 : 5} className="text-center text-gray-500 py-4">
-                No contest rankings found
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </motion.div>
-  );
-};
+import { motion, AnimatePresence } from 'framer-motion';
+import { UserPlus } from 'lucide-react';
+import DashboardLayout from './DashboardLayout';
+import UserProfileCard from './UserProfileCard';
+import PlatformCard from './PlatformCard';
+import StatisticsCard from './StatisticsCard';
+import ProblemTypeStats from './ProblemTypeStats';
+import ContestRatingChart from './ContestRatingChart';
+import ActivityHeatmap from './ActivityHeatmap';
+import ContestRankingTable from './ContestRankingTable';
+import { toast } from 'sonner';
+import MainLayout from './MainLayout';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const toggleSidebar = () => setSidebarOpen(prev => !prev);
-  
+  const toggleSidebar = () => setSidebarOpen((prev) => !prev);
+
   const [platforms, setPlatforms] = useState({
     leetcode: null,
     codeforces: null,
@@ -633,7 +31,6 @@ const Dashboard = () => {
     avatarUrl: '',
   });
 
- 
   const [leetcodeStats, setLeetcodeStats] = useState({ totalQuestions: 0, activeDays: 0, totalContests: 0 });
   const [leetcodeContest, setLeetcodeContest] = useState([]);
   const [leetcodeHeatmap, setLeetcodeHeatmap] = useState([]);
@@ -649,6 +46,7 @@ const Dashboard = () => {
   const [gfgProblems, setGfgProblems] = useState({ dsaCount: 0 });
   const [gfgData, setGfgData] = useState(null);
 
+  
   useEffect(() => {
     const token = sessionStorage.getItem('token');
     if (token) {
@@ -677,7 +75,7 @@ const Dashboard = () => {
     }
   }, []);
 
-  
+ 
   useEffect(() => {
     if (platforms.leetcode) {
       fetch(`http://localhost:8080/api/leetcode-user/${platforms.leetcode}`)
@@ -721,7 +119,7 @@ const Dashboard = () => {
     }
   }, [platforms.leetcode]);
 
-  
+
   useEffect(() => {
     if (platforms.codeforces) {
       fetch(`http://localhost:8080/api/codeforces-user/${platforms.codeforces}`)
@@ -760,7 +158,7 @@ const Dashboard = () => {
     }
   }, [platforms.codeforces]);
 
- 
+  
   useEffect(() => {
     if (platforms.gfg) {
       fetch(`http://localhost:8080/api/gfg-user/${platforms.gfg}`)
@@ -791,14 +189,11 @@ const Dashboard = () => {
     }
   }, [platforms.gfg]);
 
-
+  
   const getCombinedData = () => {
-    const lcContests = leetcodeContest && leetcodeContest.length > 0 ? leetcodeContest : [];
-    const cfContests = cfContest && cfContest.length > 0 ? cfContest : [];
-    const gfgContests =
-      gfgData && gfgData.contest && Number(gfgData.contest.totalContests) > 0
-        ? [] 
-        : [];
+    const lcContests = leetcodeContest || [];
+    const cfContests = cfContest || [];
+    const gfgContests = []; 
     const combinedContests = [...lcContests, ...cfContests, ...gfgContests].filter(
       (contest) => contest && contest.date && contest.rating !== undefined
     );
@@ -830,7 +225,6 @@ const Dashboard = () => {
         activeDays: leetcodeStats.activeDays + cfStats.activeDays + gfgStats.activeDays,
         totalContests: leetcodeStats.totalContests + cfStats.totalContests + gfgStats.totalContests,
       },
-      
       problemTypes: {
         dsaCount: Number(leetcodeProblems.dsaCount) + Number(gfgProblems.dsaCount || 0),
         cpCount: cfCpCount,
@@ -893,8 +287,15 @@ const Dashboard = () => {
   };
 
   return (
-    <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab} sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar}>
+    <MainLayout>
+    <DashboardLayout
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      sidebarOpen={sidebarOpen}
+      toggleSidebar={toggleSidebar}
+    >
       <div className="w-full max-w-6xl mx-auto space-y-8">
+    
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-4">
             <UserProfileCard
@@ -905,6 +306,10 @@ const Dashboard = () => {
               avatarUrl={userData.avatarUrl}
             />
           </div>
+          <h2 className="text-xl font-bold font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-purple-800 to-indigo-700 dark:from-purple-600 dark:to-indigo-400 flex items-center col-span-4">
+            <span className="inline-block w-1.5 h-6 bg-gradient-to-b from-purple-500 to-indigo-600 rounded-full mr-2"></span>
+            Connected Platforms
+          </h2>
           <PlatformCard
             platform="leetcode"
             username={platforms.leetcode}
@@ -924,44 +329,98 @@ const Dashboard = () => {
             isConnected={platforms.gfg !== null}
           />
         </div>
-        {isPlatformConnected ? (
-          <>
-            <StatisticsCard
-              totalQuestions={filteredData.statistics.totalQuestions}
-              activeDays={filteredData.statistics.activeDays}
-              totalContests={filteredData.statistics.totalContests}
-              platform={platformName}
-            />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <ProblemTypeStats
-                dsaCount={filteredData.problemTypes.dsaCount}
-                cpCount={filteredData.problemTypes.cpCount}
-                platform={platformName}
-              />
-              <ContestRatingChart data={filteredData.contestData} platform={platformName} />
-            </div>
-            <ActivityHeatmap data={filteredData.heatmapData} platform={platformName} />
-            <ContestRankingTable rankings={filteredData.contestRankings} platform={platformName} />
-          </>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 px-4 border rounded-lg border-dashed border-gray-300">
-            <h3 className="text-xl font-medium mb-2">Connect Your Account</h3>
-            <p className="text-gray-500 text-center max-w-md mb-6">
-              Please connect your {platformName} account to view your statistics and performance data.
-            </p>
-            <button
-              className="px-4 py-2 rounded-md bg-primary text-white hover:bg-primary/90 transition-colors"
-              onClick={() => {
-                handleSavePlatform(activeTab, 'demo_user');
-                alert(`Connected to ${platformName} for demonstration!`);
-              }}
+
+        {/* Main Content */}
+        <AnimatePresence mode="wait">
+          {isPlatformConnected ? (
+            <motion.div
+              key="stats"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
             >
-              Connect for Demo
-            </button>
-          </div>
-        )}
+              {/* Overall Statistics */}
+              <section>
+                <h2 className="text-xl font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-purple-800 to-indigo-700 dark:from-purple-600 dark:to-indigo-400 flex items-center">
+                  <span className="inline-block w-1.5 h-6 bg-gradient-to-b from-purple-500 to-indigo-600 rounded-full mr-2"></span>
+                  {platformName ? `${platformName} Statistics` : 'Overall Statistics'}
+                </h2>
+                <StatisticsCard
+                  totalQuestions={filteredData.statistics.totalQuestions}
+                  activeDays={filteredData.statistics.activeDays}
+                  totalContests={filteredData.statistics.totalContests}
+                  platform={platformName}
+                />
+              </section>
+
+              {/* Problem Analysis */}
+              <section className="mt-6">
+                <h2 className="text-xl font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-purple-800 to-indigo-700 dark:from-purple-600 dark:to-indigo-400 flex items-center">
+                  <span className="inline-block w-1.5 h-6 bg-gradient-to-b from-purple-500 to-indigo-600 rounded-full mr-2"></span>
+                  Problem Analysis
+                </h2>
+                <ProblemTypeStats
+                  dsaCount={filteredData.problemTypes.dsaCount}
+                  cpCount={filteredData.problemTypes.cpCount}
+                  platform={platformName}
+                />
+              </section>
+
+              {/* Coding Streaks */}
+              <section className="mt-6">
+                <h2 className="text-xl font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-purple-800 to-indigo-700 dark:from-purple-600 dark:to-indigo-400 flex items-center">
+                  <span className="inline-block w-1.5 h-6 bg-gradient-to-b from-purple-500 to-indigo-600 rounded-full mr-2"></span>
+                  Coding Streaks
+                </h2>
+                <ContestRatingChart data={filteredData.contestData} platform={platformName} />
+              </section>
+
+              {/* Activity Heatmap */}
+              <section className="mt-6">
+                <ActivityHeatmap data={filteredData.heatmapData} platform={platformName} />
+              </section>
+
+              {/* Contest Performance */}
+              <section className="mt-6">
+                <h2 className="text-xl font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-purple-800 to-indigo-700 dark:from-purple-600 dark:to-indigo-400 flex items-center">
+                  <span className="inline-block w-1.5 h-6 bg-gradient-to-b from-purple-500 to-indigo-600 rounded-full mr-2"></span>
+                  Contest Performance
+                </h2>
+                <ContestRankingTable rankings={filteredData.contestRankings} platform={platformName} />
+              </section>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="connect"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col items-center justify-center py-12 px-4 border rounded-lg border-dashed border-gray-300"
+            >
+              <div className="mb-4">
+                <UserPlus className="w-10 h-10 text-primary" />
+              </div>
+              <h3 className="text-xl font-medium mb-2">Connect Your Account</h3>
+              <p className="text-gray-500 text-center max-w-md mb-6">
+                Please connect your {platformName} account to view your statistics and performance data.
+              </p>
+              <button
+                className="px-4 py-2 rounded-md bg-primary text-white hover:bg-primary/90 transition-colors"
+                onClick={() => {
+                  handleSavePlatform(activeTab, 'demo_user');
+                  toast.success(`Connected to ${platformName} for demonstration!`);
+                }}
+              >
+                Connect for Demo
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </DashboardLayout>
+    </MainLayout>
   );
 };
 
