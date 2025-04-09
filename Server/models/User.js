@@ -57,7 +57,12 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
- 
+  resetPasswordToken: {
+    type: String,
+  },
+  resetPasswordExpires: {
+    type: Date,
+  },
   tasks: [{ type: mongoose.Schema.Types.ObjectId, ref: "DailyTask" }], 
   favoriteLists: [{ type: mongoose.Schema.Types.ObjectId, ref: "FavoriteList" }]
 });

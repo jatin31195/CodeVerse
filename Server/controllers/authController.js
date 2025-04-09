@@ -82,4 +82,24 @@ const uploadProfilePic = async (req, res) => {
     res.status(500).json({ status: 'error', message: error.message });
   }
 };
-module.exports = { register, login, verifyOTP,uploadProfilePic ,getUsernameById,updatePlatformUsername,getUserProfile};
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const response = await authService.forgotPassword(email);
+    res.status(response.status).json(response);
+  } catch (error) {
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  const { token, newPassword, confirmPassword } = req.body;
+
+  try {
+    const result = await authService.resetPassword(token, newPassword, confirmPassword);
+    res.status(result.status).json({ message: result.message });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+};
+module.exports = { register, login, verifyOTP,uploadProfilePic ,getUsernameById,updatePlatformUsername,getUserProfile,forgotPassword,resetPassword};

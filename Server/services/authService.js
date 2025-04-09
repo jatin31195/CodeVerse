@@ -1,13 +1,14 @@
-
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 const nodemailer = require('nodemailer');
 const fs = require('fs').promises;
 const path = require('path');
 const authRepository = require('../repositories/authRepository');
 const { generateOTP } = require('../utils/otpHelper');
 const User = require("../models/User");
-
+const sendEmail = require('../utils/email');
 const transporter = nodemailer.createTransport({
   service: 'Gmail', 
   auth: {
@@ -166,4 +167,63 @@ const getUserProfileService = async (userId) => {
   }
   return user;
 }
-module.exports = { registerUser, loginUser,getUserProfileService, verifyEmail,getUsernameById,updatePlatformUsernameService };
+const forgotPassword = async (email) => {
+  const user = await authRepository.findUserByEmail(email);
+  if (!user) return { status: 400, message: "User not found." };
+
+  const resetToken = crypto.randomBytes(20).toString('hex');
+  
+
+  user.resetPasswordToken = resetToken;
+  user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
+
+  await user.save();
+
+
+  const resetUrl = `${process.env.CLIENT_RESET_PASSWORD_URL}?token=${resetToken}`;
+
+  
+  const resetHtml = await loadTemplate('resetPasswordTemplate.html', {
+    RESET_URL: resetUrl
+  });
+
+  
+  await sendEmail(
+    user.email,
+    'CodeVerse Password Reset Request',
+    `You requested a password reset. Please click the link to set a new password: ${resetUrl}`,
+    resetHtml
+  );
+
+  return { status: 200, message: "Password reset email sent." };
+};
+
+
+const resetPassword = async (resetToken, newPassword, confirmPassword) => {
+  if (newPassword !== confirmPassword) {
+    return { status: 400, message: "Passwords do not match." };
+  }
+
+  
+  const user = await User.findOne({
+    resetPasswordToken: resetToken,
+    resetPasswordExpires: { $gt: Date.now() }
+  });
+
+  if (!user) {
+    return { status: 400, message: "Invalid or expired token." };
+  }
+
+  
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(newPassword, salt);
+  user.password = hashedPassword;
+
+  
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+
+  await user.save();
+return { status: 200, message: "Password has been reset successfully." };
+};
+module.exports = { registerUser, loginUser,getUserProfileService, verifyEmail,getUsernameById,updatePlatformUsernameService,forgotPassword,resetPassword };

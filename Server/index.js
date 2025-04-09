@@ -21,12 +21,20 @@ app.use(express.json());
 app.use("/api", apiRoutes);
 
 const cron = require("node-cron");
-const { fetchAndStorePOTD } = require("./services/potdServices/fetchPOTDService");
+const potdServices = require("./services/potdServices/fetchPOTDService");
 
-// cron.schedule("*/10 * * * * *", async () => {
-//     console.log("Fetching POTD every 30 seconds...");
-//     await fetchAndStorePOTD();
-// });
+// Schedule LeetCode POTD job at 5:30 AM every day
+cron.schedule('30 5 * * *', () => {
+    console.log("Running LeetCode POTD job...");
+    potdServices.fetchAndStoreLeetCodePOTD();
+  });
+  
+  // Schedule GFG and Codeforces POTD job at 12:00 AM (midnight) every day
+  cron.schedule('0 0 * * *', () => {
+    console.log("Running GFG and Codeforces POTD job...");
+    potdServices.fetchAndStoreGFGPOTD();
+    potdServices.fetchAndStoreCodeforcesPOTD();
+  });
 
 const io = initializeSocket(server);
 app.set('socketio', io);
