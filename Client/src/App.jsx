@@ -19,6 +19,8 @@ import Codeforces from "./components/Codeforces";
 import CustomPOTD from "./components/CustomPOTD";
 import MyProblem from "./components/MyProblem";
 import AddProblem from "./components/AddProblem";
+import PasswordReset from "./components/PasswordReset";
+import ForgotPassword from "./components/ForgotPassword";
 function App() {
     return (
         <Router>
@@ -42,7 +44,8 @@ function App() {
                 <Route path="/custom" element={<CustomPOTD/>} />
                 <Route path="/my-problems" element={<MyProblem/>} />
                 <Route path="/add-problem" element={<AddProblem/>} />
-                
+                <Route path="/reset" element={<PasswordReset/>}/>
+                <Route path="/forgot-password" element={<ForgotPassword/>} />
             </Routes>
         </Router>
     );
