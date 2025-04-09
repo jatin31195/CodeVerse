@@ -96,14 +96,6 @@ const fetchDailyProblem = async (req, res) => {
       addedAt: new Date(),
     };
 
-    // Save the new question in the database
-    await Question.create(problemData);
-
-    // Print the problem details to the terminal
-    console.log("Today's Codeforces Problem:");
-    console.log(problemData);
-
-    // Send response
     return res.json(problemData);
 
   } catch (error) {
