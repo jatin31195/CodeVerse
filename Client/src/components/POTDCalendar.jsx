@@ -3,15 +3,13 @@ import { format, addMonths, subMonths } from 'date-fns';
 import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 
-const POTDCalendar = ({ onSelectDate, platform }) => {
-  const [date, setDate] = useState(new Date());
+const POTDCalendar = ({ selectedDate, onSelectDate, platform }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [addToFavoritesOpen, setAddToFavoritesOpen] = useState(false);
   const [selectedDateForFavorite, setSelectedDateForFavorite] = useState(null);
 
   const handleSelect = (newDate) => {
     if (newDate) {
-      setDate(newDate);
       onSelectDate(newDate);
     }
   };
@@ -48,22 +46,22 @@ const POTDCalendar = ({ onSelectDate, platform }) => {
   const goToPreviousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
 
-  const problemDates = [4, 15, 24].map((day) => {
-    const date = new Date(currentMonth);
-    date.setDate(day);
-    return date;
-  });
+  
+  
 
   const renderDay = (day) => {
     const hasProblem = problemDates.some((d) => d.toDateString() === day.toDateString());
-    const isSelected = date.toDateString() === day.toDateString();
+    const isSelected = selectedDate && selectedDate.toDateString() === day.toDateString();
 
     return (
-      <div className="relative flex flex-col items-center justify-center w-10 h-10 group">
+      <div
+        onClick={() => handleSelect(day)}
+        className="relative flex flex-col items-center justify-center w-10 h-10 group cursor-pointer"
+      >
         <span className={`text-lg ${isSelected ? 'font-bold text-black' : 'text-gray-500'}`}>
           {format(day, 'd')}
         </span>
-        {hasProblem && <div className={`w-2 h-2 rounded-full mt-1 ${dotColor}`}></div>}
+        {hasProblem && <div className={`w-2 h-2 rounded-full mt-1 `}></div>}
         <button
           onClick={(e) => handleAddToFavorites(day, e)}
           className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -87,7 +85,6 @@ const POTDCalendar = ({ onSelectDate, platform }) => {
           </div>
         </div>
 
-        
         <div className="grid grid-cols-7 gap-2 text-center text-gray-700">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
             <div key={day} className="font-semibold text-sm">
@@ -101,16 +98,15 @@ const POTDCalendar = ({ onSelectDate, platform }) => {
             )
           )}
 
-          {Array.from({ length: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate() }).map(
-            (_, i) => (
-              <div key={i} onClick={() => handleSelect(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i + 1))}>
-                {renderDay(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i + 1))}
-              </div>
-            )
-          )}
+          {Array.from({
+            length: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate(),
+          }).map((_, i) => (
+            <div key={i}>
+              {renderDay(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i + 1))}
+            </div>
+          ))}
         </div>
 
-       
         <div className="flex justify-between mt-4">
           <button onClick={goToPreviousMonth} className="p-2 rounded-full hover:bg-gray-100">
             <ChevronLeft className="h-6 w-6 text-gray-400" />
@@ -121,7 +117,6 @@ const POTDCalendar = ({ onSelectDate, platform }) => {
         </div>
       </div>
 
-      
       {addToFavoritesOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg w-96 shadow-lg">

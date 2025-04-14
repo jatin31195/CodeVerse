@@ -1,28 +1,45 @@
 const { main } = require("../utils/OpenAi_API");
+const Question = require("../models/Question"); // Ensure this is the correct model path
 
-const getEasyExplanation = async (title, questionId, platform, link) => {
-  const prompt = `Explain the coding problem titled "${title}". Provide a beginner-friendly explanation and a real-world analogy.
-  
-  Respond ONLY in valid JSON format (Do not include triple backticks):
-  {
-    "easyExplanation": "<beginner-friendly problem explanation>",
-    "RealLifeExample": "<A simple real-world analogy related to the problem>"
-  }
-
-  Problem Platform: ${platform}
-  Question Link: ${link}
-  `;
-
+const getEasyExplanation = async ({ questionId, title, platform, link }) => {
   try {
-      const response = await main(prompt);
-      
-      // Remove triple backticks and any leading/trailing spaces
-      const cleanedResponse = response.replace(/```json|```/g, "").trim();
+  
+    if (questionId) {
+      const question = await Question.findById(questionId);
+      if (!question) {
+        return { error: "Question not found in the database using questionId" };
+      }
 
-      return JSON.parse(cleanedResponse);
+      title = question.title;
+      platform = question.platform;
+      link = question.link;
+    }
+
+    if (!title || !platform) {
+      return { error: "Missing required fields: title and platform are needed" };
+    }
+
+    const prompt = `Explain the coding problem titled "${title}". Provide a beginner-friendly explanation and a real-world analogy.
+  
+Respond ONLY in valid JSON format (Do not include triple backticks):
+{
+  "easyExplanation": "<Beginner-friendly explanation of the problem. Explain like you're teaching someone new to DSA.>",
+  "RealLifeExample": "<A simple, everyday real-world analogy that relates to the problem's logic. Keep it short and intuitive.>"
+}
+
+Problem Platform: ${platform}
+Question Link: ${link || "N/A"}
+`;
+
+    const response = await main(prompt);
+
+    
+    const cleanedResponse = response.replace(/```json|```/g, "").trim();
+    return JSON.parse(cleanedResponse);
+
   } catch (error) {
-      console.error("Error parsing explanation:", error);
-      return { error: "Failed to parse response from OpenAI" };
+    console.error("Error in getEasyExplanation:", error);
+    return { error: "Failed to generate or parse explanation" };
   }
 };
 

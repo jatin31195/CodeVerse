@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ThumbsUp, ThumbsDown, Clock, Plus, ChevronDown, Code, BookOpen, Activity } from 'lucide-react';
 import { format } from 'date-fns';
 
-const SolutionCard = ({ problem }) => {
+const SolutionCard = ({ problem, explanation }) => {
   const [solutionOpen, setSolutionOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState('cpp');
   const [userVotes, setUserVotes] = useState({ upvotes: 25, downvotes: 3 });
@@ -39,7 +39,9 @@ vector<int> twoSum(vector<int>& nums, int target) {
   ];
 
   const getPlatformColor = () => {
-    switch (problem.platform) {
+  
+    const platform = problem?.platform;
+    switch (platform) {
       case 'leetcode': return 'bg-blue-500';
       case 'gfg': return 'bg-green-500';
       case 'codeforces': return 'bg-red-500';
@@ -57,7 +59,7 @@ vector<int> twoSum(vector<int>& nums, int target) {
   };
 
   const handleAddToFavorites = () => {
-    alert(`${problem.title} added to favorites!`);
+    alert(`${problem?.title || 'Problem'} added to favorites!`);
     setFavoritesOpen(false);
   };
 
@@ -66,13 +68,17 @@ vector<int> twoSum(vector<int>& nums, int target) {
       
       <div className="p-4 flex justify-between items-start bg-white">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">{problem.title}</h2>
+          <h2 className="text-xl font-bold text-gray-800">{problem?.title || 'Untitled Problem'}</h2>
           <div className="flex gap-2 mt-2">
-            <span className={`px-2 py-1 rounded text-white ${getPlatformColor()}`}>{problem.platform}</span>
-            <span className={`px-2 py-1 rounded text-white ${problem.difficulty === 'Easy' ? 'bg-green-500' : problem.difficulty === 'Medium' ? 'bg-yellow-500' : 'bg-red-500'}`}>
-              {problem.difficulty}
+            <span className={`px-2 py-1 rounded text-white ${getPlatformColor()}`}>{problem?.platform || 'N/A'}</span>
+            <span className={`px-2 py-1 rounded text-white ${
+              problem?.difficulty === 'Easy' ? 'bg-green-500' : 
+              problem?.difficulty === 'Medium' ? 'bg-yellow-500' : 
+              'bg-red-500'
+            }`}>
+              {problem?.difficulty || 'Unknown'}
             </span>
-            <span className="px-2 py-1 rounded bg-gray-200 text-gray-700">{problem.date}</span>
+            <span className="px-2 py-1 rounded bg-gray-200 text-gray-700">{problem?.date || 'No Date'}</span>
           </div>
         </div>
         <button
@@ -83,7 +89,6 @@ vector<int> twoSum(vector<int>& nums, int target) {
         </button>
       </div>
 
-     
       <div className="p-4 space-y-4 bg-gray-50">
        
         <div className="border border-gray-200 rounded">
@@ -150,6 +155,7 @@ vector<int> twoSum(vector<int>& nums, int target) {
           </AnimatePresence>
         </div>
 
+       
         <div className="border border-gray-200 rounded">
           <button
             onClick={() => setExplanationExpanded(!explanationExpanded)}
@@ -157,7 +163,7 @@ vector<int> twoSum(vector<int>& nums, int target) {
           >
             <div className="flex items-center gap-2 text-gray-800">
               <BookOpen size={20} className="text-green-500" />
-              <span>Problem Explanation</span>
+              <span className='font-bold'>Problem Explanation (AI Based)</span>
             </div>
             <ChevronDown
               size={20}
@@ -172,32 +178,17 @@ vector<int> twoSum(vector<int>& nums, int target) {
                 exit={{ height: 0, opacity: 0 }}
                 className="p-4 bg-white"
               >
-                <div className="mb-4">
-                  <h3 className="font-bold text-gray-900">Problem Statement:</h3>
-                  <p className="mt-2 text-gray-700">
-                    Given an array of integers and a target value, return the indices of the two numbers that add up to the target.
-                  </p>
-                </div>
-                <div className="mb-4">
-                  <h3 className="font-bold text-gray-900">Example:</h3>
-                  <pre className="mt-2 bg-gray-50 p-3 border border-gray-100 rounded text-gray-800">
-                    <code>
-                      {`Input: nums = [2,7,11,15], target = 9
-Output: [0,1]`}
-                    </code>
-                  </pre>
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900">Approach:</h3>
-                  <p className="mt-2 text-gray-700">
-                    Use a hash map to store each number and its index. For each element, check if its complement exists in the map.
-                  </p>
-                </div>
+                {explanation ? (
+                  <p className="mt-2 text-gray-700">{explanation.easyExplanation}</p>
+                ) : (
+                  <p className="mt-2 text-gray-700">Explanation not available.</p>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
+      
         <div className="border border-gray-200 rounded">
           <button
             onClick={() => setRealLifeUseCaseExpanded(!realLifeUseCaseExpanded)}
@@ -205,7 +196,7 @@ Output: [0,1]`}
           >
             <div className="flex items-center gap-2 text-gray-800">
               <Activity size={20} className="text-green-500" />
-              <span>Real-life Use Case</span>
+              <span className='font-bold'>Real-life Use Case (AI Based)</span>
             </div>
             <ChevronDown
               size={20}
@@ -220,24 +211,11 @@ Output: [0,1]`}
                 exit={{ height: 0, opacity: 0 }}
                 className="p-4 bg-white"
               >
-                <div className="mb-4">
-                  <h3 className="font-bold text-gray-900">Financial Analysis:</h3>
-                  <p className="mt-2 text-gray-700">
-                    Identifying pairs of numbers that sum to a target is similar to reconciling financial transactions.
-                  </p>
-                </div>
-                <div className="mb-4">
-                  <h3 className="font-bold text-gray-900">Database Queries:</h3>
-                  <p className="mt-2 text-gray-700">
-                    The hashing approach is analogous to how database indexes speed up join operations.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900">Recommendation Systems:</h3>
-                  <p className="mt-2 text-gray-700">
-                    Matching complementary products uses similar pair-finding logic.
-                  </p>
-                </div>
+                {explanation ? (
+                  <p className="mt-2 text-gray-700">{explanation.realLifeExample}</p>
+                ) : (
+                  <p className="mt-2 text-gray-700">Real-life use case not available.</p>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -245,9 +223,11 @@ Output: [0,1]`}
       </div>
 
       <div className="p-4 bg-white border-t border-gray-200">
-        <a href={problem.link} target="_blank" rel="noopener noreferrer">
+        <a href={problem?.link || '#'} target="_blank" rel="noopener noreferrer">
           <button className="w-full py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-            Solve on {problem.platform.charAt(0).toUpperCase() + problem.platform.slice(1)}
+            {problem?.platform 
+              ? `Solve on ${problem.platform.charAt(0).toUpperCase() + problem.platform.slice(1)}` 
+              : 'Solve'}
           </button>
         </a>
       </div>
@@ -276,7 +256,6 @@ Output: [0,1]`}
         )}
       </AnimatePresence>
 
-      
       <AnimatePresence>
         {favoritesOpen && (
           <motion.div
@@ -311,7 +290,6 @@ Output: [0,1]`}
         )}
       </AnimatePresence>
 
-   
       <AnimatePresence>
         {solutionOpen && (
           <motion.div
@@ -321,7 +299,7 @@ Output: [0,1]`}
             exit={{ opacity: 0 }}
           >
             <div className="bg-white rounded-lg p-6 max-w-3xl w-full mx-4 overflow-y-auto max-h-[90vh]">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">User Solutions for {problem.title}</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">User Solutions for {problem?.title || 'Problem'}</h3>
               <p className="text-gray-600 mb-4">Browse all community solutions or submit your own.</p>
               {userSolutions.map(sol => (
                 <div key={sol.id} className="p-3 bg-gray-50 border border-gray-100 rounded mb-3">
