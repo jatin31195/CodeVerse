@@ -64,7 +64,8 @@ const UserSchema = new mongoose.Schema({
     type: Date,
   },
   tasks: [{ type: mongoose.Schema.Types.ObjectId, ref: "DailyTask" }], 
-  favoriteLists: [{ type: mongoose.Schema.Types.ObjectId, ref: "FavoriteList" }]
+  favoriteLists: [{ type: mongoose.Schema.Types.ObjectId, ref: "FavoriteList" }],
+  solutions: [{ type: String, ref: "Solution" }]
 });
 
 const UserModel = mongoose.model("User", UserSchema);
