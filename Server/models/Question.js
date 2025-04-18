@@ -24,10 +24,11 @@ const QuestionSchema = new mongoose.Schema({
     required: true,
     default: Date.now
   },
-  // Other fields like difficulty, topics, rating, tags, points, etc.
+  solutions: [{ type: String, ref: "Solution" }],
+  chat: { type: mongoose.Schema.Types.ObjectId, ref: "Chat" }
 });
 
-// Create a compound index on date and platform
+
 QuestionSchema.index({ date: 1, platform: 1, problem_id: 1 }, { unique: true });
 
 module.exports = mongoose.model("Question", QuestionSchema);

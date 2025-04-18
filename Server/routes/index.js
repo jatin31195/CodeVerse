@@ -14,6 +14,7 @@ const getAllQuestions=require('.././controllers/questionsController');
 const ticketRaise=require('./ticketRoutes');
 const schedule=require('../controllers/scheduleController');
 const timeTable=require('./timetableRoute');
+const chat=require('./chatRoutes');
 router.use("/ticket-Raise",ticketRaise);
 router.use("/ques", platformRoutes);
 router.use("/auth", authRoutes);
@@ -27,5 +28,7 @@ router.use('/fav',favouriteListRoute)
 router.use('/solutions',SolutionRoute);
 router.use('/contest',contestRoute);
 router.use('/tt',timeTable);
+router.use('/chat',chat);
+
 // router.post('/schedule', schedule.createTimetable);
 module.exports = router;
