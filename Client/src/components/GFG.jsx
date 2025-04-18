@@ -1,10 +1,16 @@
-import React, { useState, useEffect } from 'react';
+
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useCallback
+} from 'react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, ArrowRight } from 'lucide-react';
+import { SocketContext } from './SocketContext';
 import SolutionCard from './SolutionCard';
 import POTDCalendar from './POTDCalendar';
-import Navbar from './Navbar';
 import MainLayout from './MainLayout';
 
 const navLinks = [
@@ -13,125 +19,191 @@ const navLinks = [
   { name: 'Geeks for Geeks', path: '/gfg' },
 ];
 
+const getCurrentUserId = () => {
+  const token = sessionStorage.getItem('token');
+  if (!token) return null;
+  try {
+    return JSON.parse(atob(token.split('.')[1])).id;
+  } catch {
+    return null;
+  }
+};
+
 const GFG = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [problemData, setProblemData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [explanation, setExplanation] = useState(null);
   const [explanationLoading, setExplanationLoading] = useState(false);
-const [explanationError, setExplanationError] = useState(null);
-
-  const [loading, setLoading] = useState(true);
+  const [explanationError, setExplanationError] = useState(null);
 
   
+  const socket = useContext(SocketContext);
   const [chatOpen, setChatOpen] = useState(false);
-  const [messages, setMessages] = useState({});
+  const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
- 
-  const dateKey = format(selectedDate, 'yyyy-MM-dd');
+
+  const questionId = problemData?._id || null;
+  const rawUserId = getCurrentUserId();
+  const currentUserId = rawUserId != null ? String(rawUserId) : null;
 
   
+  useEffect(() => {
+    if (!questionId) return;
+    (async () => {
+      try {
+        const token = sessionStorage.getItem('token');
+        if (!token) throw new Error('No token');
+        const res = await fetch(
+          `http://localhost:8080/api/chat/${questionId}`,
+          { headers: { Authorization: token } }
+        );
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.message);
+        setChatMessages(
+          (body.messages || []).map((m) => ({
+            ...m,
+            userId: String(m.userId),
+          }))
+        );
+      } catch (err) {
+        console.error('Error loading chat history:', err);
+      }
+    })();
+  }, [questionId]);
+
+
+  useEffect(() => {
+    const onHistory = (msgs) => {
+      setChatMessages(
+        (msgs || []).map((m) => ({ ...m, userId: String(m.userId) }))
+      );
+    };
+    socket.on('chatHistory', onHistory);
+    return () => void socket.off('chatHistory', onHistory);
+  }, [socket]);
+
+  
+  useEffect(() => {
+    const onMessage = (msg) => {
+      msg.userId = String(msg.userId);
+      setChatMessages((prev) => {
+        if (prev.some((m) => m._id === msg._id)) return prev;
+        return [...prev, msg];
+      });
+    };
+    socket.on('chatMessage', onMessage);
+    return () => void socket.off('chatMessage', onMessage);
+  }, [socket]);
+
+
+  useEffect(() => {
+    if (chatOpen && questionId && currentUserId) {
+      socket.emit('joinChat', { questionId, userId: currentUserId });
+    }
+  }, [chatOpen, questionId, currentUserId, socket]);
+
+ 
+  const handleSendMessage = useCallback(
+    async (e) => {
+      e.preventDefault();
+      const text = newMessage.trim();
+      if (!text || !questionId || !currentUserId) return;
+
+      console.log('→ sending', { questionId, text });
+
+      try {
+        const token = sessionStorage.getItem('token');
+        if (!token) throw new Error('No token');
+        const res = await fetch(
+          `http://localhost:8080/api/chat/${questionId}/message`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: token,
+            },
+            body: JSON.stringify({ text }),
+          }
+        );
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.message || 'Failed to send');
+
+        const savedMsg = {
+          _id: body.message._id,
+          questionId,
+          text: body.message.text,
+          userId: String(body.message.userId),
+          timestamp: body.message.timestamp,
+        };
+
+        
+        socket.emit('sendChatMessage', savedMsg);
+
+        setNewMessage('');
+      } catch (err) {
+        console.error('Error sending message:', err);
+      }
+    },
+    [newMessage, questionId, currentUserId, socket]
+  );
+
   useEffect(() => {
     const fetchProblem = async () => {
       setLoading(true);
       try {
-        const dateParam = format(selectedDate, 'yyyy-MM-dd');
-        const response = await fetch(
-          `http://localhost:8080/api/ques/gfg/potd/${dateParam}`
+        const ds = format(selectedDate, 'yyyy-MM-dd');
+        const res = await fetch(
+          `http://localhost:8080/api/ques/gfg/potd/${ds}`
         );
-        const json = await response.json();
-        if (json.status === 'success') {
-          const data = json.data;
-          const mappedProblem = {
-            id: data.id,
-            title: data.problem_name,
-            url: data.problem_url,
-            difficulty: data.difficulty,
-            tags: data.tags,
-            remaining_time: data.remaining_time,
-            accuracy: data.accuracy,
-            total_submissions: data.total_submissions,
-            is_solved: data.is_solved,
-          };
-          setProblemData(mappedProblem);
-          
-          setExplanation(null);
-        } else {
-          console.error('API responded with an error:', json);
-        }
-      } catch (error) {
-        console.error('Error fetching problem:', error);
+        const json = await res.json();
+        if (json.status !== 'success') throw new Error(json.message);
+
+        
+        setProblemData({
+          ...json.data,
+          date: json.data.date?.$date || json.data.date,
+        });
+
+        setExplanation(null);
+      } catch (err) {
+        console.error(err);
+        setProblemData(null);
       } finally {
         setLoading(false);
       }
     };
-
     fetchProblem();
   }, [selectedDate]);
 
-  
   useEffect(() => {
-    const fetchExplanation = async () => {
-      if (!problemData) return;
+    if (!problemData) return;
+    (async () => {
       setExplanationLoading(true);
-      setExplanationError(null);
       try {
         const res = await fetch('http://localhost:8080/api/ques/easy', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: problemData.title,
             platform: 'GeeksForGeeks',
             link: problemData.url,
           }),
         });
-  
-        const data = await res.json();
-  
-        if (!res.ok) {
-          throw new Error(data.message || 'Error fetching explanation');
-        }
-  
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.message);
         setExplanation({
-          easyExplanation: data.easyExplanation || 'No explanation available.',
-          realLifeExample: data.RealLifeExample || '',
+          easyExplanation: json.easyExplanation || 'No explanation.',
+          realLifeExample: json.RealLifeExample || '',
         });
       } catch (err) {
         setExplanationError(err.message);
       } finally {
         setExplanationLoading(false);
       }
-    };
-  
-    fetchExplanation();
+    })();
   }, [problemData]);
-  
-
-  
-  const onExplanationClick = () => {
-    if (problemData) {
-      console.log("onExplanationClick triggered for:", problemData.title);
-      fetchSolutionExplanation(problemData);
-    }
-  };
-
-
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-
-    const timestamp = new Date();
-    const newMsg = { text: newMessage, sender: 'user', timestamp };
-
-    setMessages(prev => {
-      const prevMessages = prev[dateKey] || [];
-      return { ...prev, [dateKey]: [...prevMessages, newMsg] };
-    });
-
-    setNewMessage('');
-  };
 
   return (
     <MainLayout navLinks={navLinks}>
@@ -139,7 +211,12 @@ const [explanationError, setExplanationError] = useState(null);
         <h1 className="text-3xl font-bold text-center mb-6">
           GeeksforGeeks Problem of the Day
         </h1>
-        <POTDCalendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+
+        <POTDCalendar
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+        />
+
         <div className="mt-8">
           {loading ? (
             <div>Loading...</div>
@@ -149,10 +226,11 @@ const [explanationError, setExplanationError] = useState(null);
                 Problem for {format(selectedDate, 'MMMM d, yyyy')}
               </h2>
               <SolutionCard
-  problem={problemData}
-  explanation={explanation}
-
-/>
+                problem={problemData}
+                explanation={explanation}
+                loading={explanationLoading}
+                error={explanationError}
+              />
             </>
           ) : (
             <div>No problem available for this date.</div>
@@ -167,7 +245,7 @@ const [explanationError, setExplanationError] = useState(null);
           <MessageCircle size={24} />
         </button>
 
-    
+       
         <AnimatePresence>
           {chatOpen && (
             <motion.div
@@ -178,45 +256,74 @@ const [explanationError, setExplanationError] = useState(null);
             >
               <div className="p-4 border-b flex justify-between items-center">
                 <h2 className="font-bold text-lg">
-                  Chat - {problemData ? problemData.title : 'No Problem'} ({format(selectedDate, 'MMM d, yyyy')})
+                  Chat – {problemData?.title || 'No Problem'} (
+                  {format(selectedDate, 'MMM d, yyyy')})
                 </h2>
-                <button onClick={() => setChatOpen(false)} className="text-sm text-blue-500">
+                <button
+                  onClick={() => setChatOpen(false)}
+                  className="text-sm text-blue-500"
+                >
                   Close
                 </button>
               </div>
+
               <div className="flex-1 p-4 overflow-y-auto space-y-4">
-                {!(messages[dateKey] && messages[dateKey].length) && (
+                {chatMessages.length === 0 ? (
                   <p className="text-center text-gray-500">
                     No messages yet. Start a conversation!
                   </p>
-                )}
-                {messages[dateKey] &&
-                  messages[dateKey].map((msg, i) => (
-                    <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                ) : (
+                  chatMessages.map((msg, i) => {
+                    const isMe = msg.userId === currentUserId;
+                    return (
                       <div
-                        className={`rounded-lg p-2 text-xs max-w-[80%] ${
-                          msg.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'
+                        key={msg._id || i}
+                        className={`flex ${
+                          isMe ? 'justify-end pr-2' : 'justify-start pl-2'
                         }`}
                       >
-                        <p>{msg.text}</p>
-                        <span className="text-gray-600 mt-1 block text-right">
-                          {format(msg.timestamp, 'h:mm a')}
-                        </span>
+                        <div
+                          className={`rounded-lg p-2 text-xs max-w-[80%] ${
+                            isMe
+                              ? 'bg-blue-500 text-white text-right'
+                              : 'bg-gray-200 text-gray-800 text-left'
+                          }`}
+                        >
+                          <p className="font-semibold mb-1">
+                            {isMe ? 'You' : msg.userId}
+                          </p>
+                          <p>{msg.text}</p>
+                          <span
+                            className={`text-gray-600 mt-1 block ${
+                              isMe ? 'text-right' : 'text-left'
+                            }`}
+                          >
+                            {format(new Date(msg.timestamp), 'h:mm a')}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })
+                )}
               </div>
-              <form onSubmit={handleSendMessage} className="p-4 border-t flex gap-2">
+
+              <form
+                onSubmit={handleSendMessage}
+                className="p-4 border-t flex gap-2"
+              >
                 <textarea
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Type your message..."
-                  className="flex-1 border rounded p-2 text-xs"
+                  className="flex-1 border rounded p-2 text-xs resize-none"
                   rows="2"
                 />
                 <button
                   type="submit"
-                  className="bg-blue-500 text-white rounded px-3 py-2 text-sm flex items-center gap-1"
+                  disabled={!newMessage.trim()}
+                  className={`bg-blue-500 text-white rounded px-3 py-2 text-sm flex items-center gap-1 ${
+                    !newMessage.trim() ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
                   Send <ArrowRight size={16} />
                 </button>

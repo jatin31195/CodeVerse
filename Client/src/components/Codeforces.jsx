@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from 'react';
+// src/Codeforces.jsx
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useCallback
+} from 'react';
 import { format } from 'date-fns';
 import { MessageCircle, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SocketContext } from './SocketContext';
 import SolutionCard from './SolutionCard';
 import POTDCalendar from './POTDCalendar';
 import MainLayout from './MainLayout';
@@ -12,44 +19,52 @@ const navLinks = [
   { name: 'Geeks for Geeks', path: '/gfg' },
 ];
 
+const getCurrentUserId = () => {
+  const token = sessionStorage.getItem('token');
+  if (!token) return null;
+  try {
+    return JSON.parse(atob(token.split('.')[1])).id;
+  } catch {
+    return null;
+  }
+};
+
 const Codeforces = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [question, setQuestion] = useState(null);
   const [questionLoading, setQuestionLoading] = useState(false);
   const [questionError, setQuestionError] = useState(null);
 
-  
   const [explanation, setExplanation] = useState(null);
   const [explanationLoading, setExplanationLoading] = useState(false);
   const [explanationError, setExplanationError] = useState(null);
 
-  
+  // ——— CHAT STATE ———
+  const socket = useContext(SocketContext);
   const [chatOpen, setChatOpen] = useState(false);
-  const [messages, setMessages] = useState({});
+  const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
   
+  const questionId = question?._id || null;
+  const rawUserId = getCurrentUserId();
+  const currentUserId = rawUserId != null ? String(rawUserId) : null;
+
   const dateKey = format(selectedDate, 'yyyy-MM-dd');
 
-  
+ 
   useEffect(() => {
     const fetchQuestion = async () => {
       setQuestionLoading(true);
       setQuestionError(null);
       setExplanation(null);
       try {
-        const res = await fetch(`http://localhost:8080/api/ques/codeforces/potd/${dateKey}`);
+        const res = await fetch(
+          `http://localhost:8080/api/ques/codeforces/potd/${dateKey}`
+        );
         const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.message || 'Error fetching question');
-        }
-
-        
-        if (data.questions && data.questions.length > 0) {
-          setQuestion(data.questions[0]);
-        } else {
-          setQuestion(null);
-        }
+        if (!res.ok) throw new Error(data.message || 'Error fetching question');
+        setQuestion(data.questions?.[0] ?? null);
       } catch (err) {
         setQuestion(null);
         setQuestionError(err.message);
@@ -57,14 +72,13 @@ const Codeforces = () => {
         setQuestionLoading(false);
       }
     };
-
     fetchQuestion();
   }, [dateKey]);
 
- 
+  
   useEffect(() => {
     const fetchExplanation = async () => {
-      if (!question || !question._id) return;
+      if (!question?._id) return;
       setExplanationLoading(true);
       setExplanationError(null);
       try {
@@ -74,10 +88,7 @@ const Codeforces = () => {
           body: JSON.stringify({ questionId: question._id }),
         });
         const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.message || 'Error fetching explanation');
-        }
-        
+        if (!res.ok) throw new Error(data.message || 'Error fetching explanation');
         setExplanation({
           easyExplanation: data.easyExplanation || 'No explanation available.',
           realLifeExample: data.RealLifeExample || '',
@@ -88,42 +99,107 @@ const Codeforces = () => {
         setExplanationLoading(false);
       }
     };
-
     fetchExplanation();
   }, [question]);
 
-  
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
+ 
+  useEffect(() => {
+    if (!questionId) return;
+    (async () => {
+      try {
+        const token = sessionStorage.getItem('token');
+        if (!token) throw new Error('No token');
+        const res = await fetch(
+          `http://localhost:8080/api/chat/${questionId}`,
+          { headers: { Authorization: token } }
+        );
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.message);
+        setChatMessages(
+          (body.messages || []).map(m => ({
+            ...m,
+            userId: String(m.userId),
+          }))
+        );
+      } catch (err) {
+        console.error('Error loading chat history:', err);
+      }
+    })();
+  }, [questionId]);
 
-    const dateMessages = messages[dateKey] || [];
-    const updated = {
-      ...messages,
-      [dateKey]: [
-        ...dateMessages,
-        { text: newMessage, sender: 'user', timestamp: new Date() },
-      ],
+ 
+  useEffect(() => {
+    const onHistory = msgs => {
+      setChatMessages(
+        (msgs || []).map(m => ({ ...m, userId: String(m.userId) }))
+      );
     };
-    setMessages(updated);
-    setNewMessage('');
+    socket.on('chatHistory', onHistory);
+    return () => void socket.off('chatHistory', onHistory);
+  }, [socket]);
 
-   
-    setTimeout(() => {
-      const resp = updated[dateKey] || [];
-      setMessages({
-        ...updated,
-        [dateKey]: [
-          ...resp,
-          {
-            text: `Thanks for your message about "${question ? question.title : 'the problem'}". This is a simulated response.`,
-            sender: 'other',
-            timestamp: new Date(),
-          },
-        ],
+ 
+  useEffect(() => {
+    const onMessage = msg => {
+      msg.userId = String(msg.userId);
+      setChatMessages(prev => {
+        if (prev.some(m => m._id === msg._id)) return prev;
+        return [...prev, msg];
       });
-    }, 1000);
-  };
+    };
+    socket.on('chatMessage', onMessage);
+    return () => void socket.off('chatMessage', onMessage);
+  }, [socket]);
+
+  
+  useEffect(() => {
+    if (chatOpen && questionId && currentUserId) {
+      socket.emit('joinChat', { questionId, userId: currentUserId });
+    }
+  }, [chatOpen, questionId, currentUserId, socket]);
+
+  
+  const handleSendMessage = useCallback(
+    async e => {
+      e.preventDefault();
+      const text = newMessage.trim();
+      if (!text || !questionId || !currentUserId) return;
+
+      try {
+        const token = sessionStorage.getItem('token');
+        if (!token) throw new Error('No token');
+        const res = await fetch(
+          `http://localhost:8080/api/chat/${questionId}/message`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: token,
+            },
+            body: JSON.stringify({ text }),
+          }
+        );
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.message || 'Failed to send');
+
+        const savedMsg = {
+          _id: body.message._id,
+          questionId,
+          text: body.message.text,
+          userId: String(body.message.userId),
+          timestamp: body.message.timestamp,
+        };
+
+        
+        socket.emit('sendChatMessage', savedMsg);
+
+        setNewMessage('');
+      } catch (err) {
+        console.error('Error sending message:', err);
+      }
+    },
+    [newMessage, questionId, currentUserId, socket]
+  );
 
   return (
     <MainLayout navLinks={navLinks}>
@@ -132,10 +208,11 @@ const Codeforces = () => {
           Codeforces Problem of the Day
         </h1>
 
-        
-        <POTDCalendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+        <POTDCalendar
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+        />
 
-        
         <div>
           {question ? (
             <h2
@@ -152,9 +229,7 @@ const Codeforces = () => {
           )}
 
           {questionLoading && <p>Loading question...</p>}
-          {questionError && (
-            <p className="text-red-500">Error: {questionError}</p>
-          )}
+          {questionError && <p className="text-red-500">Error: {questionError}</p>}
           {!questionLoading && !question && !questionError && (
             <div
               className="p-4 bg-yellow-100 text-yellow-800 rounded cursor-help"
@@ -164,19 +239,17 @@ const Codeforces = () => {
             </div>
           )}
 
-          
           {question && (
-            <>
-              <SolutionCard problem={question} explanation={explanation} />
-
-
-             
-              
-            </>
+            <SolutionCard
+              problem={question}
+              explanation={explanation}
+              loading={explanationLoading}
+              error={explanationError}
+            />
           )}
         </div>
 
-       
+        {/* Chat Button */}
         <button
           onClick={() => setChatOpen(true)}
           className="fixed bottom-6 right-6 rounded-full w-14 h-14 flex items-center justify-center shadow-lg bg-gradient-to-r from-red-500 to-yellow-500 text-white"
@@ -184,7 +257,7 @@ const Codeforces = () => {
           <MessageCircle size={24} />
         </button>
 
-        
+        {/* Chat Panel */}
         <AnimatePresence>
           {chatOpen && (
             <motion.div
@@ -193,9 +266,9 @@ const Codeforces = () => {
               exit={{ x: 300 }}
               className="fixed right-0 top-0 bottom-0 bg-white shadow-lg w-80 z-50 flex flex-col"
             >
-              <div className="p-4 border-b">
+              <div className="p-4 border-b flex justify-between items-center">
                 <h2 className="font-bold text-lg">
-                  Chat - {question ? question.title : 'No Question'} (
+                  Chat – {question?.title || 'No Question'} (
                   {format(selectedDate, 'MMM d, yyyy')})
                 </h2>
                 <button
@@ -205,46 +278,64 @@ const Codeforces = () => {
                   Close
                 </button>
               </div>
+
               <div className="flex-1 p-4 overflow-y-auto space-y-4">
-                {!(messages[dateKey] && messages[dateKey].length) && (
+                {chatMessages.length === 0 ? (
                   <p className="text-center text-gray-500">
                     No messages yet. Start a conversation!
                   </p>
-                )}
-                {messages[dateKey] &&
-                  messages[dateKey].map((msg, i) => (
-                    <div
-                      key={i}
-                      className={`flex ${
-                        msg.sender === 'user' ? 'justify-end' : 'justify-start'
-                      }`}
-                    >
+                ) : (
+                  chatMessages.map((msg, i) => {
+                    const isMe = msg.userId === currentUserId;
+                    return (
                       <div
-                        className={`rounded-lg p-2 text-xs max-w-[80%] ${
-                          msg.sender === 'user'
-                            ? 'bg-red-500 text-white'
-                            : 'bg-gray-200 text-gray-800'
+                        key={msg._id || i}
+                        className={`flex ${
+                          isMe ? 'justify-end pr-2' : 'justify-start pl-2'
                         }`}
                       >
-                        <p>{msg.text}</p>
-                        <span className="text-gray-600 mt-1 block text-right">
-                          {format(msg.timestamp, 'h:mm a')}
-                        </span>
+                        <div
+                          className={`rounded-lg p-2 text-xs max-w-[80%] ${
+                            isMe
+                              ? 'bg-red-500 text-white text-right'
+                              : 'bg-gray-200 text-gray-800 text-left'
+                          }`}
+                        >
+                          <p className="font-semibold mb-1">
+                            {isMe ? 'You' : msg.userId}
+                          </p>
+                          <p>{msg.text}</p>
+                          <span
+                            className={`text-gray-600 mt-1 block ${
+                              isMe ? 'text-right' : 'text-left'
+                            }`}
+                          >
+                            {format(new Date(msg.timestamp), 'h:mm a')}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })
+                )}
               </div>
-              <form onSubmit={handleSendMessage} className="p-4 border-t flex gap-2">
+
+              <form
+                onSubmit={handleSendMessage}
+                className="p-4 border-t flex gap-2"
+              >
                 <textarea
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
+                  onChange={e => setNewMessage(e.target.value)}
                   placeholder="Type your message..."
-                  className="flex-1 border rounded p-2 text-xs"
+                  className="flex-1 border rounded p-2 text-xs resize-none"
                   rows="2"
                 />
                 <button
                   type="submit"
-                  className="bg-red-500 text-white rounded px-3 py-2 text-sm flex items-center gap-1"
+                  disabled={!newMessage.trim()}
+                  className={`bg-red-500 text-white rounded px-3 py-2 text-sm flex items-center gap-1 ${
+                    !newMessage.trim() ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
                   Send <ArrowRight size={16} />
                 </button>
