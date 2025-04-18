@@ -50,7 +50,7 @@ const POTDCalendar = ({ selectedDate, onSelectDate, platform }) => {
   
 
   const renderDay = (day) => {
-    const hasProblem = problemDates.some((d) => d.toDateString() === day.toDateString());
+    
     const isSelected = selectedDate && selectedDate.toDateString() === day.toDateString();
 
     return (
@@ -61,7 +61,7 @@ const POTDCalendar = ({ selectedDate, onSelectDate, platform }) => {
         <span className={`text-lg ${isSelected ? 'font-bold text-black' : 'text-gray-500'}`}>
           {format(day, 'd')}
         </span>
-        {hasProblem && <div className={`w-2 h-2 rounded-full mt-1 `}></div>}
+        {<div className={`w-2 h-2 rounded-full mt-1 `}></div>}
         <button
           onClick={(e) => handleAddToFavorites(day, e)}
           className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
