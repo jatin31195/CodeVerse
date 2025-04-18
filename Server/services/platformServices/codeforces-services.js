@@ -6,29 +6,44 @@ const API_URL = "https://codeforces.com/api/problemset.problems";
 
 const getTodayCodeforcesQuestions = async (req, res) => {
   try {
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+    const { date } = req.params;
 
-    const tomorrow = new Date(today);
-    tomorrow.setUTCDate(today.getUTCDate() + 1);
+    if (!date) {
+      return res.status(400).json({ success: false, message: "Date parameter is required" });
+    }
 
-    console.log("Fetching Codeforces questions from:", today, "to", tomorrow);
+ 
+    const inputDate = new Date(date);
+
+    if (isNaN(inputDate.getTime())) {
+      return res.status(400).json({ success: false, message: "Invalid date format" });
+    }
+
+
+    const startOfDayUTC = new Date(Date.UTC(
+      inputDate.getUTCFullYear(),
+      inputDate.getUTCMonth(),
+      inputDate.getUTCDate()
+    ));
+
+    const endOfDayUTC = new Date(startOfDayUTC);
+    endOfDayUTC.setUTCDate(endOfDayUTC.getUTCDate() + 1);
+
+    console.log(`Fetching Codeforces questions from: ${startOfDayUTC.toISOString()} to ${endOfDayUTC.toISOString()}`);
 
     const questions = await Question.find({
       platform: "Codeforces",
-      date: { $gte: today, $lt: tomorrow },
+      date: { $gte: startOfDayUTC, $lt: endOfDayUTC },
     });
 
-    console.log("Questions fetched:", questions.length);
-
-    // Send response properly
     return res.status(200).json({ success: true, questions });
-
   } catch (error) {
-    console.error("Error fetching today's Codeforces questions:", error);
+    console.error("Error fetching Codeforces questions by date:", error);
     return res.status(500).json({ success: false, message: "Server error" });
   }
-};
+}
+
+
 
 
 // Weekly difficulty structure
