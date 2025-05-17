@@ -1,5 +1,10 @@
 // src/GFG.jsx
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useCallback
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,14 +21,23 @@ const navLinks = [
 ];
 
 // animation variants
-const fadeIn = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
-const slideIn = { hidden: { x: 300 }, show: { x: 0 } };
+const fadeIn = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
+};
+const slideIn = {
+  hidden: { x: 300 },
+  show: { x: 0 }
+};
 
 const getCurrentUserId = () => {
   const token = sessionStorage.getItem('token');
   if (!token) return null;
-  try { return JSON.parse(atob(token.split('.')[1])).id; }
-  catch { return null; }
+  try {
+    return JSON.parse(atob(token.split('.')[1])).id;
+  } catch {
+    return null;
+  }
 };
 
 export default function GFG() {
@@ -31,12 +45,15 @@ export default function GFG() {
 
   // Redirect if unauthenticated
   useEffect(() => {
-    if (!sessionStorage.getItem('token')) navigate('/login');
+    if (!sessionStorage.getItem('token')) {
+      navigate('/login');
+    }
   }, [navigate]);
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [problemData, setProblemData] = useState(null);
   const [loading, setLoading] = useState(true);
+
   const [explanation, setExplanation] = useState(null);
   const [explanationLoading, setExplanationLoading] = useState(false);
   const [explanationError, setExplanationError] = useState(null);
@@ -46,101 +63,42 @@ export default function GFG() {
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
+  // Derive IDs
   const questionId = problemData?._id || null;
   const rawUserId = getCurrentUserId();
   const currentUserId = rawUserId != null ? String(rawUserId) : null;
 
-  // Load chat history on question change
-  useEffect(() => {
-    if (!questionId) return;
-    (async () => {
-      try {
-        const token = sessionStorage.getItem('token');
-        const res = await fetch(`http://localhost:8080/api/chat/${questionId}`, {
-          headers: { Authorization: token },
-        });
-        const body = await res.json();
-        if (!res.ok) throw new Error(body.message);
-        setChatMessages(body.messages.map(m => ({ ...m, userId: String(m.userId) })));
-      } catch (err) {
-        console.error('Error loading chat history:', err);
-      }
-    })();
-  }, [questionId]);
-
-  // Socket listeners
-  useEffect(() => {
-    const onHistory = msgs => setChatMessages(msgs.map(m => ({ ...m, userId: String(m.userId) })));
-    socket.on('chatHistory', onHistory);
-    return () => socket.off('chatHistory', onHistory);
-  }, [socket]);
-
-  useEffect(() => {
-    const onMessage = msg => {
-      msg.userId = String(msg.userId);
-      setChatMessages(prev => prev.some(m => m._id === msg._id) ? prev : [...prev, msg]);
-    };
-    socket.on('chatMessage', onMessage);
-    return () => socket.off('chatMessage', onMessage);
-  }, [socket]);
-
-  // Join room when chat opens
-  useEffect(() => {
-    if (chatOpen && questionId && currentUserId) {
-      socket.emit('joinChat', { questionId, userId: currentUserId });
-    }
-  }, [chatOpen, questionId, currentUserId, socket]);
-
-  const handleSendMessage = useCallback(async e => {
-    e.preventDefault();
-    const text = newMessage.trim();
-    if (!text || !questionId || !currentUserId) return;
-    try {
-      const token = sessionStorage.getItem('token');
-      const res = await fetch(
-        `http://localhost:8080/api/chat/${questionId}/message`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: token },
-          body: JSON.stringify({ text }),
-        }
-      );
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.message);
-      const saved = {
-        _id: body.message._id,
-        questionId,
-        text: body.message.text,
-        userId: String(body.message.userId),
-        timestamp: body.message.timestamp,
-      };
-      socket.emit('sendChatMessage', saved);
-      setNewMessage('');
-    } catch (err) {
-      console.error('Error sending message:', err);
-    }
-  }, [newMessage, questionId, currentUserId, socket]);
-
-  // Fetch GFG POTD
+  // === Fetch GFG POTD ===
   useEffect(() => {
     setLoading(true);
     (async () => {
       try {
         const ds = format(selectedDate, 'yyyy-MM-dd');
-        const res = await fetch(`http://localhost:8080/api/ques/gfg/potd/${ds}`);
+        const res = await fetch(
+          `http://localhost:8080/api/ques/gfg/potd/${ds}`
+        );
         const json = await res.json();
-        if (json.status !== 'success') throw new Error(json.message);
-        setProblemData({
-          _id: String(json.data.problem_id),
-          title: json.data.problem_name,
-          link: json.data.problem_url,
-          date: json.data.date,
-          difficulty: json.data.difficulty,
-          tags: json.data.tags,
-        });
+
+        if (json.status !== 'success' || !json.data) {
+          // No problem for this date
+          setProblemData(null);
+        } else {
+          const data = json.data;
+          setProblemData({
+            _id: String(data.problem_id),
+            title: data.title || '',
+            link: data.link || '',
+            date: data.date,
+            difficulty: data.difficulty || '',
+            tags: data.tags || []
+          });
+        }
+
+        // Reset explanation state on new fetch
         setExplanation(null);
+        setExplanationError(null);
       } catch (err) {
-        console.error(err);
+        console.error('Error fetching POTD:', err);
         setProblemData(null);
       } finally {
         setLoading(false);
@@ -148,9 +106,16 @@ export default function GFG() {
     })();
   }, [selectedDate]);
 
-  // Fetch explanation
+  // === Fetch explanation if we have a valid problem ===
   useEffect(() => {
-    if (!problemData) return;
+    if (
+      !problemData ||
+      !problemData.title.trim() ||
+      !problemData.link.trim()
+    ) {
+      return;
+    }
+
     (async () => {
       setExplanationLoading(true);
       try {
@@ -160,22 +125,119 @@ export default function GFG() {
           body: JSON.stringify({
             title: problemData.title,
             platform: 'GeeksForGeeks',
-            link: problemData.link,
-          }),
+            link: problemData.link
+          })
         });
         const json = await res.json();
-        if (!res.ok) throw new Error(json.message);
+        if (!res.ok) {
+          throw new Error(json.message || 'Unknown error');
+        }
+
         setExplanation({
-          easyExplanation: json.easyExplanation || 'No explanation.',
-          realLifeExample: json.RealLifeExample || '',
+          easyExplanation:
+            json.easyExplanation || 'No explanation available.',
+          realLifeExample: json.RealLifeExample || ''
         });
       } catch (err) {
-        setExplanationError(err.message);
+        console.error('Error fetching explanation:', err);
+        setExplanationError(err.message || 'Failed to fetch explanation.');
       } finally {
         setExplanationLoading(false);
       }
     })();
   }, [problemData]);
+
+  // === Chat: Load history when question changes ===
+  useEffect(() => {
+    if (!questionId) return;
+
+    (async () => {
+      try {
+        const token = sessionStorage.getItem('token');
+        const res = await fetch(
+          `http://localhost:8080/api/chat/${questionId}`,
+          {
+            headers: { Authorization: token }
+          }
+        );
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.message);
+        setChatMessages(
+          body.messages.map((m) => ({
+            ...m,
+            userId: String(m.userId)
+          }))
+        );
+      } catch (err) {
+        console.error('Error loading chat history:', err);
+      }
+    })();
+  }, [questionId]);
+
+  // Socket listeners
+  useEffect(() => {
+    const onHistory = (msgs) =>
+      setChatMessages(msgs.map((m) => ({ ...m, userId: String(m.userId) })));
+    socket.on('chatHistory', onHistory);
+    return () => socket.off('chatHistory', onHistory);
+  }, [socket]);
+
+  useEffect(() => {
+    const onMessage = (msg) => {
+      msg.userId = String(msg.userId);
+      setChatMessages((prev) =>
+        prev.some((m) => m._id === msg._id) ? prev : [...prev, msg]
+      );
+    };
+    socket.on('chatMessage', onMessage);
+    return () => socket.off('chatMessage', onMessage);
+  }, [socket]);
+
+  // Join chat room when opened
+  useEffect(() => {
+    if (chatOpen && questionId && currentUserId) {
+      socket.emit('joinChat', { questionId, userId: currentUserId });
+    }
+  }, [chatOpen, questionId, currentUserId, socket]);
+
+  // Send chat message
+  const handleSendMessage = useCallback(
+    async (e) => {
+      e.preventDefault();
+      const text = newMessage.trim();
+      if (!text || !questionId || !currentUserId) return;
+
+      try {
+        const token = sessionStorage.getItem('token');
+        const res = await fetch(
+          `http://localhost:8080/api/chat/${questionId}/message`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: token
+            },
+            body: JSON.stringify({ text })
+          }
+        );
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.message);
+
+        const saved = {
+          _id: body.message._id,
+          questionId,
+          text: body.message.text,
+          userId: String(body.message.userId),
+          timestamp: body.message.timestamp
+        };
+        socket.emit('sendChatMessage', saved);
+        setNewMessage('');
+      } catch (err) {
+        console.error('Error sending message:', err);
+      }
+    },
+    [newMessage, questionId, currentUserId, socket]
+  );
 
   return (
     <MainLayout navLinks={navLinks}>
@@ -186,13 +248,13 @@ export default function GFG() {
         variants={fadeIn}
         transition={{ duration: 0.6 }}
       >
-        {/* Gradient Headline */}
+        {/* Header */}
         <motion.h1
-          className="text-center text-3xl sm:text-3xl md:text-3xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 mb-6"
+          className="text-center text-3xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 mb-6"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
-         GeeksforGeeks Problem of the Day
+          GeeksforGeeks Problem of the Day
         </motion.h1>
 
         {/* Calendar */}
@@ -268,7 +330,6 @@ export default function GFG() {
                   Close
                 </button>
               </div>
-
               <motion.div
                 className="flex-1 p-4 overflow-y-auto space-y-4"
                 initial="hidden"
@@ -286,7 +347,9 @@ export default function GFG() {
                     return (
                       <div
                         key={msg._id || i}
-                        className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                        className={`flex ${
+                          isMe ? 'justify-end' : 'justify-start'
+                        }`}
                       >
                         <motion.div
                           className={`rounded-lg p-3 text-sm max-w-[75%] ${
@@ -324,7 +387,7 @@ export default function GFG() {
               >
                 <textarea
                   value={newMessage}
-                  onChange={e => setNewMessage(e.target.value)}
+                  onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Type your message..."
                   className="flex-1 border rounded p-2 text-sm resize-none"
                   rows="2"
@@ -334,7 +397,9 @@ export default function GFG() {
                   disabled={!newMessage.trim()}
                   whileHover={newMessage.trim() ? { scale: 1.05 } : {}}
                   className={`bg-purple-600 text-white rounded px-4 py-2 flex items-center gap-1 ${
-                    !newMessage.trim() ? 'opacity-50 cursor-not-allowed' : ''
+                    !newMessage.trim()
+                      ? 'opacity-50 cursor-not-allowed'
+                      : ''
                   }`}
                 >
                   Send <ArrowRight size={16} />

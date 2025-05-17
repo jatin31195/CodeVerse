@@ -59,42 +59,29 @@ async function fetchAndStoreLeetCodePOTD() {
 }
 
 const now = new Date();
-const todayFormatted = getLocalDateString(now); 
+const todayFormatted = getLocalDateString(now);
 
 async function fetchAndStoreGFGPOTD() {
   try {
-    const date = todayFormatted.split(" ")[0];
-    
-    const existingGfgQuestion = await Question.findOne({ date: date, platform: "GFG" });
+    const date = todayFormatted.split(" ")[0]; 
+    const queryDate = new Date(date + "T00:00:00.000Z");
+
+    const existingGfgQuestion = await Question.findOne({
+      date: queryDate,
+      platform: "GFG",
+    });
 
     if (existingGfgQuestion) {
-      console.log("GFG POTD for today already exists, skipping...");
-    } else {
-      console.log("Fetching GFG POTD...");
-
-      const gfgData = await axios.get(`http://localhost:8080/api/ques/gfg/potd/${todayFormatted}`);
-      console.log("Raw GFG API Response:", JSON.stringify(gfgData.data, null, 2));
-
-      let { problem_name, problem_url, problem_id, date: responseDate } = gfgData.data.data;
-
-      if (!problem_name || !problem_url || !problem_id) {
-        console.log("❌ Missing required GFG fields (problem_name, problem_url, or problem_id). Skipping...");
-        return;
-      }
-
-      const gfgQuestion = {
-        _id: uuidv4(),
-        platform: "GFG",
-        title: problem_name,
-        link: problem_url,
-        problem_id: problem_id,
-        date: new Date(date),
-      };
-
-      console.log("✅ Storing GFG Question:", gfgQuestion);
-      await Question.insertMany([gfgQuestion]);
-      console.log("✅ GFG POTD stored successfully.");
+      console.log("✅ GFG POTD for today already exists in DB:", existingGfgQuestion.title);
+      return;
     }
+
+    console.log("📡 Fetching GFG POTD from route...");
+
+    const gfgData = await axios.get(`http://localhost:8080/api/ques/gfg/potd/${date}`);
+    console.log("✅ GFG POTD fetched and stored via API route.");
+    console.log("📄 Response:", JSON.stringify(gfgData.data.data, null, 2));
+
   } catch (error) {
     console.error("❌ Error fetching and storing GFG POTD:", error.message);
   }
