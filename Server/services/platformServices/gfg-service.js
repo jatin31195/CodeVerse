@@ -1,63 +1,65 @@
+
 const axios = require('axios');
+const Question = require('../../models/Question');
+
+const GFG_API_URL =
+  'https://practiceapi.geeksforgeeks.org/api/vr/problems-of-day/problem/today/';
 
 async function fetchGFGPOTD() {
-    try {
-        const url = 'https://practiceapi.geeksforgeeks.org/api/vr/problems-of-day/problem/today/';
-        const response = await axios.get(url);
-        return response.data;
-    } catch (error) {
-        console.error("GFG API Error:", error.message);
-        throw new Error("Failed to fetch today's POTD from GFG.");
-    }
+  const resp = await axios.get(GFG_API_URL);
+  
+  return resp.data;
 }
 
+async function getGFGPOTDByDate(dateStr) {
+  
+  const date = new Date(dateStr + 'T00:00:00.000Z');
 
+  
+  const existing = await Question.findOne({
+    platform: 'GFG',
+    date
+  });
+  if (existing) return existing;
 
-async function fetchGFGPOTDByDate(date) {
-    try {
-        const today = new Date().toISOString().split("T")[0]; 
+  
+  let apiData;
+  try {
+    apiData = await fetchGFGPOTD();
+  } catch (err) {
+    console.error('❌ GFG API error:', err);
+    const e = new Error('Failed to fetch from GFG API');
+    e.statusCode = 502;
+    throw e;
+  }
 
-        if (date === today) {
-            return await fetchGFGPOTD(); 
-        }
+  
+  const { problem_name, problem_url, problem_id } = apiData;
+  if (!problem_name || !problem_url || !problem_id) {
+    console.error('❌ Unexpected GFG API data:', apiData);
+    const e = new Error('GFG returned unexpected data');
+    e.statusCode = 502;
+    throw e;
+  }
 
-        let [year, month, day] = date.split("-").map(Number);
-        let problemFound = null;
+  const q = new Question({
+    platform: 'GFG',
+    title: problem_name,
+    link: problem_url,
+    problem_id: String(problem_id),
+    date
+  });
 
-        while (!problemFound && (year > 2021 || (year === 2021 && month >= 1))) {
-            const problems = await fetchPreviousGFGPOTD(year, month.toString().padStart(2, "0"));
+  try {
+    await q.save();
+  } catch (dbErr) {
+    console.error('❌ DB save error:', dbErr);
+    const e = new Error('Failed to save POTD to database');
+    e.statusCode = 500;
+    throw e;
+  }
 
-            problemFound = problems.find(problem => problem.date.startsWith(date));
-
-
-
-
-
-
-            if (!problemFound) {
-                month -= 1;
-                if (month === 0) {
-                    month = 12;
-                    year -= 1;
-                }
-            }
-        }
-
-        if (!problemFound) {
-            throw new Error(`No POTD found for ${date}`);
-        }
-
-
-        return problemFound;
-    } catch (error) {
-        console.error("GFG POTD by Date Error:", error.message);
-        throw new Error("Failed to fetch POTD for the given date.");
-    }
+  return q;
 }
 
-
-
-
-
-
-module.exports = { fetchGFGPOTDByDate };
+module.exports = { getGFGPOTDByDate };

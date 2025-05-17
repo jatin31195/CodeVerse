@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { v4: uuidv4 } = require("uuid");
+
 const QuestionSchema = new mongoose.Schema({
   _id: { type: String, default: uuidv4 },
 
@@ -25,9 +26,18 @@ const QuestionSchema = new mongoose.Schema({
     default: Date.now
   },
   solutions: [{ type: String, ref: "Solution" }],
-  chat: { type: mongoose.Schema.Types.ObjectId, ref: "Chat" }
-});
+  chat: { type: mongoose.Schema.Types.ObjectId, ref: "Chat" },
 
+  
+  easyExplanation: {
+    type: String,
+    default: null
+  },
+  realLifeExample: {
+    type: String,
+    default: null
+  }
+});
 
 QuestionSchema.index({ date: 1, platform: 1, problem_id: 1 }, { unique: true });
 
