@@ -58,47 +58,48 @@ async function fetchAndStoreLeetCodePOTD() {
   }
 }
 
-
 const now = new Date();
-    const todayFormatted = getLocalDateString(now);
+const todayFormatted = getLocalDateString(now); 
 
 async function fetchAndStoreGFGPOTD() {
   try {
-    
-    const gfgData = await axios.get(`http://localhost:8080/api/ques/gfg/potd/${todayFormatted}`);
-   
-    let { problem_name, problem_url, problem_id, date } = gfgData.data.data;
-    
-  
-    date = date.split(" ")[0]; 
-    console.log("GFG Date from response:", date);
+    const date = todayFormatted.split(" ")[0];
     
     const existingGfgQuestion = await Question.findOne({ date: date, platform: "GFG" });
-    console.log("Existing GFG Question:", existingGfgQuestion);
-    
+
     if (existingGfgQuestion) {
       console.log("GFG POTD for today already exists, skipping...");
     } else {
-      console.log("Storing GFG POTD...");
-      if (!problem_name || !problem_url) {
-        console.log("Warning: Missing required GFG fields (problem_name or problem_url). Skipping storage.");
-      } else {
-        const gfgQuestion = {
-          _id: uuidv4(),
-          platform: "GFG",
-          title: problem_name,
-          link: problem_url,
-          problem_id: problem_id,
-          date: date,
-        };
-        await Question.insertMany([gfgQuestion]);
-        console.log("GFG POTD stored.");
+      console.log("Fetching GFG POTD...");
+
+      const gfgData = await axios.get(`http://localhost:8080/api/ques/gfg/potd/${todayFormatted}`);
+      console.log("Raw GFG API Response:", JSON.stringify(gfgData.data, null, 2));
+
+      let { problem_name, problem_url, problem_id, date: responseDate } = gfgData.data.data;
+
+      if (!problem_name || !problem_url || !problem_id) {
+        console.log("❌ Missing required GFG fields (problem_name, problem_url, or problem_id). Skipping...");
+        return;
       }
+
+      const gfgQuestion = {
+        _id: uuidv4(),
+        platform: "GFG",
+        title: problem_name,
+        link: problem_url,
+        problem_id: problem_id,
+        date: new Date(date),
+      };
+
+      console.log("✅ Storing GFG Question:", gfgQuestion);
+      await Question.insertMany([gfgQuestion]);
+      console.log("✅ GFG POTD stored successfully.");
     }
   } catch (error) {
-    console.error("Error fetching and storing GFG POTD:", error.message);
+    console.error("❌ Error fetching and storing GFG POTD:", error.message);
   }
 }
+
 
 async function fetchAndStoreCodeforcesPOTD() {
     

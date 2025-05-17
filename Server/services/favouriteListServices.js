@@ -9,10 +9,16 @@ const getUserFavoriteLists = async (userId) => {
   return await favoriteListRepository.getUserFavoriteLists(userId);
 };
 
+
+
 const addQuestionToList = async (listId, questionId) => {
   return await favoriteListRepository.addQuestionToList(listId, questionId);
 };
-
+const deleteFavoriteList = async (listId, userId) => {
+  const deleted = await favoriteListRepository.deleteFavoriteList(listId, userId);
+  if (!deleted) throw new Error('List not found or not authorized');
+  return deleted;
+};
 const removeQuestionFromList = async (listId, questionId) => {
   return await favoriteListRepository.removeQuestionFromList(listId, questionId);
 };
@@ -22,4 +28,5 @@ module.exports = {
   getUserFavoriteLists,
   addQuestionToList,
   removeQuestionFromList,
+  deleteFavoriteList,
 };

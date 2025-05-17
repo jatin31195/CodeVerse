@@ -1,4 +1,11 @@
 @import "tailwindcss";
+/* in your styles/globals.css or index.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+@layer base {
+  html {
+    font-family: 'Poppins', sans-serif;
+  }
+}
 @keyframes float {
     0%, 100% {
       transform: translateY(0);

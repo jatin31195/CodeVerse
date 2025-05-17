@@ -12,6 +12,12 @@ router.post('/verify-otp', authController.verifyOTP);
 router.get("/profile", authMiddleware, authController.getUserProfile);
 router.patch("/update-platform", authMiddleware, authController.updatePlatformUsername);
 router.post('/upload-profile-pic', authMiddleware, upload.single('profilePic'), uploadProfilePic);
+router.patch(
+  '/update-profile',
+  authMiddleware,
+  upload.single('profilePic'),  
+  authController.updateProfile 
+);
 router.get('/:id', authController.getUsernameById);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);

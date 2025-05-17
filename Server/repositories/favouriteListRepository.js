@@ -1,4 +1,4 @@
-
+const mongoose = require('mongoose');
 const FavoriteList = require('../models/FavouriteList');
 
 const createFavoriteList = async (userId, name) => {
@@ -8,7 +8,12 @@ const createFavoriteList = async (userId, name) => {
 const getUserFavoriteLists = async (userId) => {
   return await FavoriteList.find({ userId }).populate('questions');
 };
-
+const deleteFavoriteList = async (listId, userId) => {
+  return await FavoriteList.findOneAndDelete({
+    _id: listId,
+    userId: new mongoose.Types.ObjectId(userId)
+  });
+};
 const addQuestionToList = async (listId, questionId) => {
   return await FavoriteList.findByIdAndUpdate(
     listId,
@@ -30,4 +35,5 @@ module.exports = {
   getUserFavoriteLists,
   addQuestionToList,
   removeQuestionFromList,
+  deleteFavoriteList,
 };

@@ -1,135 +1,192 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   ArrowRight,
   Calendar,
   Code,
+  ChevronDown,
   BookOpen,
   PenTool,
   Users,
   Lightbulb,
 } from 'lucide-react';
-import Navbar from './Navbar';
 import MainLayout from './MainLayout';
+
 const navLinks = [
   { name: 'LeetCode', path: '/leetcode' },
   { name: 'CodeForces', path: '/codeforces' },
   { name: 'Geeks for Geeks', path: '/gfg' },
-  // Add more links as needed
 ];
-const POTD = () => {
-  return (
-    <>
-    <MainLayout  navLinks={navLinks}>
-    <div className="min-h-screen bg-white text-gray-950">
-      <main className="flex-1">
-      
-        <section className="py-16 relative overflow-hidden bg-white">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-purple-200 rounded-full opacity-30"></div>
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-cyan-100 rounded-full opacity-30"></div>
-          <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
-            <h1 className="text-5xl font-extrabold text-gray-900 mb-4">
-              Welcome to{' '}
-              <span className="bg-gradient-to-r from-purple-500 to-cyan-400 bg-clip-text text-transparent">
-                Daily POTD
-              </span>
-              {' '}Section
-            </h1>
-            <p className="text-xl text-gray-600 mb-8">
-              Your daily dose of algorithmic challenges from the top competitive programming platforms.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Link to="/leetcode" className="w-full sm:w-auto">
-                <button className="w-full sm:w-auto px-6 py-3 rounded-full bg-purple-500 text-white font-semibold flex items-center justify-center hover:bg-purple-600 transition-all">
-                  LeetCode POTD <ArrowRight className="ml-2" size={16} />
-                </button>
-              </Link>
-              <Link to="/gfg" className="w-full sm:w-auto">
-                <button className="w-full sm:w-auto px-6 py-3 rounded-full border border-purple-300 text-purple-500 font-semibold hover:bg-purple-100 transition-all">
-                  GeeksforGeeks POTD
-                </button>
-              </Link>
-              <Link to="/codeforces" className="w-full sm:w-auto">
-                <button className="w-full sm:w-auto px-6 py-3 rounded-full border border-cyan-300 text-cyan-500 font-semibold hover:bg-cyan-100 transition-all">
-                  Codeforces POTD
-                </button>
-              </Link>
-            </div>
-          </div>
-        </section>
 
-      
-        <section className="py-16 bg-white">
-          <div className="max-w-6xl mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">
-              <span className="bg-gradient-to-r from-purple-500 to-cyan-400 text-transparent bg-clip-text">
+export default function POTD() {
+  const features = [
+    {
+      icon: <Calendar className="h-6 w-6 text-purple-600" />,
+      title: 'Daily Problems',
+      desc: 'Curated challenges delivered every day to sharpen your skills.',
+      bg: 'bg-purple-50',
+    },
+    {
+      icon: <Code className="h-6 w-6 text-purple-600" />,
+      title: 'Detailed Solutions',
+      desc: 'Clean, commented code in C++, Java, and JavaScript.',
+      bg: 'bg-purple-50',
+    },
+    {
+      icon: <Users className="h-6 w-6 text-purple-600" />,
+      title: 'Community Insights',
+      desc: 'See peer approaches and best practices.',
+      bg: 'bg-purple-50',
+    },
+    {
+      icon: <PenTool className="h-6 w-6 text-purple-600" />,
+      title: 'Complexity Analysis',
+      desc: 'In‑depth time & space trade‑offs explained.',
+      bg: 'bg-purple-50',
+    },
+    {
+      icon: <Lightbulb className="h-6 w-6 text-purple-600" />,
+      title: 'Real‑World Use Cases',
+      desc: 'How algorithms apply in engineering scenarios.',
+      bg: 'bg-purple-50',
+    },
+    {
+      icon: <BookOpen className="h-6 w-6 text-purple-600" />,
+      title: 'Favorites & Lists',
+      desc: 'Bookmark and organize problems into custom lists.',
+      bg: 'bg-purple-50',
+    },
+  ];
+
+  return (
+    <MainLayout navLinks={navLinks} className="w-full">
+      <div className="w-full min-h-screen bg-neutral-50 text-slate-800 font-poppins">
+        {/* Hero Section */}
+       <section className="relative w-full py-20 bg-white from-purple-50 to-blue-50 overflow-hidden">
+  <div className="relative z-10 flex flex-col items-center justify-center text-center px-2 lg:px-0  mx-auto">
+    <motion.p
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="text-sm uppercase tracking-widest text-purple-600 mb-4"
+    >
+      Elevate Your Coding
+    </motion.p>
+
+    <motion.h1
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.4 }}
+      className="text-5xl sm:text-6xl md:text-7xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 mb-6"
+    >
+      Daily <span className="italic">POTD</span>
+    </motion.h1>
+
+    <motion.p
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.6 }}
+      className="text-lg sm:text-xl text-gray-700 mb-10"
+    >
+      Hand‑picked algorithm challenges, expert solutions, and community insights—every single day.
+    </motion.p>
+
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.8 }}
+      className="flex flex-wrap justify-center gap-10"
+    >
+      <Link to="/leetcode">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex items-center gap-2 
+    px-8 py-4 rounded-full font-semibold 
+    shadow-lg border-2 border-purple-600 text-purple-600
+    transition-all duration-200 ease-in-out
+
+    hover:shadow-2xl
+    hover:border-transparent
+    hover:bg-gradient-to-r hover:from-purple-600 hover:to-blue-600
+    hover:text-white"
+        >
+          LeetCode POTD <ArrowRight className="h-5 w-5" />
+        </motion.button>
+      </Link>
+      <Link to="/gfg">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex items-center gap-2 
+    px-8 py-4 rounded-full font-semibold 
+    shadow-lg border-2 border-purple-600 text-purple-600
+    transition-all duration-200 ease-in-out
+
+    hover:shadow-2xl
+    hover:border-transparent
+    hover:bg-gradient-to-r hover:from-purple-600 hover:to-blue-600
+    hover:text-white"
+        >
+          GFG POTD <ArrowRight className="h-5 w-5" />
+        </motion.button>
+      </Link>
+      <Link to="/codeforces">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex items-center gap-2 
+    px-8 py-4 rounded-full font-semibold 
+    shadow-lg border-2 border-purple-600 text-purple-600
+    transition-all duration-200 ease-in-out
+
+    hover:shadow-2xl
+    hover:border-transparent
+    hover:bg-gradient-to-r hover:from-purple-600 hover:to-blue-600
+    hover:text-white"
+        >
+          Codeforces POTD <ArrowRight className="h-5 w-5" />
+        </motion.button>
+      </Link>
+    </motion.div>
+  </div>
+</section>
+
+
+
+        {/* Features Section */}
+        <section className="w-full bg-neutral-50 py-16">
+          <div className="flex flex-col items-center text-center px-6">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+              <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 Features
               </span>
             </h2>
-            <p className="text-center text-gray-600 mb-12 text-lg">
-              Everything you need to master algorithmic problem solving and ace your technical interviews.
+            <p className="max-w-2xl text-base sm:text-lg text-slate-600 mb-10">
+              Everything you need to master algorithms and excel in your coding
+              interviews.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[
-                {
-                  icon: <Calendar size={24} className="text-purple-500" />,
-                  title: 'Daily Problems',
-                  desc: 'Access daily challenges from LeetCode, GeeksforGeeks, and Codeforces all in one place.',
-                  bg: 'bg-purple-100',
-                },
-                {
-                  icon: <Code size={24} className="text-cyan-500" />,
-                  title: 'Detailed Solutions',
-                  desc: 'Get optimal solutions in C++ and Java with detailed explanations.',
-                  bg: 'bg-cyan-100',
-                },
-                {
-                  icon: <Users size={24} className="text-purple-500" />,
-                  title: 'Community Solutions',
-                  desc: 'Share your solutions and learn from others with our community-driven approach.',
-                  bg: 'bg-purple-100',
-                },
-                {
-                  icon: <PenTool size={24} className="text-cyan-500" />,
-                  title: 'Time Complexity Analysis',
-                  desc: 'Understand the efficiency of solutions with our detailed analysis.',
-                  bg: 'bg-cyan-100',
-                },
-                {
-                  icon: <Lightbulb size={24} className="text-purple-500" />,
-                  title: 'Real-life Applications',
-                  desc: 'See how algorithmic concepts apply to real-world challenges.',
-                  bg: 'bg-purple-100',
-                },
-                {
-                  icon: <BookOpen size={24} className="text-cyan-500" />,
-                  title: 'Favorites System',
-                  desc: 'Save problems to custom lists for later review.',
-                  bg: 'bg-cyan-100',
-                },
-              ].map((feature, index) => (
-                <div
-                  key={index}
-                  className="border border-gray-200 rounded-xl p-6 shadow hover:shadow-md transition bg-white"
+            <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {features.map((f, idx) => (
+                <motion.div
+                  key={idx}
+                  whileHover={{ y: -4, boxShadow: '0 12px 18px rgba(0,0,0,0.1)' }}
+                  className="bg-white p-6 rounded-2xl shadow-md transition-all duration-200"
                 >
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-3 ${feature.bg}`}>
-                    {feature.icon}
+                  <div className={`${f.bg} inline-block p-4 rounded-xl mb-4`}>
+                    {f.icon}
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{feature.title}</h3>
-                  <p className="text-gray-600 text-sm">{feature.desc}</p>
-                </div>
+                  <h3 className="text-xl font-semibold mb-2">{f.title}</h3>
+                  <p className="text-slate-700 text-sm leading-relaxed">
+                    {f.desc}
+                  </p>
+                </motion.div>
               ))}
             </div>
           </div>
         </section>
-
-        
-      </main>
-    </div>
+      </div>
     </MainLayout>
-    </>
-
   );
-};
-
-export default POTD;
+}

@@ -1,10 +1,6 @@
-
-import React, {
-  useState,
-  useEffect,
-  useContext,
-  useCallback
-} from 'react';
+// src/GFG.jsx
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, ArrowRight } from 'lucide-react';
@@ -19,17 +15,25 @@ const navLinks = [
   { name: 'Geeks for Geeks', path: '/gfg' },
 ];
 
+// animation variants
+const fadeIn = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
+const slideIn = { hidden: { x: 300 }, show: { x: 0 } };
+
 const getCurrentUserId = () => {
   const token = sessionStorage.getItem('token');
   if (!token) return null;
-  try {
-    return JSON.parse(atob(token.split('.')[1])).id;
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(atob(token.split('.')[1])).id; }
+  catch { return null; }
 };
 
-const GFG = () => {
+export default function GFG() {
+  const navigate = useNavigate();
+
+  // Redirect if unauthenticated
+  useEffect(() => {
+    if (!sessionStorage.getItem('token')) navigate('/login');
+  }, [navigate]);
+
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [problemData, setProblemData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,135 +41,103 @@ const GFG = () => {
   const [explanationLoading, setExplanationLoading] = useState(false);
   const [explanationError, setExplanationError] = useState(null);
 
-  
   const socket = useContext(SocketContext);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
-
   const questionId = problemData?._id || null;
   const rawUserId = getCurrentUserId();
   const currentUserId = rawUserId != null ? String(rawUserId) : null;
 
-  
+  // Load chat history on question change
   useEffect(() => {
     if (!questionId) return;
     (async () => {
       try {
         const token = sessionStorage.getItem('token');
-        if (!token) throw new Error('No token');
-        const res = await fetch(
-          `http://localhost:8080/api/chat/${questionId}`,
-          { headers: { Authorization: token } }
-        );
+        const res = await fetch(`http://localhost:8080/api/chat/${questionId}`, {
+          headers: { Authorization: token },
+        });
         const body = await res.json();
         if (!res.ok) throw new Error(body.message);
-        setChatMessages(
-          (body.messages || []).map((m) => ({
-            ...m,
-            userId: String(m.userId),
-          }))
-        );
+        setChatMessages(body.messages.map(m => ({ ...m, userId: String(m.userId) })));
       } catch (err) {
         console.error('Error loading chat history:', err);
       }
     })();
   }, [questionId]);
 
-
+  // Socket listeners
   useEffect(() => {
-    const onHistory = (msgs) => {
-      setChatMessages(
-        (msgs || []).map((m) => ({ ...m, userId: String(m.userId) }))
-      );
-    };
+    const onHistory = msgs => setChatMessages(msgs.map(m => ({ ...m, userId: String(m.userId) })));
     socket.on('chatHistory', onHistory);
-    return () => void socket.off('chatHistory', onHistory);
+    return () => socket.off('chatHistory', onHistory);
   }, [socket]);
 
-  
   useEffect(() => {
-    const onMessage = (msg) => {
+    const onMessage = msg => {
       msg.userId = String(msg.userId);
-      setChatMessages((prev) => {
-        if (prev.some((m) => m._id === msg._id)) return prev;
-        return [...prev, msg];
-      });
+      setChatMessages(prev => prev.some(m => m._id === msg._id) ? prev : [...prev, msg]);
     };
     socket.on('chatMessage', onMessage);
-    return () => void socket.off('chatMessage', onMessage);
+    return () => socket.off('chatMessage', onMessage);
   }, [socket]);
 
-
+  // Join room when chat opens
   useEffect(() => {
     if (chatOpen && questionId && currentUserId) {
       socket.emit('joinChat', { questionId, userId: currentUserId });
     }
   }, [chatOpen, questionId, currentUserId, socket]);
 
- 
-  const handleSendMessage = useCallback(
-    async (e) => {
-      e.preventDefault();
-      const text = newMessage.trim();
-      if (!text || !questionId || !currentUserId) return;
+  const handleSendMessage = useCallback(async e => {
+    e.preventDefault();
+    const text = newMessage.trim();
+    if (!text || !questionId || !currentUserId) return;
+    try {
+      const token = sessionStorage.getItem('token');
+      const res = await fetch(
+        `http://localhost:8080/api/chat/${questionId}/message`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: token },
+          body: JSON.stringify({ text }),
+        }
+      );
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.message);
+      const saved = {
+        _id: body.message._id,
+        questionId,
+        text: body.message.text,
+        userId: String(body.message.userId),
+        timestamp: body.message.timestamp,
+      };
+      socket.emit('sendChatMessage', saved);
+      setNewMessage('');
+    } catch (err) {
+      console.error('Error sending message:', err);
+    }
+  }, [newMessage, questionId, currentUserId, socket]);
 
-      console.log('→ sending', { questionId, text });
-
-      try {
-        const token = sessionStorage.getItem('token');
-        if (!token) throw new Error('No token');
-        const res = await fetch(
-          `http://localhost:8080/api/chat/${questionId}/message`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: token,
-            },
-            body: JSON.stringify({ text }),
-          }
-        );
-        const body = await res.json();
-        if (!res.ok) throw new Error(body.message || 'Failed to send');
-
-        const savedMsg = {
-          _id: body.message._id,
-          questionId,
-          text: body.message.text,
-          userId: String(body.message.userId),
-          timestamp: body.message.timestamp,
-        };
-
-        
-        socket.emit('sendChatMessage', savedMsg);
-
-        setNewMessage('');
-      } catch (err) {
-        console.error('Error sending message:', err);
-      }
-    },
-    [newMessage, questionId, currentUserId, socket]
-  );
-
+  // Fetch GFG POTD
   useEffect(() => {
-    const fetchProblem = async () => {
-      setLoading(true);
+    setLoading(true);
+    (async () => {
       try {
         const ds = format(selectedDate, 'yyyy-MM-dd');
-        const res = await fetch(
-          `http://localhost:8080/api/ques/gfg/potd/${ds}`
-        );
+        const res = await fetch(`http://localhost:8080/api/ques/gfg/potd/${ds}`);
         const json = await res.json();
         if (json.status !== 'success') throw new Error(json.message);
-
-        
         setProblemData({
-          ...json.data,
-          date: json.data.date?.$date || json.data.date,
+          _id: String(json.data.problem_id),
+          title: json.data.problem_name,
+          link: json.data.problem_url,
+          date: json.data.date,
+          difficulty: json.data.difficulty,
+          tags: json.data.tags,
         });
-
         setExplanation(null);
       } catch (err) {
         console.error(err);
@@ -173,10 +145,10 @@ const GFG = () => {
       } finally {
         setLoading(false);
       }
-    };
-    fetchProblem();
+    })();
   }, [selectedDate]);
 
+  // Fetch explanation
   useEffect(() => {
     if (!problemData) return;
     (async () => {
@@ -188,7 +160,7 @@ const GFG = () => {
           body: JSON.stringify({
             title: problemData.title,
             platform: 'GeeksForGeeks',
-            link: problemData.url,
+            link: problemData.link,
           }),
         });
         const json = await res.json();
@@ -207,19 +179,40 @@ const GFG = () => {
 
   return (
     <MainLayout navLinks={navLinks}>
-      <div className="container mx-auto py-8 px-4 max-w-screen-xl">
-        <h1 className="text-3xl font-bold text-center mb-6">
-          GeeksforGeeks Problem of the Day
-        </h1>
+      <motion.div
+        className="container mx-auto py-8 px-4 max-w-screen-xl"
+        initial="hidden"
+        animate="show"
+        variants={fadeIn}
+        transition={{ duration: 0.6 }}
+      >
+        {/* Gradient Headline */}
+        <motion.h1
+          className="text-center text-3xl sm:text-3xl md:text-3xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 mb-6"
+          variants={fadeIn}
+          transition={{ delay: 0.2 }}
+        >
+         GeeksforGeeks Problem of the Day
+        </motion.h1>
 
-        <POTDCalendar
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-        />
+        {/* Calendar */}
+        <motion.div variants={fadeIn} transition={{ delay: 0.3 }}>
+          <POTDCalendar
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+          />
+        </motion.div>
 
-        <div className="mt-8">
+        {/* Problem Section */}
+        <motion.section
+          className="mt-8"
+          variants={fadeIn}
+          transition={{ delay: 0.4 }}
+        >
           {loading ? (
-            <div>Loading...</div>
+            <motion.p variants={fadeIn} transition={{ delay: 0.5 }}>
+              Loading problem…
+            </motion.p>
           ) : problemData ? (
             <>
               <h2 className="text-2xl font-semibold mb-4">
@@ -228,31 +221,40 @@ const GFG = () => {
               <SolutionCard
                 problem={problemData}
                 explanation={explanation}
-                loading={explanationLoading}
-                error={explanationError}
+                explanationLoading={explanationLoading}
+                explanationError={explanationError}
               />
             </>
           ) : (
-            <div>No problem available for this date.</div>
+            <motion.div
+              className="text-center py-6 text-gray-500"
+              variants={fadeIn}
+              transition={{ delay: 0.5 }}
+            >
+              No problem available for this date.
+            </motion.div>
           )}
-        </div>
+        </motion.section>
 
-     
-        <button
+        {/* Chat Launcher */}
+        <motion.button
           onClick={() => setChatOpen(true)}
-          className="fixed bottom-6 right-6 rounded-full w-14 h-14 flex items-center justify-center shadow-lg bg-gradient-to-r from-blue-500 to-green-500 text-white"
+          className="fixed bottom-6 right-6 rounded-full w-14 h-14 flex items-center justify-center shadow-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white"
+          whileHover={{ scale: 1.1 }}
         >
           <MessageCircle size={24} />
-        </button>
+        </motion.button>
 
-       
+        {/* Chat Panel */}
         <AnimatePresence>
           {chatOpen && (
             <motion.div
-              initial={{ x: 300 }}
-              animate={{ x: 0 }}
-              exit={{ x: 300 }}
               className="fixed right-0 top-0 bottom-0 bg-white shadow-lg w-80 z-50 flex flex-col"
+              initial="hidden"
+              animate="show"
+              exit="hidden"
+              variants={slideIn}
+              transition={{ type: 'tween', duration: 0.3 }}
             >
               <div className="p-4 border-b flex justify-between items-center">
                 <h2 className="font-bold text-lg">
@@ -261,13 +263,19 @@ const GFG = () => {
                 </h2>
                 <button
                   onClick={() => setChatOpen(false)}
-                  className="text-sm text-blue-500"
+                  className="text-gray-600 hover:text-gray-800 transition"
                 >
                   Close
                 </button>
               </div>
 
-              <div className="flex-1 p-4 overflow-y-auto space-y-4">
+              <motion.div
+                className="flex-1 p-4 overflow-y-auto space-y-4"
+                initial="hidden"
+                animate="show"
+                variants={fadeIn}
+                transition={{ delay: 0.2 }}
+              >
                 {chatMessages.length === 0 ? (
                   <p className="text-center text-gray-500">
                     No messages yet. Start a conversation!
@@ -278,62 +286,64 @@ const GFG = () => {
                     return (
                       <div
                         key={msg._id || i}
-                        className={`flex ${
-                          isMe ? 'justify-end pr-2' : 'justify-start pl-2'
-                        }`}
+                        className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                       >
-                        <div
-                          className={`rounded-lg p-2 text-xs max-w-[80%] ${
+                        <motion.div
+                          className={`rounded-lg p-3 text-sm max-w-[75%] ${
                             isMe
-                              ? 'bg-blue-500 text-white text-right'
-                              : 'bg-gray-200 text-gray-800 text-left'
+                              ? 'bg-purple-600 text-white text-right'
+                              : 'bg-gray-100 text-gray-900 text-left'
                           }`}
+                          whileHover={{ scale: 1.02 }}
                         >
                           <p className="font-semibold mb-1">
                             {isMe ? 'You' : msg.userId}
                           </p>
                           <p>{msg.text}</p>
                           <span
-                            className={`text-gray-600 mt-1 block ${
-                              isMe ? 'text-right' : 'text-left'
+                            className={`block text-xs mt-1 ${
+                              isMe ? 'text-gray-200' : 'text-gray-500'
                             }`}
                           >
                             {format(new Date(msg.timestamp), 'h:mm a')}
                           </span>
-                        </div>
+                        </motion.div>
                       </div>
                     );
                   })
                 )}
-              </div>
+              </motion.div>
 
-              <form
+              <motion.form
                 onSubmit={handleSendMessage}
                 className="p-4 border-t flex gap-2"
+                initial="hidden"
+                animate="show"
+                variants={fadeIn}
+                transition={{ delay: 0.4 }}
               >
                 <textarea
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
+                  onChange={e => setNewMessage(e.target.value)}
                   placeholder="Type your message..."
-                  className="flex-1 border rounded p-2 text-xs resize-none"
+                  className="flex-1 border rounded p-2 text-sm resize-none"
                   rows="2"
                 />
-                <button
+                <motion.button
                   type="submit"
                   disabled={!newMessage.trim()}
-                  className={`bg-blue-500 text-white rounded px-3 py-2 text-sm flex items-center gap-1 ${
+                  whileHover={newMessage.trim() ? { scale: 1.05 } : {}}
+                  className={`bg-purple-600 text-white rounded px-4 py-2 flex items-center gap-1 ${
                     !newMessage.trim() ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
                   Send <ArrowRight size={16} />
-                </button>
-              </form>
+                </motion.button>
+              </motion.form>
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
     </MainLayout>
   );
-};
-
-export default GFG;
+}

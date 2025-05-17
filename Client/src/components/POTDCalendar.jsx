@@ -28,20 +28,34 @@ const POTDCalendar = ({ selectedDate, onSelectDate, platform }) => {
     }
   };
 
-  const getPlatformStyles = () => {
-    switch (platform) {
-      case 'leetcode':
-        return { borderColor: 'border-orange-500', dotColor: 'bg-orange-500' };
-      case 'gfg':
-        return { borderColor: 'border-green-500', dotColor: 'bg-green-500' };
-      case 'codeforces':
-        return { borderColor: 'border-red-500', dotColor: 'bg-red-500' };
-      default:
-        return { borderColor: 'border-blue-500', dotColor: 'bg-blue-500' };
-    }
-  };
+const getPlatformStyles = () => {
+  switch (platform) {
+    case 'leetcode':
+      return {
+        shadow: 'shadow-[0_4px_16px_rgba(255,193,7,0.25)]', // Yellowish shadow
+        dotColor: 'bg-yellow-500'
+      };
+    case 'gfg':
+      return {
+        shadow: 'shadow-[0_8px_30px_rgba(4,120,87,1)]', // Dark emerald green
+        dotColor: 'bg-emerald-600',
+      };
+    case 'codeforces':
+      return {
+        shadow: 'shadow-[0_8px_30px_rgba(30,64,175,0.75)]', // Deep blue
+        dotColor: 'bg-blue-700',
+      };
+    default:
+      return {
+        shadow: 'shadow-[0_6px_20px_rgba(100,116,139,0.3)]',
+        dotColor: 'bg-gray-400',
+      };
+  }
+};
 
-  const { borderColor, dotColor } = getPlatformStyles();
+
+
+  const { shadow, dotColor } = getPlatformStyles();
 
   const goToPreviousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
@@ -77,7 +91,7 @@ const POTDCalendar = ({ selectedDate, onSelectDate, platform }) => {
 
   return (
     <div className="flex flex-col w-full mb-8">
-      <div className={`rounded-md border p-8 w-full max-w-full mx-auto shadow-sm ${borderColor}`}>
+      <div className={`rounded-md p-8 w-full max-w-full mx-auto transition duration-300 transform hover:-translate-y-1 hover:shadow-lg ${shadow}`}>
         <div className="flex justify-between items-start mb-8">
           <div>
             <h2 className="text-5xl font-semibold text-gray-900">{month}</h2>

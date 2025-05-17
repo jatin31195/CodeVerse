@@ -42,6 +42,51 @@ const getUsernameById = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId; 
+    const updates = {};
+    console.log(userId)
+    // Only include fields if provided in the request
+    if (req.body.name) {
+      updates.name = req.body.name.trim();
+    }
+    if (req.body.dob) {
+  updates.dateOfBirth = new Date(req.body.dob);
+}
+    if (req.body.gender) {
+      updates.gender = req.body.gender;
+    }
+
+    // —— NEW: use Multer’s req.file.path exactly like uploadProfilePic
+    if (req.file) {
+      // this will be something like 'uploads/avatars/filename.jpg'
+      updates.profilePic = req.file.path;
+    }
+
+    // Call service to apply the updates
+    const updated = await authService.updateProfile(userId, updates);
+
+    res.json({
+      success: true,
+      user: {
+        id: updated._id,
+        name: updated.name,
+        email: updated.email,
+        dateOfBirth: updated.dateOfBirth,
+        gender: updated.gender,
+        profilePic: updated.profilePic,    // match the field you just set
+      },
+    });
+  } catch (err) {
+    console.error('updateProfile error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Could not update profile',
+    });
+  }
+};
+
 const updatePlatformUsername = async (req, res) => {
   try {
     const { platform, username } = req.body;
@@ -102,4 +147,4 @@ const resetPassword = async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 };
-module.exports = { register, login, verifyOTP,uploadProfilePic ,getUsernameById,updatePlatformUsername,getUserProfile,forgotPassword,resetPassword};
+module.exports = {updateProfile, register, login, verifyOTP,uploadProfilePic ,getUsernameById,updatePlatformUsername,getUserProfile,forgotPassword,resetPassword};

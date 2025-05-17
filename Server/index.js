@@ -30,6 +30,7 @@ cron.schedule('30 5 * * *', () => {
   });
   
   // Schedule GFG and Codeforces POTD job at 12:00 AM (midnight) every day
+  //for 10 second */10 * * * * *
   cron.schedule('0 0 * * *', () => {
     console.log("Running GFG and Codeforces POTD job...");
     potdServices.fetchAndStoreGFGPOTD();

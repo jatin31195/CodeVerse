@@ -1,10 +1,6 @@
 // src/Codeforces.jsx
-import React, {
-  useState,
-  useEffect,
-  useContext,
-  useCallback
-} from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { MessageCircle, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,42 +15,45 @@ const navLinks = [
   { name: 'Geeks for Geeks', path: '/gfg' },
 ];
 
+const fadeIn = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
+const slideIn = { hidden: { x: 300 }, show: { x: 0 } };
+
 const getCurrentUserId = () => {
   const token = sessionStorage.getItem('token');
   if (!token) return null;
-  try {
-    return JSON.parse(atob(token.split('.')[1])).id;
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(atob(token.split('.')[1])).id; }
+  catch { return null; }
 };
 
-const Codeforces = () => {
+export default function Codeforces() {
+  const navigate = useNavigate();
+
+  // Auth guard
+  useEffect(() => {
+    if (!sessionStorage.getItem('token')) navigate('/login');
+  }, [navigate]);
+
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [question, setQuestion] = useState(null);
   const [questionLoading, setQuestionLoading] = useState(false);
   const [questionError, setQuestionError] = useState(null);
-
   const [explanation, setExplanation] = useState(null);
   const [explanationLoading, setExplanationLoading] = useState(false);
   const [explanationError, setExplanationError] = useState(null);
 
-  // ——— CHAT STATE ———
   const socket = useContext(SocketContext);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
-  
   const questionId = question?._id || null;
   const rawUserId = getCurrentUserId();
   const currentUserId = rawUserId != null ? String(rawUserId) : null;
-
   const dateKey = format(selectedDate, 'yyyy-MM-dd');
 
- 
+  // Fetch POTD
   useEffect(() => {
-    const fetchQuestion = async () => {
+    (async () => {
       setQuestionLoading(true);
       setQuestionError(null);
       setExplanation(null);
@@ -71,13 +70,12 @@ const Codeforces = () => {
       } finally {
         setQuestionLoading(false);
       }
-    };
-    fetchQuestion();
+    })();
   }, [dateKey]);
 
-  
+  // Fetch explanation
   useEffect(() => {
-    const fetchExplanation = async () => {
+    (async () => {
       if (!question?._id) return;
       setExplanationLoading(true);
       setExplanationError(null);
@@ -98,173 +96,173 @@ const Codeforces = () => {
       } finally {
         setExplanationLoading(false);
       }
-    };
-    fetchExplanation();
+    })();
   }, [question]);
 
- 
+  // Load chat history
   useEffect(() => {
     if (!questionId) return;
     (async () => {
       try {
         const token = sessionStorage.getItem('token');
-        if (!token) throw new Error('No token');
-        const res = await fetch(
-          `http://localhost:8080/api/chat/${questionId}`,
-          { headers: { Authorization: token } }
-        );
+        const res = await fetch(`http://localhost:8080/api/chat/${questionId}`, {
+          headers: { Authorization: token },
+        });
         const body = await res.json();
         if (!res.ok) throw new Error(body.message);
-        setChatMessages(
-          (body.messages || []).map(m => ({
-            ...m,
-            userId: String(m.userId),
-          }))
-        );
+        setChatMessages(body.messages.map(m => ({ ...m, userId: String(m.userId) })));
       } catch (err) {
         console.error('Error loading chat history:', err);
       }
     })();
   }, [questionId]);
 
- 
+  // Socket listeners
   useEffect(() => {
-    const onHistory = msgs => {
-      setChatMessages(
-        (msgs || []).map(m => ({ ...m, userId: String(m.userId) }))
-      );
-    };
+    const onHistory = msgs => setChatMessages(msgs.map(m => ({ ...m, userId: String(m.userId) })));
     socket.on('chatHistory', onHistory);
-    return () => void socket.off('chatHistory', onHistory);
+    return () => socket.off('chatHistory', onHistory);
   }, [socket]);
 
- 
   useEffect(() => {
     const onMessage = msg => {
       msg.userId = String(msg.userId);
-      setChatMessages(prev => {
-        if (prev.some(m => m._id === msg._id)) return prev;
-        return [...prev, msg];
-      });
+      setChatMessages(prev => prev.some(m => m._id === msg._id) ? prev : [...prev, msg]);
     };
     socket.on('chatMessage', onMessage);
-    return () => void socket.off('chatMessage', onMessage);
+    return () => socket.off('chatMessage', onMessage);
   }, [socket]);
 
-  
+  // Join chat room
   useEffect(() => {
     if (chatOpen && questionId && currentUserId) {
       socket.emit('joinChat', { questionId, userId: currentUserId });
     }
   }, [chatOpen, questionId, currentUserId, socket]);
 
-  
-  const handleSendMessage = useCallback(
-    async e => {
-      e.preventDefault();
-      const text = newMessage.trim();
-      if (!text || !questionId || !currentUserId) return;
-
-      try {
-        const token = sessionStorage.getItem('token');
-        if (!token) throw new Error('No token');
-        const res = await fetch(
-          `http://localhost:8080/api/chat/${questionId}/message`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: token,
-            },
-            body: JSON.stringify({ text }),
-          }
-        );
-        const body = await res.json();
-        if (!res.ok) throw new Error(body.message || 'Failed to send');
-
-        const savedMsg = {
-          _id: body.message._id,
-          questionId,
-          text: body.message.text,
-          userId: String(body.message.userId),
-          timestamp: body.message.timestamp,
-        };
-
-        
-        socket.emit('sendChatMessage', savedMsg);
-
-        setNewMessage('');
-      } catch (err) {
-        console.error('Error sending message:', err);
-      }
-    },
-    [newMessage, questionId, currentUserId, socket]
-  );
+  const handleSendMessage = useCallback(async e => {
+    e.preventDefault();
+    const text = newMessage.trim();
+    if (!text || !questionId || !currentUserId) return;
+    try {
+      const token = sessionStorage.getItem('token');
+      const res = await fetch(
+        `http://localhost:8080/api/chat/${questionId}/message`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: token },
+          body: JSON.stringify({ text }),
+        }
+      );
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.message);
+      const saved = {
+        _id: body.message._id,
+        questionId,
+        text: body.message.text,
+        userId: String(body.message.userId),
+        timestamp: body.message.timestamp,
+      };
+      socket.emit('sendChatMessage', saved);
+      setNewMessage('');
+    } catch (err) {
+      console.error('Error sending message:', err);
+    }
+  }, [newMessage, questionId, currentUserId, socket]);
 
   return (
     <MainLayout navLinks={navLinks}>
-      <div className="container mx-auto py-8 px-4 max-w-screen-xl">
-        <h1 className="text-3xl font-bold text-center mb-6">
+      <motion.div
+        className="container mx-auto py-8 px-4 max-w-screen-xl"
+        initial="hidden"
+        animate="show"
+        variants={fadeIn}
+        transition={{ duration: 0.6 }}
+      >
+        {/* Gradient Headline */}
+        <motion.h1
+          className="text-center text-3xl sm:text-3xl md:text-3xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 mb-6"
+          variants={fadeIn}
+          transition={{ delay: 0.2 }}
+        >
           Codeforces Problem of the Day
-        </h1>
+        </motion.h1>
 
-        <POTDCalendar
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-        />
+        {/* Calendar */}
+        <motion.div variants={fadeIn} transition={{ delay: 0.3 }}>
+          <POTDCalendar
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+            platform="codeforces"
+          />
+        </motion.div>
 
-        <div>
-          {question ? (
-            <h2
-              className="text-2xl font-semibold mb-4 cursor-pointer text-blue-600 hover:underline"
-              onClick={() => window.open(question.link, '_blank')}
-              title="Click to open the problem link"
+        {/* Question Section */}
+        <motion.div
+          className="mt-8"
+          variants={fadeIn}
+          transition={{ delay: 0.4 }}
+        >
+          {questionLoading ? (
+            <motion.p variants={fadeIn} transition={{ delay: 0.5 }}>
+              Loading question…
+            </motion.p>
+          ) : questionError ? (
+            <motion.p
+              className="text-red-500"
+              variants={fadeIn}
+              transition={{ delay: 0.5 }}
             >
-              Problem for {format(selectedDate, 'MMMM d, yyyy')}
-            </h2>
-          ) : (
-            <h2 className="text-2xl font-semibold mb-4">
-              Problem for {format(selectedDate, 'MMMM d, yyyy')}
-            </h2>
-          )}
-
-          {questionLoading && <p>Loading question...</p>}
-          {questionError && <p className="text-red-500">Error: {questionError}</p>}
-          {!questionLoading && !question && !questionError && (
-            <div
-              className="p-4 bg-yellow-100 text-yellow-800 rounded cursor-help"
-              title="Question not available"
+              Error: {questionError}
+            </motion.p>
+          ) : !question ? (
+            <motion.div
+              className="text-center py-6 text-gray-500"
+              variants={fadeIn}
+              transition={{ delay: 0.5 }}
             >
               Question not available for this date.
-            </div>
+            </motion.div>
+          ) : (
+            <>
+              <motion.h2
+                className="text-2xl font-semibold mb-4"
+                variants={fadeIn}
+                transition={{ delay: 0.5 }}
+              >
+                Problem for {format(selectedDate, 'MMMM d, yyyy')}
+              </motion.h2>
+              <motion.div variants={fadeIn} transition={{ delay: 0.6 }}>
+                <SolutionCard
+                  problem={question}
+                  explanation={explanation}
+                  loading={explanationLoading}
+                  error={explanationError}
+                />
+              </motion.div>
+            </>
           )}
+        </motion.div>
 
-          {question && (
-            <SolutionCard
-              problem={question}
-              explanation={explanation}
-              loading={explanationLoading}
-              error={explanationError}
-            />
-          )}
-        </div>
-
-        {/* Chat Button */}
-        <button
+        {/* Chat Launcher */}
+        <motion.button
           onClick={() => setChatOpen(true)}
-          className="fixed bottom-6 right-6 rounded-full w-14 h-14 flex items-center justify-center shadow-lg bg-gradient-to-r from-red-500 to-yellow-500 text-white"
+          className="fixed bottom-6 right-6 rounded-full w-14 h-14 flex items-center justify-center shadow-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white"
+          whileHover={{ scale: 1.1 }}
         >
           <MessageCircle size={24} />
-        </button>
+        </motion.button>
 
         {/* Chat Panel */}
         <AnimatePresence>
           {chatOpen && (
             <motion.div
-              initial={{ x: 300 }}
-              animate={{ x: 0 }}
-              exit={{ x: 300 }}
               className="fixed right-0 top-0 bottom-0 bg-white shadow-lg w-80 z-50 flex flex-col"
+              initial="hidden"
+              animate="show"
+              exit="hidden"
+              variants={slideIn}
+              transition={{ type: 'tween', duration: 0.3 }}
             >
               <div className="p-4 border-b flex justify-between items-center">
                 <h2 className="font-bold text-lg">
@@ -273,13 +271,19 @@ const Codeforces = () => {
                 </h2>
                 <button
                   onClick={() => setChatOpen(false)}
-                  className="text-sm text-blue-500"
+                  className="text-gray-600 hover:text-gray-800 transition"
                 >
                   Close
                 </button>
               </div>
 
-              <div className="flex-1 p-4 overflow-y-auto space-y-4">
+              <motion.div
+                className="flex-1 p-4 overflow-y-auto space-y-4"
+                initial="hidden"
+                animate="show"
+                variants={fadeIn}
+                transition={{ delay: 0.2 }}
+              >
                 {chatMessages.length === 0 ? (
                   <p className="text-center text-gray-500">
                     No messages yet. Start a conversation!
@@ -290,62 +294,64 @@ const Codeforces = () => {
                     return (
                       <div
                         key={msg._id || i}
-                        className={`flex ${
-                          isMe ? 'justify-end pr-2' : 'justify-start pl-2'
-                        }`}
+                        className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                       >
-                        <div
-                          className={`rounded-lg p-2 text-xs max-w-[80%] ${
+                        <motion.div
+                          className={`rounded-lg p-3 text-sm max-w-[75%] ${
                             isMe
-                              ? 'bg-red-500 text-white text-right'
-                              : 'bg-gray-200 text-gray-800 text-left'
+                              ? 'bg-purple-600 text-white text-right'
+                              : 'bg-gray-100 text-gray-900 text-left'
                           }`}
+                          whileHover={{ scale: 1.02 }}
                         >
                           <p className="font-semibold mb-1">
                             {isMe ? 'You' : msg.userId}
                           </p>
                           <p>{msg.text}</p>
                           <span
-                            className={`text-gray-600 mt-1 block ${
-                              isMe ? 'text-right' : 'text-left'
+                            className={`block text-xs mt-1 ${
+                              isMe ? 'text-gray-200' : 'text-gray-500'
                             }`}
                           >
                             {format(new Date(msg.timestamp), 'h:mm a')}
                           </span>
-                        </div>
+                        </motion.div>
                       </div>
                     );
                   })
                 )}
-              </div>
+              </motion.div>
 
-              <form
+              <motion.form
                 onSubmit={handleSendMessage}
                 className="p-4 border-t flex gap-2"
+                initial="hidden"
+                animate="show"
+                variants={fadeIn}
+                transition={{ delay: 0.4 }}
               >
                 <textarea
                   value={newMessage}
                   onChange={e => setNewMessage(e.target.value)}
                   placeholder="Type your message..."
-                  className="flex-1 border rounded p-2 text-xs resize-none"
+                  className="flex-1 border rounded p-2 text-sm resize-none"
                   rows="2"
                 />
-                <button
+                <motion.button
                   type="submit"
                   disabled={!newMessage.trim()}
-                  className={`bg-red-500 text-white rounded px-3 py-2 text-sm flex items-center gap-1 ${
+                  whileHover={newMessage.trim() ? { scale: 1.05 } : {}}
+                  className={`bg-purple-600 text-white rounded px-4 py-2 flex items-center gap-1 ${
                     !newMessage.trim() ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
                   Send <ArrowRight size={16} />
-                </button>
-              </form>
+                </motion.button>
+              </motion.form>
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
     </MainLayout>
   );
-};
-
-export default Codeforces;
+}
