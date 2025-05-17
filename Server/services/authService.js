@@ -74,7 +74,22 @@ const registerUser = async (userData) => {
 
   return { status: 201, message: 'User registered. Please check your email for OTP verification.', user: newUser, token };
 };
+const updateProfile = async (userId, updates) => {
+  // `$set` only the fields in `updates`
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { $set: updates },
+    { new: true, runValidators: true }
+  ).select('name email dob gender avatarUrl');
 
+  if (!updatedUser) {
+    const err = new Error('User not found');
+    err.status = 404;
+    throw err;
+  }
+
+  return updatedUser;
+};
 const loginUser = async (userData) => {
   const { email, password } = userData;
 
@@ -226,4 +241,4 @@ const resetPassword = async (resetToken, newPassword, confirmPassword) => {
   await user.save();
 return { status: 200, message: "Password has been reset successfully." };
 };
-module.exports = { registerUser, loginUser,getUserProfileService, verifyEmail,getUsernameById,updatePlatformUsernameService,forgotPassword,resetPassword };
+module.exports = {updateProfile, registerUser, loginUser,getUserProfileService, verifyEmail,getUsernameById,updatePlatformUsernameService,forgotPassword,resetPassword };

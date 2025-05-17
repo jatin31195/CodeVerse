@@ -10,13 +10,13 @@ const DashboardLayout = ({
   sidebarOpen,
   toggleSidebar,
 }) => (
-  <div className="min-h-screen bg-white my-0">
+  <div className="min-h-screen w-full bg-white my-0">
 
     
     <div className="flex relative">
     
       
-      <main className="flex-1 container mx-auto py-8 px-4 md:px-8">
+      <main className="flex-1 container mx-auto py-8 ">
       
         <div className="hidden md:flex justify-center mb-6 mt-4">
           <div className="bg-white/70 dark:bg-white-900/70 backdrop-blur-md rounded-full shadow-sm border border-purple-100 dark:border-purple-900/30 p-1">

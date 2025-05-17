@@ -294,9 +294,9 @@ const Dashboard = () => {
       sidebarOpen={sidebarOpen}
       toggleSidebar={toggleSidebar}
     >
-      <div className="w-full max-w-6xl mx-auto space-y-8">
+      <div className="w-full  mx-auto space-y-8">
     
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 py-4">
           <div className="md:col-span-4">
             <UserProfileCard
               name={userData.name}
@@ -306,7 +306,7 @@ const Dashboard = () => {
               avatarUrl={userData.avatarUrl}
             />
           </div>
-          <h2 className="text-xl font-bold font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-purple-800 to-indigo-700 dark:from-purple-600 dark:to-indigo-400 flex items-center col-span-4">
+          <h2 className="text-xl font-bold font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-purple-800 to-indigo-700 dark:from-purple-600 dark:to-indigo-400 flex items-center col-span-4 py-8">
             <span className="inline-block w-1.5 h-6 bg-gradient-to-b from-purple-500 to-indigo-600 rounded-full mr-2"></span>
             Connected Platforms
           </h2>
@@ -341,7 +341,7 @@ const Dashboard = () => {
               transition={{ duration: 0.3 }}
             >
               {/* Overall Statistics */}
-              <section>
+              <section className='py-5'>
                 <h2 className="text-xl font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-purple-800 to-indigo-700 dark:from-purple-600 dark:to-indigo-400 flex items-center">
                   <span className="inline-block w-1.5 h-6 bg-gradient-to-b from-purple-500 to-indigo-600 rounded-full mr-2"></span>
                   {platformName ? `${platformName} Statistics` : 'Overall Statistics'}
