@@ -71,14 +71,11 @@ vector<int> twoSum(vector<int>& nums, int target) {
           <h2 className="text-xl font-bold text-gray-800">{problem?.title || 'Untitled Problem'}</h2>
           <div className="flex gap-2 mt-2">
             <span className={`px-2 py-1 rounded text-white ${getPlatformColor()}`}>{problem?.platform || 'N/A'}</span>
-            <span className={`px-2 py-1 rounded text-white ${
-              problem?.difficulty === 'Easy' ? 'bg-green-500' : 
-              problem?.difficulty === 'Medium' ? 'bg-yellow-500' : 
-              'bg-red-500'
-            }`}>
-              {problem?.difficulty || 'Unknown'}
-            </span>
-            <span className="px-2 py-1 rounded bg-gray-200 text-gray-700">{problem?.date || 'No Date'}</span>
+            
+            <span className="px-2 py-1 rounded bg-gray-200 text-gray-700">
+  {problem?.date ? format(new Date(problem.date), 'yyyy-MM-dd') : 'No Date'}
+</span>
+
           </div>
         </div>
         <button
