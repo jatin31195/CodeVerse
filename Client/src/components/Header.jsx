@@ -14,9 +14,9 @@ const Header = ({ onNewTicket }) => {
          
             <button
               onClick={toggleSidebar}
-              className="p-2 text-purple-500 bg-codeverse-gradient bg-clip-text hover:text-purple-300 fixed left-0 top-8 z-40 ml-10 "
+              className="p-2 text-purple-500 bg-codeverse-gradient bg-clip-text hover:text-purple-300 fixed left-0 top-8 z-40 ml-10 px-20"
             >
-              <PanelRight className="h-8 w-9 " />
+              <PanelRight className="h-8 w-9" />
             </button>
   
 

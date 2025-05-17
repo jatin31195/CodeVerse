@@ -13,15 +13,15 @@ const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white ">
 
-      <header className="sticky top-0 z-50 border-b bg-white bg-opacity-95 backdrop-blur-sm">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+      <header className="sticky top-0 z-50  bg-white bg-opacity-95 backdrop-blur-sm shadow-md">
+        <div className="container mx-auto flex h-20 items-center justify-between px-4">
           <div className="flex items-center gap-3">
             <button onClick={toggleSidebar} className="p-2" aria-label="Toggle sidebar">
-              {!sidebarOpen ? <PanelRight className="h-6 w-6" /> : <X className="h-6 w-6" />}
+              {!sidebarOpen ? <PanelRight className="h-8 w-8" /> : <X className="h-6 w-6" />}
             </button>
-            <Link to="/" className="text-xl font-bold">CodeVerse</Link>
+            <Link to="/home" className="text-xl font-bold">CodeVerse</Link>
           </div>
           <nav className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
