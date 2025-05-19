@@ -1,4 +1,3 @@
-// src/GFG.jsx
 import React, {
   useState,
   useEffect,
@@ -20,7 +19,6 @@ const navLinks = [
   { name: 'Geeks for Geeks', path: '/gfg' },
 ];
 
-// animation variants
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0 }
@@ -43,7 +41,6 @@ const getCurrentUserId = () => {
 export default function GFG() {
   const navigate = useNavigate();
 
-  // Redirect if unauthenticated
   useEffect(() => {
     if (!sessionStorage.getItem('token')) {
       navigate('/login');
@@ -54,16 +51,11 @@ export default function GFG() {
   const [problemData, setProblemData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [explanation, setExplanation] = useState(null);
-  const [explanationLoading, setExplanationLoading] = useState(false);
-  const [explanationError, setExplanationError] = useState(null);
-
   const socket = useContext(SocketContext);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
-  // Derive IDs
   const questionId = problemData?._id || null;
   const rawUserId = getCurrentUserId();
   const currentUserId = rawUserId != null ? String(rawUserId) : null;
@@ -74,13 +66,10 @@ export default function GFG() {
     (async () => {
       try {
         const ds = format(selectedDate, 'yyyy-MM-dd');
-        const res = await fetch(
-          `http://localhost:8080/api/ques/gfg/potd/${ds}`
-        );
+        const res = await fetch(`http://localhost:8080/api/ques/gfg/potd/${ds}`);
         const json = await res.json();
 
         if (json.status !== 'success' || !json.data) {
-          // No problem for this date
           setProblemData(null);
         } else {
           const data = json.data;
@@ -90,13 +79,11 @@ export default function GFG() {
             link: data.link || '',
             date: data.date,
             difficulty: data.difficulty || '',
-            tags: data.tags || []
+            tags: data.tags || [],
+            easyExplanation: data.easyExplanation || '',
+            realLifeExample: data.realLifeExample || ''
           });
         }
-
-        // Reset explanation state on new fetch
-        setExplanation(null);
-        setExplanationError(null);
       } catch (err) {
         console.error('Error fetching POTD:', err);
         setProblemData(null);
@@ -106,60 +93,15 @@ export default function GFG() {
     })();
   }, [selectedDate]);
 
-  // === Fetch explanation if we have a valid problem ===
-  useEffect(() => {
-    if (
-      !problemData ||
-      !problemData.title.trim() ||
-      !problemData.link.trim()
-    ) {
-      return;
-    }
-
-    (async () => {
-      setExplanationLoading(true);
-      try {
-        const res = await fetch('http://localhost:8080/api/ques/easy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: problemData.title,
-            platform: 'GeeksForGeeks',
-            link: problemData.link
-          })
-        });
-        const json = await res.json();
-        if (!res.ok) {
-          throw new Error(json.message || 'Unknown error');
-        }
-
-        setExplanation({
-          easyExplanation:
-            json.easyExplanation || 'No explanation available.',
-          realLifeExample: json.RealLifeExample || ''
-        });
-      } catch (err) {
-        console.error('Error fetching explanation:', err);
-        setExplanationError(err.message || 'Failed to fetch explanation.');
-      } finally {
-        setExplanationLoading(false);
-      }
-    })();
-  }, [problemData]);
-
-  // === Chat: Load history when question changes ===
+ 
   useEffect(() => {
     if (!questionId) return;
-
     (async () => {
       try {
         const token = sessionStorage.getItem('token');
-        const res = await fetch(
-          `http://localhost:8080/api/chat/${questionId}`,
-          {
-            headers: { Authorization: token }
-          }
-        );
+        const res = await fetch(`http://localhost:8080/api/chat/${questionId}`, {
+          headers: { Authorization: token }
+        });
         const body = await res.json();
         if (!res.ok) throw new Error(body.message);
         setChatMessages(
@@ -174,7 +116,7 @@ export default function GFG() {
     })();
   }, [questionId]);
 
-  // Socket listeners
+
   useEffect(() => {
     const onHistory = (msgs) =>
       setChatMessages(msgs.map((m) => ({ ...m, userId: String(m.userId) })));
@@ -193,14 +135,12 @@ export default function GFG() {
     return () => socket.off('chatMessage', onMessage);
   }, [socket]);
 
-  // Join chat room when opened
   useEffect(() => {
     if (chatOpen && questionId && currentUserId) {
       socket.emit('joinChat', { questionId, userId: currentUserId });
     }
   }, [chatOpen, questionId, currentUserId, socket]);
 
-  // Send chat message
   const handleSendMessage = useCallback(
     async (e) => {
       e.preventDefault();
@@ -248,7 +188,6 @@ export default function GFG() {
         variants={fadeIn}
         transition={{ duration: 0.6 }}
       >
-        {/* Header */}
         <motion.h1
           className="text-center text-3xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 mb-6"
           variants={fadeIn}
@@ -257,7 +196,6 @@ export default function GFG() {
           GeeksforGeeks Problem of the Day
         </motion.h1>
 
-        {/* Calendar */}
         <motion.div variants={fadeIn} transition={{ delay: 0.3 }}>
           <POTDCalendar
             selectedDate={selectedDate}
@@ -265,12 +203,7 @@ export default function GFG() {
           />
         </motion.div>
 
-        {/* Problem Section */}
-        <motion.section
-          className="mt-8"
-          variants={fadeIn}
-          transition={{ delay: 0.4 }}
-        >
+        <motion.section className="mt-8" variants={fadeIn} transition={{ delay: 0.4 }}>
           {loading ? (
             <motion.p variants={fadeIn} transition={{ delay: 0.5 }}>
               Loading problem…
@@ -282,9 +215,10 @@ export default function GFG() {
               </h2>
               <SolutionCard
                 problem={problemData}
-                explanation={explanation}
-                explanationLoading={explanationLoading}
-                explanationError={explanationError}
+                explanation={{
+                  easyExplanation: problemData.easyExplanation,
+                  realLifeExample: problemData.realLifeExample
+                }}
               />
             </>
           ) : (
@@ -347,9 +281,7 @@ export default function GFG() {
                     return (
                       <div
                         key={msg._id || i}
-                        className={`flex ${
-                          isMe ? 'justify-end' : 'justify-start'
-                        }`}
+                        className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                       >
                         <motion.div
                           className={`rounded-lg p-3 text-sm max-w-[75%] ${
@@ -397,9 +329,7 @@ export default function GFG() {
                   disabled={!newMessage.trim()}
                   whileHover={newMessage.trim() ? { scale: 1.05 } : {}}
                   className={`bg-purple-600 text-white rounded px-4 py-2 flex items-center gap-1 ${
-                    !newMessage.trim()
-                      ? 'opacity-50 cursor-not-allowed'
-                      : ''
+                    !newMessage.trim() ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
                   Send <ArrowRight size={16} />

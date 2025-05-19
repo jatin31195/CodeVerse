@@ -1,4 +1,3 @@
-// src/Codeforces.jsx
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -28,7 +27,6 @@ const getCurrentUserId = () => {
 export default function Codeforces() {
   const navigate = useNavigate();
 
-  // Auth guard
   useEffect(() => {
     if (!sessionStorage.getItem('token')) navigate('/login');
   }, [navigate]);
@@ -37,9 +35,6 @@ export default function Codeforces() {
   const [question, setQuestion] = useState(null);
   const [questionLoading, setQuestionLoading] = useState(false);
   const [questionError, setQuestionError] = useState(null);
-  const [explanation, setExplanation] = useState(null);
-  const [explanationLoading, setExplanationLoading] = useState(false);
-  const [explanationError, setExplanationError] = useState(null);
 
   const socket = useContext(SocketContext);
   const [chatOpen, setChatOpen] = useState(false);
@@ -51,19 +46,16 @@ export default function Codeforces() {
   const currentUserId = rawUserId != null ? String(rawUserId) : null;
   const dateKey = format(selectedDate, 'yyyy-MM-dd');
 
-  // Fetch POTD
+ 
   useEffect(() => {
     (async () => {
       setQuestionLoading(true);
       setQuestionError(null);
-      setExplanation(null);
       try {
-        const res = await fetch(
-          `http://localhost:8080/api/ques/codeforces/potd/${dateKey}`
-        );
+        const res = await fetch(`http://localhost:8080/api/ques/codeforces/potd/${dateKey}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Error fetching question');
-        setQuestion(data.questions?.[0] ?? null);
+        setQuestion(data.data ?? null);
       } catch (err) {
         setQuestion(null);
         setQuestionError(err.message);
@@ -73,33 +65,7 @@ export default function Codeforces() {
     })();
   }, [dateKey]);
 
-  // Fetch explanation
-  useEffect(() => {
-    (async () => {
-      if (!question?._id) return;
-      setExplanationLoading(true);
-      setExplanationError(null);
-      try {
-        const res = await fetch('http://localhost:8080/api/ques/easy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ questionId: question._id }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Error fetching explanation');
-        setExplanation({
-          easyExplanation: data.easyExplanation || 'No explanation available.',
-          realLifeExample: data.RealLifeExample || '',
-        });
-      } catch (err) {
-        setExplanationError(err.message);
-      } finally {
-        setExplanationLoading(false);
-      }
-    })();
-  }, [question]);
-
-  // Load chat history
+  
   useEffect(() => {
     if (!questionId) return;
     (async () => {
@@ -117,7 +83,7 @@ export default function Codeforces() {
     })();
   }, [questionId]);
 
-  // Socket listeners
+  
   useEffect(() => {
     const onHistory = msgs => setChatMessages(msgs.map(m => ({ ...m, userId: String(m.userId) })));
     socket.on('chatHistory', onHistory);
@@ -133,7 +99,6 @@ export default function Codeforces() {
     return () => socket.off('chatMessage', onMessage);
   }, [socket]);
 
-  // Join chat room
   useEffect(() => {
     if (chatOpen && questionId && currentUserId) {
       socket.emit('joinChat', { questionId, userId: currentUserId });
@@ -179,16 +144,14 @@ export default function Codeforces() {
         variants={fadeIn}
         transition={{ duration: 0.6 }}
       >
-        {/* Gradient Headline */}
         <motion.h1
-          className="text-center text-3xl sm:text-3xl md:text-3xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 mb-6"
+          className="text-center text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 mb-6"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
           Codeforces Problem of the Day
         </motion.h1>
 
-        {/* Calendar */}
         <motion.div variants={fadeIn} transition={{ delay: 0.3 }}>
           <POTDCalendar
             selectedDate={selectedDate}
@@ -197,54 +160,33 @@ export default function Codeforces() {
           />
         </motion.div>
 
-        {/* Question Section */}
-        <motion.div
-          className="mt-8"
-          variants={fadeIn}
-          transition={{ delay: 0.4 }}
-        >
+        <motion.div className="mt-8" variants={fadeIn} transition={{ delay: 0.4 }}>
           {questionLoading ? (
-            <motion.p variants={fadeIn} transition={{ delay: 0.5 }}>
-              Loading question…
-            </motion.p>
+            <p>Loading question…</p>
           ) : questionError ? (
-            <motion.p
-              className="text-red-500"
-              variants={fadeIn}
-              transition={{ delay: 0.5 }}
-            >
-              Error: {questionError}
-            </motion.p>
+            <p className="text-red-500">Error: {questionError}</p>
           ) : !question ? (
-            <motion.div
-              className="text-center py-6 text-gray-500"
-              variants={fadeIn}
-              transition={{ delay: 0.5 }}
-            >
+            <div className="text-center py-6 text-gray-500">
               Question not available for this date.
-            </motion.div>
+            </div>
           ) : (
             <>
-              <motion.h2
-                className="text-2xl font-semibold mb-4"
-                variants={fadeIn}
-                transition={{ delay: 0.5 }}
-              >
+              <h2 className="text-2xl font-semibold mb-4">
                 Problem for {format(selectedDate, 'MMMM d, yyyy')}
-              </motion.h2>
-              <motion.div variants={fadeIn} transition={{ delay: 0.6 }}>
-                <SolutionCard
-                  problem={question}
-                  explanation={explanation}
-                  loading={explanationLoading}
-                  error={explanationError}
-                />
-              </motion.div>
+              </h2>
+              <SolutionCard
+                problem={question}
+                explanation={{
+                  easyExplanation: question.easyExplanation || 'No explanation available.',
+                  realLifeExample: question.realLifeExample || '',
+                }}
+                loading={false}
+                error={null}
+              />
             </>
           )}
         </motion.div>
 
-        {/* Chat Launcher */}
         <motion.button
           onClick={() => setChatOpen(true)}
           className="fixed bottom-6 right-6 rounded-full w-14 h-14 flex items-center justify-center shadow-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white"
@@ -253,7 +195,6 @@ export default function Codeforces() {
           <MessageCircle size={24} />
         </motion.button>
 
-        {/* Chat Panel */}
         <AnimatePresence>
           {chatOpen && (
             <motion.div
