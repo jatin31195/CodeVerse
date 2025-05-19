@@ -1,5 +1,5 @@
 const { main } = require("../utils/OpenAi_API");
-const Question = require("../models/Question"); // Ensure this is the correct model path
+const Question = require("../models/Question"); 
 
 const getEasyExplanation = async ({ questionId, title, platform, link }) => {
   try {
@@ -23,8 +23,8 @@ const getEasyExplanation = async ({ questionId, title, platform, link }) => {
   
 Respond ONLY in valid JSON format (Do not include triple backticks):
 {
-  "easyExplanation": "<Beginner-friendly explanation of the problem. Explain like you're teaching someone new to DSA.>",
-  "RealLifeExample": "<A simple, everyday real-world analogy that relates to the problem's logic. Keep it short and intuitive.>"
+  "easyExplanation": "<Beginner-friendly 100 words Point wise explanation of the problem. Explain like you're teaching someone new to DSA.>",
+  "RealLifeExample": "<A simple,Point wise everyday real-world analogy that relates to the problem's logic. Keep it short and intuitive.>"
 }
 
 Problem Platform: ${platform}
