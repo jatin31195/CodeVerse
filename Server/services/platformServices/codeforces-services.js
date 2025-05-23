@@ -1,122 +1,126 @@
-const axios = require("axios");
+const axios    = require("axios");
+const { v4: uuidv4 } = require("uuid");
 const Question = require("../../models/Question");
 
-// Codeforces API URL
-const API_URL = "https://codeforces.com/api/problemset.problems";
+// ————————————————
+// Weekly difficulty structure
+const difficultySchedule = [
+  [800,  900,  1000],  // Week 1
+  [900,  1000, 1100],  // Week 2
+  [1000, 1100, 1200],  // Week 3
+  [1100, 1200, 1300]   // Week 4
+];
 
-const getTodayCodeforcesQuestions = async (req, res) => {
+function getDifficultyForToday() {
+  const today      = new Date();
+  const dayOfMonth = today.getDate();
+  const week       = Math.floor((dayOfMonth - 1) / 7);  // 0–3
+  const dayOfWeek  = (dayOfMonth - 1) % 7;              // 0–6
+
+  if (dayOfWeek < 3)        return difficultySchedule[week][0];
+  else if (dayOfWeek < 5)   return difficultySchedule[week][1];
+  else                      return difficultySchedule[week][2];
+}
+
+
+async function fetchEasyExplanation({ title, platform, link, questionId }) {
   try {
-    const { date } = req.params;
-
-    if (!date) {
-      return res.status(400).json({ success: false, message: "Date parameter is required" });
-    }
-
- 
-    const inputDate = new Date(date);
-
-    if (isNaN(inputDate.getTime())) {
-      return res.status(400).json({ success: false, message: "Invalid date format" });
-    }
-
-
-    const startOfDayUTC = new Date(Date.UTC(
-      inputDate.getUTCFullYear(),
-      inputDate.getUTCMonth(),
-      inputDate.getUTCDate()
-    ));
-
-    const endOfDayUTC = new Date(startOfDayUTC);
-    endOfDayUTC.setUTCDate(endOfDayUTC.getUTCDate() + 1);
-
-    console.log(`Fetching Codeforces questions from: ${startOfDayUTC.toISOString()} to ${endOfDayUTC.toISOString()}`);
-
-    const questions = await Question.find({
-      platform: "Codeforces",
-      date: { $gte: startOfDayUTC, $lt: endOfDayUTC },
+    const resp = await axios.post("http://localhost:8080/api/ques/easy", {
+      title, platform, link, questionId
     });
-
-    return res.status(200).json({ success: true, questions });
-  } catch (error) {
-    console.error("Error fetching Codeforces questions by date:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return resp.data;
+  } catch (err) {
+    console.error("❌ Easy Explanation API Error:", err?.response?.data || err.message);
+    return null;
   }
 }
 
 
+async function fetchDailyCodeforcesProblem() {
+  const API_URL = "https://codeforces.com/api/problemset.problems";
+  const rating  = getDifficultyForToday();
 
+  const { data } = await axios.get(API_URL);
+  const allProblems = data.result.problems;
 
-// Weekly difficulty structure
-const difficultySchedule = [
-  [800, 900, 1000],   // Week 1: Easy start
-  [900, 1000, 1100],  // Week 2: Slight increase
-  [1000, 1100, 1200], // Week 3: Mid-level
-  [1100, 1200, 1300]  // Week 4: Harder start
-];
+  
+  const filtered = allProblems.filter(p => p.rating === rating);
+  if (filtered.length === 0) throw new Error(`No Codeforces problems at rating ${rating}`);
 
-// Function to determine today's difficulty
-const getDifficultyForToday = () => {
-  const today = new Date();
-  const dayOfMonth = today.getDate();
-  const week = Math.floor((dayOfMonth - 1) / 7); // Week 0 to 3
-  const dayOfWeek = (dayOfMonth - 1) % 7; // Day 0 to 6
+  
+  let problem, tries = 0;
+  do {
+    problem = filtered[Math.floor(Math.random() * filtered.length)];
+    const link = `https://codeforces.com/problemset/problem/${problem.contestId}/${problem.index}`;
+    const exists = await Question.exists({ link });
+    if (!exists) break;
+    tries++;
+  } while (tries < 10);
 
-  let difficulty;
-  if (dayOfWeek < 3) difficulty = difficultySchedule[week][0]; // Easy
-  else if (dayOfWeek < 5) difficulty = difficultySchedule[week][1]; // Medium
-  else difficulty = difficultySchedule[week][2]; // Hard
+  if (tries >= 10) throw new Error("Could not find a unique Codeforces problem after 10 tries");
 
-  return difficulty;
-};
+  return {
+    _id:        uuidv4(),
+    platform:   "Codeforces",
+    title:      problem.name,
+    link:       `https://codeforces.com/problemset/problem/${problem.contestId}/${problem.index}`,
+    problem_id:`${problem.contestId}${problem.index}`,
+    tags:       problem.tags || [],
+    date:       null
+  };
+}
 
-// Fetch and insert a unique Codeforces problem
-const fetchDailyProblem = async (req, res) => {
-  const rating = getDifficultyForToday();
+async function getCodeforcesPOTDByDate(dateStr) {
+ 
+  const date = new Date(dateStr + "T00:00:00.000Z");
 
-  try {
-    const response = await axios.get(API_URL);
-    const problems = response.data.result.problems;
+  
+  let question = await Question.findOne({
+    platform: "Codeforces",
+    date
+  });
 
-    // Filter problems by today's difficulty
-    let filteredProblems = problems.filter((p) => p.rating === rating);
-
-    if (filteredProblems.length === 0) {
-      return res.status(404).json({ message: `No problems found for rating ${rating}` });
-    }
-
-    let randomProblem;
-    let exists = true;
-    let attempts = 0;
-
-    // Keep selecting a new problem until we find one that isn't in the database
-    while (exists && attempts < 10) { // Avoid infinite loops
-      randomProblem = filteredProblems[Math.floor(Math.random() * filteredProblems.length)];
-
-      const problemUrl = `https://codeforces.com/problemset/problem/${randomProblem.contestId}/${randomProblem.index}`;
-
-      exists = await Question.exists({ link: problemUrl });
-      attempts++;
-    }
-
-    if (exists) {
-      return res.status(500).json({ error: "Unable to find a unique problem after multiple attempts." });
-    }
-
-    const problemData = {
-      platform: "Codeforces",
-      title: randomProblem.name,
-      link: `https://codeforces.com/problemset/problem/${randomProblem.contestId}/${randomProblem.index}`,
-      problem_id: `${randomProblem.contestId}${randomProblem.index}`,
-      tags: randomProblem.tags || [],
-      addedAt: new Date(),
-    };
-
-    return res.json(problemData);
-
-  } catch (error) {
-    console.error("Error fetching or inserting problem:", error);
-    return res.status(500).json({ error: "Failed to fetch problems" });
+  
+  if (question && question.easyExplanation && question.realLifeExample) {
+    return question;
   }
-};
 
-module.exports = { fetchDailyProblem , getTodayCodeforcesQuestions};
+  
+  if (question) {
+    const expl = await fetchEasyExplanation({
+      title:      question.title,
+      platform:   question.platform,
+      link:       question.link,
+      questionId: question._id
+    });
+    if (expl?.easyExplanation && expl?.RealLifeExample) {
+      question.easyExplanation = expl.easyExplanation;
+      question.realLifeExample = expl.RealLifeExample;
+      await question.save();
+    }
+    return question;
+  }
+
+  
+  const probData = await fetchDailyCodeforcesProblem();
+  probData.date = date;
+  question = new Question(probData);
+  await question.save();
+
+  
+  const expl = await fetchEasyExplanation({
+    title:      question.title,
+    platform:   question.platform,
+    link:       question.link,
+    questionId: question._id
+  });
+  if (expl?.easyExplanation && expl?.RealLifeExample) {
+    question.easyExplanation = expl.easyExplanation;
+    question.realLifeExample = expl.RealLifeExample;
+    await question.save();
+  }
+
+  return question;
+}
+
+module.exports = { getCodeforcesPOTDByDate };

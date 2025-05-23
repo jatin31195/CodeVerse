@@ -14,7 +14,6 @@ const navLinks = [
   { name: 'Geeks for Geeks', path: '/gfg' },
 ];
 
-// animation variants
 const fadeIn = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 const slideIn = { hidden: { x: 300 }, show: { x: 0 } };
 
@@ -22,8 +21,11 @@ const getInitialDate = () => new Date();
 const getCurrentUserId = () => {
   const token = sessionStorage.getItem('token');
   if (!token) return null;
-  try { return JSON.parse(atob(token.split('.')[1])).id; }
-  catch { return null; }
+  try {
+    return JSON.parse(atob(token.split('.')[1])).id;
+  } catch {
+    return null;
+  }
 };
 
 export default function LeetCode() {
@@ -32,15 +34,11 @@ export default function LeetCode() {
   const [problem, setProblem] = useState(null);
   const [problemLoading, setProblemLoading] = useState(false);
   const [problemError, setProblemError] = useState(null);
-  const [explanation, setExplanation] = useState(null);
-  const [explanationLoading, setExplanationLoading] = useState(false);
-  const [explanationError, setExplanationError] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const socket = useContext(SocketContext);
 
-  // redirect if not auth
   useEffect(() => {
     if (!sessionStorage.getItem('token')) navigate('/login');
   }, [navigate]);
@@ -49,7 +47,6 @@ export default function LeetCode() {
   const rawUserId = getCurrentUserId();
   const currentUserId = rawUserId != null ? String(rawUserId) : null;
 
-  // load chat history
   useEffect(() => {
     if (!questionId) return;
     (async () => {
@@ -69,7 +66,6 @@ export default function LeetCode() {
     })();
   }, [questionId]);
 
-  // socket listeners
   useEffect(() => {
     const onHistory = msgs => setChatMessages(msgs.map(m => ({ ...m, userId: String(m.userId) })));
     socket.on('chatHistory', onHistory);
@@ -85,7 +81,6 @@ export default function LeetCode() {
     return () => socket.off('chatMessage', handler);
   }, [socket]);
 
-  // join socket room
   useEffect(() => {
     if (chatOpen && questionId && currentUserId) {
       socket.emit('joinChat', { questionId, userId: currentUserId });
@@ -122,13 +117,11 @@ export default function LeetCode() {
     }
   }, [newMessage, questionId, currentUserId, socket]);
 
-  // fetch problem of the day
   useEffect(() => {
     setProblemLoading(true);
     setProblemError(null);
-    setExplanation(null);
     const ds = format(selectedDate, 'yyyy-MM-dd');
-    fetch(`http://localhost:8080/api/ques/leetcode/potd/today/${encodeURIComponent(ds)}`)
+    fetch(`http://localhost:8080/api/ques/leetcode/potd/${encodeURIComponent(ds)}`)
       .then(r => r.json().then(data => {
         if (!r.ok) throw new Error(data.message || 'Fetch failed');
         return data.data;
@@ -137,32 +130,6 @@ export default function LeetCode() {
       .catch(e => { setProblemError(e.message); setProblem(null); })
       .finally(() => setProblemLoading(false));
   }, [selectedDate]);
-
-  // fetch explanation
-  useEffect(() => {
-    if (!problem) return;
-    setExplanationLoading(true);
-    setExplanationError(null);
-    fetch('http://localhost:8080/api/ques/easy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: problem.title,
-        platform: 'LeetCode',
-        link: problem.link,
-      }),
-    })
-      .then(r => r.json().then(data => {
-        if (!r.ok) throw new Error(data.message || 'Fetch failed');
-        return data;
-      }))
-      .then(data => setExplanation({
-        easyExplanation: data.easyExplanation || 'No explanation.',
-        realLifeExample: data.RealLifeExample || ''
-      }))
-      .catch(e => setExplanationError(e.message))
-      .finally(() => setExplanationLoading(false));
-  }, [problem]);
 
   return (
     <MainLayout navLinks={navLinks}>
@@ -174,18 +141,14 @@ export default function LeetCode() {
         transition={{ duration: 0.6 }}
       >
         <motion.h1
-                    className="text-center text-3xl sm:text-3xl md:text-3xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 mb-6"
-
+          className="text-center text-3xl sm:text-3xl md:text-3xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 mb-6"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
           LeetCode POTD
         </motion.h1>
 
-        <motion.div
-          variants={fadeIn}
-          transition={{ delay: 0.3 }}
-        >
+        <motion.div variants={fadeIn} transition={{ delay: 0.3 }}>
           <POTDCalendar
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
@@ -193,39 +156,28 @@ export default function LeetCode() {
           />
         </motion.div>
 
-        <motion.section
-          className="mb-8"
-          variants={fadeIn}
-          transition={{ delay: 0.4 }}
-        >
+        <motion.section className="mb-8" variants={fadeIn} transition={{ delay: 0.4 }}>
           <h2 className="text-2xl font-semibold mb-4">
             Problem for {format(selectedDate, 'MMMM d, yyyy')}
           </h2>
           {problemLoading ? (
-            <motion.p
-              variants={fadeIn}
-              transition={{ delay: 0.5 }}
-            >
+            <motion.p variants={fadeIn} transition={{ delay: 0.5 }}>
               Loading problem…
             </motion.p>
           ) : problemError ? (
-            <motion.p
-              className="text-red-500"
-              variants={fadeIn}
-              transition={{ delay: 0.5 }}
-            >
+            <motion.p className="text-red-500" variants={fadeIn} transition={{ delay: 0.5 }}>
               Error: {problemError}
             </motion.p>
           ) : problem ? (
-            <motion.div
-              variants={fadeIn}
-              transition={{ delay: 0.5 }}
-            >
+            <motion.div variants={fadeIn} transition={{ delay: 0.5 }}>
               <SolutionCard
                 problem={problem}
-                explanation={explanation}
-                explanationLoading={explanationLoading}
-                explanationError={explanationError}
+                explanation={{
+                  easyExplanation: problem.easyExplanation || 'No explanation.',
+                  realLifeExample: problem.realLifeExample || '',
+                }}
+                explanationLoading={false}
+                explanationError={null}
               />
             </motion.div>
           ) : (
