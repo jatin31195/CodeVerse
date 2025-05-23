@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { Check, Link } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, Link as LinkIcon } from "lucide-react";
 
 const PlatformCard = ({ platform, username, onSave, isConnected }) => {
   const [newUsername, setNewUsername] = useState(username || "");
@@ -35,63 +35,84 @@ const PlatformCard = ({ platform, username, onSave, isConnected }) => {
   };
 
   return (
-    <motion.div
-      className={`w-full bg-white rounded-lg shadow transition-transform hover:shadow-xl ${
-        isConnected ? "border-green-300" : "border-gray-300"
-      }`}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <div className={`h-1 w-full bg-gradient-to-r ${color}`}></div>
-      <div className="p-4 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded overflow-hidden bg-white">
-            <img src={logo} alt={name} className="w-6 h-6 object-contain" />
-          </div>
-          <div>
-            <h3 className="font-medium">{name}</h3>
-            {username && <p className="text-xs text-gray-500">@{username}</p>}
-          </div>
-        </div>
-        <button
-          onClick={() => setIsOpen(true)}
-          className="px-3 py-1 rounded bg-gray-600 text-white hover:bg-primary/90 transition"
-        >
-          {isConnected ? "Update" : "Connect"}
-        </button>
-      </div>
-      {isOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6">
-            <h3 className="text-lg font-bold mb-2">Connect {name}</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Enter your {name} username to connect your account.
-            </p>
-            <input
-              type="text"
-              value={newUsername}
-              onChange={(e) => setNewUsername(e.target.value)}
-              placeholder={`Enter your ${name} username`}
-              className="w-full border rounded px-3 py-2 mb-4"
-            />
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={() => setIsOpen(false)}
-                className="px-4 py-2 border rounded hover:bg-red-200 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-green-500/90 transition"
-              >
-                Save
-              </button>
+    <>
+      <motion.div
+        className={`w-full bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 border-2 ${
+          isConnected ? "border-green-400" : "border-gray-200"
+        }`}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ scale: 1.02 }}
+      >
+        <div className={`h-2 w-full rounded-t-2xl bg-gradient-to-r ${color}`}></div>
+        <div className="p-5 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-10 h-10 rounded-full bg-white shadow-inner flex items-center justify-center">
+              <img src={logo} alt={name} className="w-6 h-6 object-contain" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-800 text-lg">{name}</h3>
+              {username && (
+                <p className="text-sm text-gray-500 tracking-wide">@{username}</p>
+              )}
             </div>
           </div>
+          <button
+            onClick={() => setIsOpen(true)}
+            className="px-4 py-1.5 bg-gradient-to-r from-gray-700 to-gray-900 text-white rounded-lg text-sm hover:brightness-110 transition"
+          >
+            {isConnected ? "Update" : "Connect"}
+          </button>
         </div>
-      )}
-    </motion.div>
+      </motion.div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 relative"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <h3 className="text-xl font-bold text-gray-800 mb-2">
+                Connect to {name}
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Enter your username to link your {name} profile.
+              </p>
+              <input
+                type="text"
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+                placeholder={`Enter your ${name} username`}
+                className="w-full border border-gray-300 rounded-md px-4 py-2 mb-4 focus:ring-2 focus:ring-gray-500 outline-none transition"
+              />
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="px-4 py-2 rounded-lg text-gray-700 border border-gray-300 hover:bg-gray-100 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                >
+                  Save
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
