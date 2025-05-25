@@ -133,6 +133,10 @@ export default function LeetCode() {
 
   return (
     <MainLayout navLinks={navLinks}>
+      <div className="fixed top-25 left-6 bg-white/80 backdrop-blur-md shadow-md rounded-full px-4 py-2 text-sm text-gray-800 flex items-center gap-2 border border-gray-300 hover:shadow-lg transition-all duration-400 z-40 animate-pulse">
+  <span className="text-blue-600 font-semibold">💡 Tip:</span>
+  Click + to add question to Task or Favourites
+</div>
       <motion.div
         className="container mx-auto py-8 px-4 max-w-screen-xl"
         initial="hidden"
@@ -147,7 +151,7 @@ export default function LeetCode() {
         >
           LeetCode POTD
         </motion.h1>
-
+        
         <motion.div variants={fadeIn} transition={{ delay: 0.3 }}>
           <POTDCalendar
             selectedDate={selectedDate}
@@ -296,6 +300,9 @@ export default function LeetCode() {
             </motion.div>
           )}
         </AnimatePresence>
+        {/* Floating helper badge in bottom right */}
+
+
       </motion.div>
     </MainLayout>
   );

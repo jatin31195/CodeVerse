@@ -181,6 +181,10 @@ export default function GFG() {
 
   return (
     <MainLayout navLinks={navLinks}>
+      <div className="fixed top-25 left-6 bg-white/80 backdrop-blur-md shadow-md rounded-full px-4 py-2 text-sm text-gray-800 flex items-center gap-2 border border-gray-300 hover:shadow-lg transition-all duration-400 z-40 animate-pulse">
+  <span className="text-blue-600 font-semibold">💡 Tip:</span>
+  Click + to add question to Task or Favourites
+</div>
       <motion.div
         className="container mx-auto py-8 px-4 max-w-screen-xl"
         initial="hidden"
@@ -188,6 +192,7 @@ export default function GFG() {
         variants={fadeIn}
         transition={{ duration: 0.6 }}
       >
+        
         <motion.h1
           className="text-center text-3xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 mb-6"
           variants={fadeIn}

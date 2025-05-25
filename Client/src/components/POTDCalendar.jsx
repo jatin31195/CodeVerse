@@ -3,6 +3,7 @@ import { format, addMonths, subMonths } from 'date-fns';
 import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const API_BASE_URL = 'http://localhost:8080/api/fav';
 const TASK_API_URL = 'http://localhost:8080/api/tasks';
@@ -12,6 +13,7 @@ const POTDCalendar = ({ selectedDate, onSelectDate, platform,showAddIcon = true 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDateForModal, setSelectedDateForModal] = useState(null);
   const [favoriteLists, setFavoriteLists] = useState([]);
+  const [activeTab, setActiveTab] = useState('daily');
 
   const getPlatformShadow = () => {
     switch (platform) {
@@ -127,12 +129,19 @@ const POTDCalendar = ({ selectedDate, onSelectDate, platform,showAddIcon = true 
     </span>
 
     {showAddIcon && (
-      <button
-        onClick={(e) => openModal(day, e)}
-        className="absolute -top-3 right-0 p-1 rounded-full bg-sky-100 hover:bg-sky-200 transition-opacity opacity-0 group-hover:opacity-100"
-      >
-        <Plus className="h-4 w-4 text-gray-700" />
-      </button>
+      <div className="relative group">
+  <button
+    onClick={(e) => openModal(day, e)}
+    className="absolute -top-10 right-0 p-1 rounded-full  hover:bg-sky-200 transition-opacity opacity-100 group-hover:opacity-100 cursor-pointer"
+  >
+    <Plus className="h-2 w-2 text-gray-700" />
+  </button>
+
+  <div className="absolute -top-20 right-0 w-max max-w-[200px] scale-0 group-hover:scale-100 transition-transform duration-200 bg-white text-gray-700 text-xs px-3 py-1.5 rounded-md shadow-lg border border-gray-200">
+    Click to add this question to your Daily Task or a Favorite List
+  </div>
+</div>
+
     )}
   </div>
 );
@@ -197,50 +206,102 @@ const POTDCalendar = ({ selectedDate, onSelectDate, platform,showAddIcon = true 
         </div>
       </div>
 
+      <AnimatePresence>
       {modalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-white/30 z-50">
-          <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
-            <h3 className="text-lg font-semibold mb-4 text-center">Choose Action</h3>
+        <motion.div
+          className="fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-white/30 z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="bg-white p-6 rounded-lg w-96 shadow-lg"
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0.9 }}
+          >
+            <div className="mb-6 text-center">
+  <h2 className="text-2xl font-bold text-gray-900 mb-1">
+    Choose Option
+  </h2>
+  <p className="text-sm text-gray-600">
+    Select an option below to organize your question into your daily tasks or a favorite list.
+  </p>
+</div>
 
-            <button
-              onClick={addToTask}
-              className="w-full p-2 rounded-md bg-yellow-100 hover:bg-yellow-200 text-center mb-4"
-            >
-              ✅ Add to Daily Task
-            </button>
-
-            <div className="border-t pt-2 text-sm text-gray-600 mb-2">
-              Select Favorite List:
+            <div className="flex mb-4 border-b border-gray-200">
+              <button
+                onClick={() => setActiveTab('daily')}
+                className={`flex-1 py-2 text-center font-medium transition ${
+                  activeTab === 'daily'
+                    ? 'text-gray-800 border-b-2 border-yellow-400'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Daily Task
+              </button>
+              <button
+                onClick={() => setActiveTab('favorites')}
+                className={`flex-1 py-2 text-center font-medium transition ${
+                  activeTab === 'favorites'
+                    ? 'text-gray-800 border-b-2 border-yellow-400'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Favorite Lists
+              </button>
             </div>
-            {favoriteLists.length === 0 ? (
-              <div className="text-gray-500 text-sm italic px-2">
-                No favorite lists found.
+
+            {/* Tab Content */}
+            {activeTab === 'daily' ? (
+              <div className="space-y-4">
+                <button
+                  onClick={addToTask}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-md bg-yellow-100 hover:bg-yellow-200 text-gray-900 font-medium transition"
+                >
+                  <Plus className="h-5 w-5" />
+                  ✅ Add to Daily Task
+                </button>
               </div>
             ) : (
-              <div className="flex flex-col gap-2 max-h-40 overflow-y-auto mb-4">
-                {favoriteLists.map((list) => (
-                  <button
-                    key={list._id}
-                    onClick={() => addToFavorites(list._id)}
-                    className="p-2 rounded-md bg-gray-100 hover:bg-gray-200 text-left"
-                  >
-                    ⭐ {list.name}
-                  </button>
-                ))}
+              <div className="space-y-4">
+                <div className="text-sm text-gray-600">Select Favorite List:</div>
+                {favoriteLists.length === 0 ? (
+                  <div className="text-gray-500 italic text-sm px-2">
+                    No favorite lists found.
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
+                    {favoriteLists.map((list) => (
+                      <button
+                        key={list._id}
+                        onClick={() => addToFavorites(list._id)}
+                        className="flex items-center gap-2 p-2 rounded-md bg-gray-100 hover:bg-gray-200 text-left transition"
+                      >
+                        ⭐ {list.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
-            <div className="flex justify-end">
+            {/* Footer */}
+            <div className="mt-6 flex justify-end">
               <button
-                onClick={() => setModalOpen(false)}
-                className="p-2 rounded-md bg-red-100 hover:bg-red-200"
+                onClick={() => {
+                  setModalOpen(false);
+                  setActiveTab('daily');
+                }}
+                className="px-4 py-2 text-sm rounded-md bg-red-100 hover:bg-red-200 text-red-800 font-medium transition"
               >
                 Cancel
               </button>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+    </AnimatePresence>
     </div>
   );
 };
