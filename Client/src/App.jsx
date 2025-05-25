@@ -21,9 +21,22 @@ import MyProblem from "./components/MyProblem";
 import AddProblem from "./components/AddProblem";
 import PasswordReset from "./components/PasswordReset";
 import ForgotPassword from "./components/ForgotPassword";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 function App() {
     return (
         <Router>
+            <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
             <Routes>
                 <Route path="/" element={<LandingPage/>}/>
                 <Route path="/login" element={<LoginPage/>} />

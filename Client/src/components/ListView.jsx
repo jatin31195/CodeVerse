@@ -39,12 +39,12 @@ const fetchListById = async (id) => {
   }
 };
 
-const addQuestionToListAPI = async (listId, question) => {
+export const addQuestionToListAPI = async (listId, questionId) => {
   try {
     const response = await fetch(`${API_BASE}/add-question`, {
       method: "POST",
       headers: getAuthHeaders(),
-      body: JSON.stringify({ listId, ...question })
+      body: JSON.stringify({ listId, questionId }),
     });
     if (!response.ok) throw new Error("Failed to add question");
     return await response.json();
@@ -53,6 +53,7 @@ const addQuestionToListAPI = async (listId, question) => {
     throw error;
   }
 };
+
 
 const removeQuestionFromListAPI = async (listId, questionId) => {
   try {
@@ -104,17 +105,18 @@ const SearchBar = ({ onSearch, placeholder, listId, onQuestionAdded, className }
   };
 
   const handleAddQuestion = async (question) => {
-    if (!listId || !onQuestionAdded) return;
-    try {
-      await addQuestionToListAPI(listId, question);
-      alert(`Added "${question.title}" to your list`);
-      onQuestionAdded();
-      setShowResults(false);
-      setQuery("");
-    } catch (error) {
-      alert("Failed to add question");
-    }
-  };
+  if (!listId || !onQuestionAdded) return;
+  try {
+    await addQuestionToListAPI(listId, question._id);
+    alert(`Added "${question.title}" to your list`);
+    onQuestionAdded();
+    setShowResults(false);
+    setQuery("");
+  } catch (error) {
+    alert("Failed to add question");
+  }
+};
+
 
   return (
     <div className={`relative ${className}`}>

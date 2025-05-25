@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-
+import { toast } from 'react-toastify';
 const LoginPage = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -38,13 +38,13 @@ const LoginPage = () => {
       });
       const data = await response.json();
       if (response.ok) {
-        // The server should set an httpOnly cookie with the token.
-        alert("Login successful!");
+        
+        toast.success("Login successful!");
         sessionStorage.setItem('token',data.token);
         navigate('/home');
       } else {
         const data = await response.json();
-        alert(data.message || "Authentication failed");
+        toast.error(data.message || "Authentication failed");
       }
     } catch (error) {
       console.error("Error:", error);
@@ -59,7 +59,7 @@ const LoginPage = () => {
     setIsLoading(true);
     // Replace with your Google sign-in API call
     setTimeout(() => {
-      alert("Google sign-in successful!");
+      toast.success("Google sign-in successful!");
       navigate('/');
       setIsLoading(false);
     }, 1500);
