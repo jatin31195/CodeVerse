@@ -40,5 +40,5 @@ const QuestionSchema = new mongoose.Schema({
 });
 
 QuestionSchema.index({ date: 1, platform: 1, problem_id: 1 }, { unique: true });
-
+QuestionSchema.index({ date: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 31 });
 module.exports = mongoose.model("Question", QuestionSchema);
