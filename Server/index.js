@@ -4,7 +4,7 @@ const cors = require("cors");
 const { serverConfig, dbConnection } = require("./config");
 const apiRoutes = require("./routes");
 const initializeSocket = require("./socket/socket");
-
+const { startCleanupJob } = require('./utils/taskCleanupScheduler');
 const app = express();
 const server = http.createServer(app); 
 
@@ -36,6 +36,7 @@ cron.schedule('30 5 * * *', () => {
     potdServices.fetchAndStoreGFGPOTD();
     potdServices.fetchAndStoreCodeforcesPOTD();
   });
+startCleanupJob();
 
 const io = initializeSocket(server);
 app.set('socketio', io);
