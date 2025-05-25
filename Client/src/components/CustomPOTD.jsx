@@ -87,7 +87,7 @@ export default function CustomPOTD() {
         transition={{ duration: 0.6 }}
       >
 
-        {/* HEADER */}
+       
         <motion.div
           className="flex flex-col md:flex-row justify-between items-center mb-10"
           variants={fadeIn}
@@ -120,7 +120,7 @@ export default function CustomPOTD() {
           </div>
         </motion.div>
 
-        {/* LIST SELECTOR */}
+        
         <motion.div
           className="mb-8 md:w-1/3"
           variants={fadeIn}
@@ -148,7 +148,7 @@ export default function CustomPOTD() {
 
         <div className="grid gap-8 md:grid-cols-3">
 
-          {/* CALENDAR */}
+         
           <motion.div
             className="md:col-span-2"
             variants={fadeIn}
@@ -158,10 +158,11 @@ export default function CustomPOTD() {
               selectedDate={selectedDate}
               onSelectDate={setSelectedDate}
               platform={selectedProblem ? selectedProblem.platform.toLowerCase() : 'other'}
+              showAddIcon={false}
             />
           </motion.div>
 
-          {/* PROBLEM DETAIL */}
+          
           <motion.div
             className="bg-white rounded-2xl shadow-xl"
             whileHover={{ scale: 1.02 }}
@@ -260,7 +261,7 @@ export default function CustomPOTD() {
           </motion.div>
         </div>
 
-        {/* GETTING STARTED CARDS */}
+        
         <motion.div
           className="mt-12"
           variants={fadeIn}
