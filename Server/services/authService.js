@@ -33,7 +33,20 @@ const registerUser = async (userData) => {
   const { username, email, password, dateOfBirth, gender } = userData;
 
   const existingEmail = await authRepository.findUserByEmail(email);
-  if (existingEmail) return { status: 400, message: 'Email already exists' };
+
+  if (existingEmail) {
+    if (!existingEmail.isVerified) {
+      return {
+        status: 400,
+        message: 'Email already exists but not verified',
+        user: {
+          email: existingEmail.email,
+          isVerified: existingEmail.isVerified,
+        },
+      };
+    }
+    return { status: 400, message: 'Email already exists and is already verified' };
+  }
 
   const existingUsername = await authRepository.findUserByUsername(username);
   if (existingUsername) return { status: 400, message: 'Username already exists' };
@@ -52,15 +65,13 @@ const registerUser = async (userData) => {
     gender,
     otp,
     otpExpires,
-    isVerified: false
+    isVerified: false,
   });
 
- 
   const otpHtml = await loadTemplate('otpTemplate.html', {
-    OTP_CODE: otp
+    OTP_CODE: otp,
   });
 
-  //otp sending
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
     to: newUser.email,
@@ -69,13 +80,18 @@ const registerUser = async (userData) => {
     html: otpHtml,
   });
 
-  
   const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-  return { status: 201, message: 'User registered. Please check your email for OTP verification.', user: newUser, token };
+  return {
+    status: 201,
+    message: 'User registered. Please check your email for OTP verification.',
+    user: newUser,
+    token,
+  };
 };
+
 const updateProfile = async (userId, updates) => {
-  // `$set` only the fields in `updates`
+ 
   const updatedUser = await User.findByIdAndUpdate(
     userId,
     { $set: updates },
