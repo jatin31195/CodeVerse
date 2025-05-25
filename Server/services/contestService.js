@@ -86,7 +86,7 @@ const fetchUpcomingGFGContests = async () => {
             contests = response.data.objects.map(contest => ({
                 name: contest.event,
                 platform: 'GeeksforGeeks',
-                startTimeIST: moment(contest.start).tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss'),
+                startTimeIST: moment(contest.startTime * 1000).format('YYYY-MM-DD HH:mm:ss'),
                 durationMinutes: contest.duration / 60,
                 url: contest.href
             }));
