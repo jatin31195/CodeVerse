@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-
+import React, { Fragment, useState, useEffect } from 'react';
+import { Combobox, Transition } from '@headlessui/react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { Shuffle, ExternalLink, Code } from 'lucide-react';
+import { ChevronDown, Search, Shuffle, ExternalLink, Code } from 'lucide-react';
 import { motion } from 'framer-motion';
+
 import MainLayout from './MainLayout';
 import POTDCalendar from './POTDCalendar';
 
@@ -14,10 +15,17 @@ const navLinks = [
   { name: 'Add Problem', path: '/add-problem' },
 ];
 
-const fadeIn = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
+const fadeIn = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
 
 export default function CustomPOTD() {
-  const [lists, setLists] = useState([]);
+ 
+  const [allLists, setAllLists] = useState([]);
+
+  const [filteredLists, setFilteredLists] = useState([]);
+
   const [currentList, setCurrentList] = useState(null);
   const [problemsMap, setProblemsMap] = useState({});
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -31,17 +39,23 @@ export default function CustomPOTD() {
     headers: { Authorization: token },
   });
 
+
   useEffect(() => {
     const fetchLists = async () => {
       setLoadingLists(true);
       try {
         const own = await api.get('/lists');
         const pub = await api.get('/lists/public');
-        const all = [...own.data.lists, ...pub.data.lists];
-        setLists(all);
-        if (all.length) selectList(all[0]._id);
-      } catch (e) {
-        console.error(e);
+        const combined = [...own.data.lists, ...pub.data.lists];
+
+        setAllLists(combined);
+        setFilteredLists(combined);
+
+        if (combined.length) {
+          selectList(combined[0]._id);
+        }
+      } catch (err) {
+        console.error('Failed to fetch lists:', err);
       } finally {
         setLoadingLists(false);
       }
@@ -49,9 +63,11 @@ export default function CustomPOTD() {
     fetchLists();
   }, []);
 
+ 
   const selectList = async (listId) => {
     setCurrentList(listId);
     setLoadingProblems(true);
+
     try {
       const res = await api.get(`/list/${listId}/questions`);
       const map = res.data.questions.reduce((acc, q) => {
@@ -59,21 +75,24 @@ export default function CustomPOTD() {
         return acc;
       }, {});
       setProblemsMap(map);
-    } catch {
+    } catch (err) {
+      console.error('Failed to fetch list questions:', err);
       setProblemsMap({});
     } finally {
       setLoadingProblems(false);
     }
   };
 
+  
   useEffect(() => {
     const key = format(selectedDate, 'yyyy-MM-dd');
     setSelectedProblem(problemsMap[key] || null);
   }, [selectedDate, problemsMap]);
 
+  
   const handleRandomize = () => {
-    if (!lists.length) return;
-    const pick = lists[Math.floor(Math.random() * lists.length)];
+    if (!allLists.length) return;
+    const pick = allLists[Math.floor(Math.random() * allLists.length)];
     selectList(pick._id);
   };
 
@@ -86,8 +105,7 @@ export default function CustomPOTD() {
         variants={fadeIn}
         transition={{ duration: 0.6 }}
       >
-
-       
+        
         <motion.div
           className="flex flex-col md:flex-row justify-between items-center mb-10"
           variants={fadeIn}
@@ -122,33 +140,89 @@ export default function CustomPOTD() {
 
         
         <motion.div
-          className="mb-8 md:w-1/3"
+          className="mb-8 md:w-1/3 relative"
           variants={fadeIn}
           transition={{ delay: 0.4 }}
         >
-          <label className="block text-gray-700 mb-2 font-medium">
-            Choose List:
-          </label>
-          {loadingLists ? (
-            <div className="h-10 bg-gray-200 rounded-lg animate-pulse" />
-          ) : (
-            <select
-              value={currentList || ''}
-              onChange={(e) => selectList(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+          <Combobox value={currentList} onChange={selectList}>
+            <label className="block text-gray-700 mb-2 font-medium">
+              Choose List
+            </label>
+            <div className="relative">
+              <Combobox.Input
+                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+                placeholder="Search or select a list..."
+                onChange={(e) => {
+                  const q = e.target.value.toLowerCase();
+                  if (!q) {
+                    setFilteredLists(allLists);
+                    return;
+                  }
+                  const filtered = allLists.filter((l) =>
+                    l.name.toLowerCase().includes(q)
+                  );
+                  setFilteredLists(filtered);
+                }}
+                displayValue={(id) =>
+                  allLists.find((l) => l._id === id)?.name || ''
+                }
+              />
+              <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
+                <ChevronDown className="h-5 w-5 text-gray-400" />
+              </Combobox.Button>
+            </div>
+            <Transition
+              as={Fragment}
+              leave="transition ease-in duration-100"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+              afterLeave={() => setFilteredLists(allLists)}
             >
-              {lists.map((lst) => (
-                <option key={lst._id} value={lst._id}>
-                  {lst.name} {lst.isPublic ? '(Public)' : '(Private)'}
-                </option>
-              ))}
-            </select>
-          )}
+              <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                {loadingLists ? (
+                  <div className="px-4 py-2 text-gray-400">Loading...</div>
+                ) : filteredLists.length === 0 ? (
+                  <div className="px-4 py-2 text-gray-400">No lists found.</div>
+                ) : (
+                  filteredLists.map((lst) => (
+                    <Combobox.Option
+                      key={lst._id}
+                      value={lst._id}
+                      className={({ active }) =>
+                        `relative cursor-pointer select-none py-2 pl-4 pr-10 ${
+                          active
+                            ? 'bg-purple-100 text-purple-900'
+                            : 'text-gray-800'
+                        }`
+                      }
+                    >
+                      {({ selected }) => (
+                        <>
+                          <span
+                            className={`block truncate ${
+                              selected ? 'font-semibold' : ''
+                            }`}
+                          >
+                            {lst.name}{' '}
+                            {lst.isPublic ? '(Public)' : '(Private)'}
+                          </span>
+                          {selected && (
+                            <span className="absolute inset-y-0 right-3 flex items-center text-purple-600">
+                              ✓
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </Combobox.Option>
+                  ))
+                )}
+              </Combobox.Options>
+            </Transition>
+          </Combobox>
         </motion.div>
 
+      
         <div className="grid gap-8 md:grid-cols-3">
-
-         
           <motion.div
             className="md:col-span-2"
             variants={fadeIn}
@@ -157,18 +231,22 @@ export default function CustomPOTD() {
             <POTDCalendar
               selectedDate={selectedDate}
               onSelectDate={setSelectedDate}
-              platform={selectedProblem ? selectedProblem.platform.toLowerCase() : 'other'}
+              platform={
+                selectedProblem
+                  ? selectedProblem.platform.toLowerCase()
+                  : 'other'
+              }
               showAddIcon={false}
             />
           </motion.div>
 
-          
           <motion.div
             className="bg-white rounded-2xl shadow-xl"
             whileHover={{ scale: 1.02 }}
             variants={fadeIn}
             transition={{ delay: 0.8 }}
           >
+          
             <div
               className={`p-4 rounded-t-2xl ${
                 selectedProblem
@@ -180,10 +258,13 @@ export default function CustomPOTD() {
                 {format(selectedDate, 'MMMM d, yyyy')}
               </h2>
               <p className="text-gray-600">
-                {selectedProblem ? 'Problem details' : 'No problem assigned'}
+                {selectedProblem
+                  ? 'Problem details'
+                  : 'No problem assigned'}
               </p>
             </div>
 
+           
             {loadingProblems ? (
               <div className="p-6 animate-pulse space-y-4">
                 <div className="h-6 bg-gray-200 rounded w-1/2" />
@@ -221,9 +302,15 @@ export default function CustomPOTD() {
                 ) : (
                   <>
                     <h3 className="text-2xl font-bold">
-                      Add problem for {format(selectedDate, 'MMMM d, yyyy')}
+                      Add problem for{' '}
+                      {format(selectedDate, 'MMMM d, yyyy')}
                     </h3>
-                    <Link to={`/add-problem?date=${format(selectedDate, 'yyyy-MM-dd')}`}>
+                    <Link
+                      to={`/add-problem?date=${format(
+                        selectedDate,
+                        'yyyy-MM-dd'
+                      )}`}
+                    >
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-5 py-2 rounded-lg font-semibold"
@@ -236,6 +323,7 @@ export default function CustomPOTD() {
               </div>
             )}
 
+            
             <div className="p-4">
               {selectedProblem ? (
                 <Link to={selectedProblem.link} target="_blank">
@@ -295,15 +383,23 @@ export default function CustomPOTD() {
               <motion.div
                 key={i}
                 className="p-6 bg-white rounded-2xl shadow-lg"
-                whileHover={{ y: -5, boxShadow: '0px 10px 25px rgba(0,0,0,0.1)' }}
+                whileHover={{
+                  y: -5,
+                  boxShadow: '0px 10px 25px rgba(0,0,0,0.1)',
+                }}
                 transition={{ type: 'spring', stiffness: 300 }}
               >
-                <h3 className="text-lg font-semibold mb-2">{card.title}</h3>
-                <p className="text-gray-500 text-sm mb-4">{card.desc}</p>
+                <h3 className="text-lg font-semibold mb-2">
+                  {card.title}
+                </h3>
+                <p className="text-gray-500 text-sm mb-4">
+                  {card.desc}
+                </p>
                 {card.to ? (
                   <Link to={card.to}>
                     <button className="flex items-center gap-2 border border-purple-600 text-purple-600 px-4 py-2 rounded-lg font-medium">
-                      {card.icon} {card.title.includes('Add') ? 'Add' : 'Go'}
+                      {card.icon}{' '}
+                      {card.title.includes('Add') ? 'Add' : 'Go'}
                     </button>
                   </Link>
                 ) : (

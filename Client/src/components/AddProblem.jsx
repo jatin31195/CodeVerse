@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
-import { Code, Save, AlertTriangle, CalendarDays } from 'lucide-react';
+import { Save, AlertTriangle, CalendarDays } from 'lucide-react';
 import { motion } from 'framer-motion';
 import MainLayout from './MainLayout';
-
+import {toast} from 'react-toastify'
 const navLinks = [
   { name: 'POTD Calendar', path: '/custom' },
   { name: 'My Problems', path: '/my-problems' },
@@ -16,18 +15,17 @@ const fadeIn = {
   visible: (delay = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { delay, duration: 0.5, ease: 'easeOut' }
-  })
+    transition: { delay, duration: 0.5, ease: 'easeOut' },
+  }),
 };
 
 export default function AddProblem() {
-  // form state
   const [lists, setLists] = useState([]);
   const [selectedList, setSelectedList] = useState('');
-  const [platform, setPlatform] = useState('Codeforces');
-  const [title, setTitle] = useState('');
   const [link, setLink] = useState('');
   const [date, setDate] = useState('');
+  const [platform, setPlatform] = useState('');
+  const [title, setTitle] = useState('');
 
   const token = sessionStorage.getItem('token');
   const api = axios.create({
@@ -35,25 +33,133 @@ export default function AddProblem() {
     headers: { Authorization: token },
   });
 
-  // Load lists on mount
+ 
   useEffect(() => {
     (async () => {
       try {
         const res = await api.get('/lists');
-        setLists(res.data.lists);
+        setLists(res.data.lists || []);
         if (res.data.lists.length) {
           setSelectedList(res.data.lists[0]._id);
         }
-      } catch {
-        alert('Could not load problem lists.');
+      } catch (err) {
+        console.error(err);
+        alert('Could not load your problem lists.');
       }
     })();
   }, []);
 
-  // Save problem
+ 
+  useEffect(() => {
+    let cancelled = false;
+    setTitle('');
+    setPlatform('');
+
+    try {
+      const url = new URL(link.trim());
+      const host = url.hostname.toLowerCase();
+      const path = url.pathname;
+
+      if (host.includes('leetcode.com')) {
+        setPlatform('LeetCode');
+        
+        const parts = path.split('/').filter(Boolean);
+        const idx = parts.indexOf('problems');
+        if (idx !== -1 && parts[idx + 1]) {
+          const slug = parts[idx + 1];
+          setTitle(
+            slug
+              .split('-')
+              .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+              .join(' ')
+          );
+        }
+      } else if (host.includes('geeksforgeeks.org')) {
+        setPlatform('GeeksForGeeks');
+      
+        const parts = path.split('/').filter(Boolean);
+        const idx = parts.indexOf('problems');
+        if (idx !== -1 && parts[idx + 1]) {
+          const slug = parts[idx + 1].replace(/\d+$/, '');
+          setTitle(
+            slug
+              .split('-')
+              .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+              .join(' ')
+          );
+        }
+      } else if (host.includes('codeforces.com')) {
+        setPlatform('Codeforces');
+       
+        const parts = path.split('/').filter(Boolean);
+        let contestId, letter;
+        const ci = parts.indexOf('problemset');
+        const cj = parts.indexOf('contest');
+        if (ci !== -1 && parts[ci + 2] && parts[ci + 3]) {
+      
+          contestId = parts[ci + 2];
+          letter = parts[ci + 3];
+        } else if (cj !== -1 && parts[cj + 1] && parts[cj + 3]) {
+      
+          contestId = parts[cj + 1];
+          letter = parts[cj + 3];
+        }
+
+       
+        if (contestId && letter) {
+          
+          fetch(link, {
+            
+            mode: 'cors',
+          })
+            .then(res => res.text())
+            .then(html => {
+              if (cancelled) return;
+              const doc = new DOMParser().parseFromString(
+                html,
+                'text/html'
+              );
+            
+              const titleDiv = doc.querySelector(
+                '.problem-statement .header .title'
+              );
+              if (titleDiv) {
+                setTitle(titleDiv.textContent.trim());
+              } else {
+                
+                setTitle(`Problem ${contestId}${letter}`);
+              }
+            })
+            .catch(err => {
+              console.error('CF fetch failed', err);
+              if (!cancelled) {
+                setTitle(`Problem ${contestId}${letter}`);
+              }
+            });
+        } else {
+          
+          setTitle('');
+        }
+      } else {
+        setPlatform('Other');
+        setTitle('');
+      }
+    } catch {
+      
+      setPlatform('');
+      setTitle('');
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [link]);
+
   const handleAddProblem = async () => {
-    if (!selectedList || !title || !link || !platform || !date) {
-      return alert('Please fill in all required fields.');
+    if (!selectedList || !link || !date) {
+      return alert(
+        'Please choose a list, paste the URL, and pick a date.'
+      );
     }
     try {
       await api.post('/list/add-question', {
@@ -63,17 +169,19 @@ export default function AddProblem() {
         link,
         date,
       });
-      alert('Problem added successfully!');
-      setTitle(''); setLink(''); setPlatform('Codeforces'); setDate('');
-    } catch {
-      alert('Failed to add problem. Check console for details.');
+      toast.success('Problem added successfully!');
+      setLink('');
+      setDate('');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to add problem. Problem already Exist or Internal Error');
     }
   };
 
   return (
     <MainLayout navLinks={navLinks}>
       <div className="max-w-3xl mx-auto py-10">
-        {/* Header */}
+        
         <motion.div
           className="mb-8"
           initial="hidden"
@@ -81,19 +189,19 @@ export default function AddProblem() {
           viewport={{ once: true }}
           variants={{
             hidden: fadeIn.hidden,
-            visible: fadeIn.visible(0)
+            visible: fadeIn.visible(0),
           }}
         >
           <div className="flex items-center mb-2">
-            <Code className="mr-2 text-purple-600 h-7 w-7" />
+            <CalendarDays className="mr-2 text-purple-600 h-7 w-7" />
             <h1 className="text-3xl font-bold font-display bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
               Add Problem
             </h1>
           </div>
-          <p className="text-gray-600">Add a coding challenge to your calendar</p>
+          <p className="text-gray-600">Just paste the URL and pick a date.</p>
         </motion.div>
 
-        {/* Form Card */}
+        
         <motion.div
           className="shadow-2xl rounded-lg overflow-hidden"
           initial="hidden"
@@ -101,40 +209,22 @@ export default function AddProblem() {
           viewport={{ once: true }}
           variants={{
             hidden: fadeIn.hidden,
-            visible: fadeIn.visible(0.2)
+            visible: fadeIn.visible(0.2),
           }}
         >
           <div className="bg-gradient-to-r from-purple-100 to-blue-100 p-4">
-            <motion.div
-              className="flex items-center space-x-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-            >
+            <h2 className="text-xl font-bold flex items-center gap-2">
               <CalendarDays className="h-5 w-5 text-purple-600" />
-              <h2 className="text-xl font-bold">Problem Details</h2>
-            </motion.div>
-            <motion.p
-              className="text-gray-600 mt-1"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-            >
-              Fill in the information about the problem
-            </motion.p>
+              Problem Details
+            </h2>
           </div>
 
           <div className="p-6 space-y-6">
-            {/* Select List */}
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              variants={{
-                hidden: fadeIn.hidden,
-                visible: fadeIn.visible(0.5)
-              }}
-            >
-              <label htmlFor="list" className="block text-base">Select List</label>
+            
+            <div>
+              <label htmlFor="list" className="block text-base">
+                Select List
+              </label>
               <select
                 id="list"
                 value={selectedList}
@@ -147,85 +237,42 @@ export default function AddProblem() {
                   </option>
                 ))}
               </select>
-            </motion.div>
+            </div>
 
-            {/* Platform */}
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              variants={{
-                hidden: fadeIn.hidden,
-                visible: fadeIn.visible(0.6)
-              }}
-            >
-              <label htmlFor="platform" className="block text-base">Platform</label>
-              <select
-                id="platform"
-                value={platform}
-                onChange={e => setPlatform(e.target.value)}
-                className="mt-1 h-11 w-full border border-gray-300 rounded px-3"
-              >
-                <option>LeetCode</option>
-                <option>GeeksForGeeks</option>
-                <option>Codeforces</option>
-                <option>Other</option>
-              </select>
-            </motion.div>
-
-            {/* Title */}
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              variants={{
-                hidden: fadeIn.hidden,
-                visible: fadeIn.visible(0.7)
-              }}
-            >
-              <label htmlFor="title" className="block text-base">Problem Title</label>
-              <input
-                id="title"
-                type="text"
-                placeholder="E.g. Two Sum"
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                className="mt-1 h-11 w-full border border-gray-300 rounded px-3"
-              />
-            </motion.div>
-
-            {/* Link */}
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              variants={{
-                hidden: fadeIn.hidden,
-                visible: fadeIn.visible(0.8)
-              }}
-            >
-              <label htmlFor="link" className="block text-base">Problem URL</label>
+            
+            <div>
+              <label htmlFor="link" className="block text-base">
+                Problem URL
+              </label>
               <input
                 id="link"
                 type="url"
-                placeholder="https://leetcode.com/problems/two-sum/"
+                placeholder="https://codeforces.com/…"
                 value={link}
                 onChange={e => setLink(e.target.value)}
                 className="mt-1 h-11 w-full border border-gray-300 rounded px-3"
               />
               <div className="flex items-start gap-2 text-xs text-gray-500 mt-1">
                 <AlertTriangle className="h-4 w-4" />
-                <p>Make sure the URL is correct and points directly to the problem</p>
+                <p>Paste a public problem link (CF, LC, GFG).</p>
               </div>
-            </motion.div>
+            </div>
 
-            {/* Date */}
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              variants={{
-                hidden: fadeIn.hidden,
-                visible: fadeIn.visible(0.9)
-              }}
-            >
-              <label htmlFor="date" className="block text-base">Schedule Date</label>
+           
+            <div className="space-y-1 text-sm text-gray-600">
+              <p>
+                <strong>Platform:</strong> {platform || '—'}
+              </p>
+              <p>
+                <strong>Title:</strong> {title || '—'}
+              </p>
+            </div>
+
+            
+            <div>
+              <label htmlFor="date" className="block text-base">
+                Schedule Date
+              </label>
               <input
                 id="date"
                 type="date"
@@ -233,18 +280,10 @@ export default function AddProblem() {
                 onChange={e => setDate(e.target.value)}
                 className="mt-1 h-11 w-full border border-gray-300 rounded px-3"
               />
-            </motion.div>
+            </div>
 
-            {/* Save Button */}
-            <motion.div
-              className="pt-4"
-              initial="hidden"
-              whileInView="visible"
-              variants={{
-                hidden: fadeIn.hidden,
-                visible: fadeIn.visible(0.8)
-              }}
-            >
+            
+            <div className="pt-4">
               <motion.button
                 onClick={handleAddProblem}
                 whileHover={{ scale: 1.03 }}
@@ -253,7 +292,7 @@ export default function AddProblem() {
                 <Save className="h-5 w-5" />
                 Save Problem
               </motion.button>
-            </motion.div>
+            </div>
           </div>
         </motion.div>
       </div>
