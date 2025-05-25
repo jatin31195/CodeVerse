@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { motion,AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bell,
   Plus,
-  List,
   Edit,
   Calendar,
   SquareCheck,
   PanelRight,
 } from 'lucide-react';
-import Sidebar from './Sidebar'; 
+import Sidebar from '../components/Sidebar';
+
+
+const API_BASE = 'http://localhost:8080/api';
+
 
 const ToggleSwitch = ({ enabled, onChange }) => {
   return (
@@ -37,16 +40,42 @@ const TaskCard = ({ task, onTaskUpdated, onEdit }) => {
   const isDueSoon = !task.completed && hoursUntilDue <= 24 && hoursUntilDue > 0;
 
  
+  const [reminderEnabled, setReminderEnabled] = useState(Boolean(task.reminderEnabled));
+
+  
+  useEffect(() => {
+    setReminderEnabled(Boolean(task.reminderEnabled));
+  }, [task.reminderEnabled]);
+
+  
   const completeTask = async () => {
-    await fetch(`http://localhost:8080/api/tasks/${task._id}`, {
+    await fetch(`${API_BASE}/tasks/${task._id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
         Authorization: sessionStorage.getItem('token') || '',
       },
-      body: JSON.stringify({ completed: true }),
     });
     onTaskUpdated();
+  };
+
+  
+  const toggleReminder = async (newVal) => {
+    setReminderEnabled(newVal); 
+    const res = await fetch(`${API_BASE}/tasks/${task._id}/reminder`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: sessionStorage.getItem('token') || '',
+      },
+      body: JSON.stringify({ enabled: newVal }),
+    });
+    if (!res.ok) {
+      setReminderEnabled(prev => !prev);
+      console.error('Failed toggling reminder');
+    } else {
+      onTaskUpdated();
+    }
   };
 
   const dateString = new Date(task.date).toLocaleDateString([], {
@@ -54,17 +83,13 @@ const TaskCard = ({ task, onTaskUpdated, onEdit }) => {
     day: 'numeric',
     year: 'numeric',
   });
-  const endTimeString = new Date(task.endDateTime).toLocaleTimeString([], {
+  const endTimeString = dueDate.toLocaleTimeString([], {
     hour: 'numeric',
     minute: '2-digit',
   });
 
   return (
-    <div className="border border-yellow-300 rounded-lg p-4 mb-4 relative">
-      <span className="absolute top-3 right-3 bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full">
-        {task.priority ? task.priority : 'medium'}
-      </span>
-
+    <div className="border rounded-lg p-4 mb-4 relative">
       <div className="flex items-start gap-3">
         <input
           type="checkbox"
@@ -73,9 +98,9 @@ const TaskCard = ({ task, onTaskUpdated, onEdit }) => {
           className="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded"
         />
 
-        <div>
+        <div className="flex-1">
           <h3 className="text-lg font-semibold mb-1">
-            {task.task || 'Untitled Task'}
+            {task.task ?? 'Untitled Task'}
           </h3>
 
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
@@ -92,98 +117,118 @@ const TaskCard = ({ task, onTaskUpdated, onEdit }) => {
           </div>
 
           <div className="flex items-center gap-2">
-            <ToggleSwitch enabled={false} onChange={() => {}} />
+            <ToggleSwitch
+              enabled={reminderEnabled}
+              onChange={toggleReminder}
+            />
             <span className="text-sm text-gray-600">Email notification</span>
           </div>
         </div>
       </div>
 
       <div className="flex gap-3 absolute bottom-3 right-3">
-  <button
-    onClick={() => onEdit(task)}
-    className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
-  >
-    <Edit className="w-5 h-5" />
-  </button>
-  {!task.completed && (
-    <div className="relative group">
-      <button
-        onClick={completeTask}
-        className="p-2 text-gray-600 hover:text-green-600 transition-colors"
-      >
-        <SquareCheck className="w-6 h-6" />
-      </button>
-      <span className="absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-gray-700 text-white text-xs px-2 py-1 rounded transition-opacity">
-        Mark as complete
-      </span>
-    </div>
-  )}
-</div>
-
+        <button
+          onClick={() => onEdit(task)}
+          className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
+        >
+          <Edit className="w-5 h-5" />
+        </button>
+        {!task.completed && (
+          <div className="relative group">
+            <button
+              onClick={completeTask}
+              className="p-2 text-gray-600 hover:text-green-600 transition-colors"
+            >
+              <SquareCheck className="w-6 h-6" />
+            </button>
+            <span className="absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-gray-700 text-white text-xs px-2 py-1 rounded transition-opacity">
+              Mark as complete
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
 
-const NewTaskForm = ({ onSuccess }) => {
+const NewTaskForm = ({ task, onSuccess }) => {
   const [taskTitle, setTaskTitle] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
 
+  useEffect(() => {
+    if (task) {
+      setTaskTitle(task.task || '');
+      const end = new Date(task.endDateTime);
+      setDate(end.toISOString().slice(0, 10));
+      setTime(end.toTimeString().slice(0, 5));
+    } else {
+      setTaskTitle('');
+      setDate('');
+      setTime('');
+    }
+  }, [task]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const endDateTime = new Date(`${date}T${time}`).toISOString();
-    await fetch('http://localhost:8080/api/tasks/', {
-      method: 'POST',
+    const endISO = new Date(`${date}T${time}`).toISOString();
+
+    const method = task ? 'PUT' : 'POST';
+    const url = task
+      ? `${API_BASE}/tasks/${task._id}`
+      : `${API_BASE}/tasks/`;
+
+    const res = await fetch(url, {
+      method,
       headers: {
         'Content-Type': 'application/json',
         Authorization: sessionStorage.getItem('token') || '',
       },
       body: JSON.stringify({
         task: taskTitle,
-        date,
-        endDateTime,
+        endDateTime: endISO,
       }),
     });
+
+    if (!res.ok) {
+      console.error('Failed to save task', await res.json());
+      return;
+    }
+
     onSuccess();
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Task Title
-        </label>
+        <label className="block text-sm font-medium text-gray-700">Task Title</label>
         <input
           type="text"
           placeholder="Enter your task"
           value={taskTitle}
-          onChange={(e) => setTaskTitle(e.target.value)}
+          onChange={e => setTaskTitle(e.target.value)}
           required
           className="mt-1 block w-full border border-gray-300 rounded-md p-2"
         />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Date
-          </label>
+          <label className="block text-sm font-medium text-gray-700">Date</label>
           <input
             type="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={e => setDate(e.target.value)}
             required
             className="mt-1 block w-full border border-gray-300 rounded-md p-2"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Time
-          </label>
+          <label className="block text-sm font-medium text-gray-700">Time</label>
           <input
             type="time"
             value={time}
-            onChange={(e) => setTime(e.target.value)}
+            onChange={e => setTime(e.target.value)}
             required
             className="mt-1 block w-full border border-gray-300 rounded-md p-2"
           />
@@ -193,86 +238,12 @@ const NewTaskForm = ({ onSuccess }) => {
         type="submit"
         className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2 rounded-md hover:shadow-md transition-all"
       >
-        Add Task
+        {task ? 'Update Task' : 'Add Task'}
       </button>
     </form>
   );
 };
 
-
-const EditTaskForm = ({ task, onSuccess }) => {
-  const [taskTitle, setTaskTitle] = useState(task.task);
-  const [date, setDate] = useState(new Date(task.date).toISOString().slice(0, 10));
-  const [time, setTime] = useState(new Date(task.endDateTime).toISOString().slice(11, 16));
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const endDateTime = new Date(`${date}T${time}`).toISOString();
-    await fetch(`http://localhost:8080/api/tasks/${task._id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: sessionStorage.getItem('token') || '',
-      },
-      body: JSON.stringify({
-        task: taskTitle,
-        date,
-        endDateTime,
-      }),
-    });
-    onSuccess();
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Task Title
-        </label>
-        <input
-          type="text"
-          placeholder="Enter your task"
-          value={taskTitle}
-          onChange={(e) => setTaskTitle(e.target.value)}
-          required
-          className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Date
-          </label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-            className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Time
-          </label>
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            required
-            className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-          />
-        </div>
-      </div>
-      <button
-        type="submit"
-        className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2 rounded-md hover:shadow-md transition-all"
-      >
-        Update Task
-      </button>
-    </form>
-  );
-};
 
 
 const Modal = ({ open, onClose, children }) => {
@@ -282,7 +253,7 @@ const Modal = ({ open, onClose, children }) => {
       <div
         className="absolute inset-0 bg-black opacity-50"
         onClick={onClose}
-      ></div>
+      />
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -298,32 +269,34 @@ const Modal = ({ open, onClose, children }) => {
 
 const TasksPage = () => {
   const [tasks, setTasks] = useState([]);
-  const [activeTab, setActiveTab] = useState('all');
   const [addTaskOpen, setAddTaskOpen] = useState(false);
   const [editTask, setEditTask] = useState(null);
   const [dueSoonCount, setDueSoonCount] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const toggleSidebar = () => setSidebarOpen(prev => !prev);
+
   const loadTasks = async () => {
     const token = sessionStorage.getItem('token');
-    const res = await fetch('http://localhost:8080/api/tasks/', {
-      headers: {
-        Authorization: token || '',
-      },
+    const res = await fetch(`${API_BASE}/tasks/`, {
+      headers: { Authorization: token || '' },
     });
     const data = await res.json();
     if (!Array.isArray(data)) return;
+
     data.sort(
       (a, b) =>
-        new Date(a.endDateTime).getTime() - new Date(b.endDateTime).getTime()
+        new Date(a.endDateTime).getTime() -
+        new Date(b.endDateTime).getTime()
     );
     setTasks(data);
+
     const now = new Date();
-    const soon = data.filter((t) => {
+    const soonCount = data.filter(t => {
       const diff = new Date(t.endDateTime) - now;
       return diff <= 24 * 60 * 60 * 1000 && diff > 0 && !t.completed;
     }).length;
-    setDueSoonCount(soon);
+    setDueSoonCount(soonCount);
   };
 
   useEffect(() => {
@@ -331,23 +304,15 @@ const TasksPage = () => {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(loadTasks, 60000);
-    return () => clearInterval(interval);
+    const intv = setInterval(loadTasks, 60_000);
+    return () => clearInterval(intv);
   }, []);
-
-
-  const priorityGroups = {
-    high: tasks.filter((t) => t.priority === 'high'),
-    medium: tasks.filter((t) => t.priority === 'medium' || !t.priority),
-    low: tasks.filter((t) => t.priority === 'low'),
-  };
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
-  <AnimatePresence>
+      <AnimatePresence>
         {sidebarOpen && (
           <div className="fixed inset-0 z-20">
-           
             <motion.div
               className="absolute inset-0 bg-black opacity-50"
               onClick={toggleSidebar}
@@ -356,7 +321,6 @@ const TasksPage = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             />
-           
             <motion.div
               className="absolute left-0 top-0 bottom-0 w-64 bg-white shadow-lg z-30"
               initial={{ x: -256 }}
@@ -369,29 +333,30 @@ const TasksPage = () => {
           </div>
         )}
       </AnimatePresence>
-  <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
-  <div className="flex items-center gap-3">
-    <button onClick={toggleSidebar} className="p-2 rounded hover:bg-gray-100 transition">
-      <PanelRight className="w-6 h-6 text-gray-700" />
-    </button>
-    <div>
-      <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">
-        Codeverse
-      </h1>
-      <p className="text-xs text-gray-500 -mt-1">Task Management</p>
-    </div>
-  </div>
-  <div className="flex items-center gap-4">
-    <button className="flex items-center gap-2 text-sm bg-yellow-100 text-yellow-700 px-3 py-2 rounded-md hover:bg-yellow-200 transition-all">
-      <Bell className="w-4 h-4" />
-      {dueSoonCount} task{dueSoonCount !== 1 && 's'} due soon
-    </button>
-  </div>
-</header>
 
+      <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleSidebar}
+            className="p-2 rounded hover:bg-gray-100 transition"
+          >
+            <PanelRight className="w-6 h-6 text-gray-700" />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">
+              Codeverse
+            </h1>
+            <p className="text-xs text-gray-500 -mt-1">Task Management</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <button className="flex items-center gap-2 text-sm bg-yellow-100 text-yellow-700 px-3 py-2 rounded-md hover:bg-yellow-200 transition-all">
+            <Bell className="w-4 h-4" />
+            {dueSoonCount} task{dueSoonCount !== 1 && 's'} due soon
+          </button>
+        </div>
+      </header>
 
-
-    
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center gap-4 mb-6">
           <h2 className="text-2xl font-bold">Your Tasks</h2>
@@ -404,130 +369,37 @@ const TasksPage = () => {
           </button>
         </div>
 
-        <div className="flex items-center gap-2 mb-4">
-          <List className="w-5 h-5 text-blue-500" />
-          <h3 className="font-semibold text-lg">Task Status</h3>
-        </div>
-
-        <div className="inline-flex items-center bg-gray-100 p-1 rounded-md mb-6">
-          <button
-            onClick={() => setActiveTab('all')}
-            className={`px-4 py-2 text-sm font-medium rounded-md ${
-              activeTab === 'all'
-                ? 'bg-white shadow text-gray-900'
-                : 'text-gray-500'
-            }`}
-          >
-            All Tasks
-          </button>
-          <button
-            onClick={() => setActiveTab('priority')}
-            className={`px-4 py-2 text-sm font-medium rounded-md ${
-              activeTab === 'priority'
-                ? 'bg-white shadow text-gray-900'
-                : 'text-gray-500'
-            }`}
-          >
-            By Priority
-          </button>
-        </div>
-
-        {activeTab === 'all' && (
-          <div>
-            {tasks.length === 0 ? (
-              <div className="text-center p-8 border border-dashed border-gray-300 rounded-md bg-gray-50">
-                <Bell className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-                <h3 className="text-lg font-medium text-gray-900 mb-1">
-                  No tasks found
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  You don't have any tasks yet.
-                </p>
-                <button
-                  onClick={() => setAddTaskOpen(true)}
-                  className="inline-flex items-center bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-md hover:shadow-lg transition-all"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Your First Task
-                </button>
-              </div>
-            ) : (
-              tasks.map((task) => (
-                <TaskCard
-                  key={task._id}
-                  task={task}
-                  onTaskUpdated={loadTasks}
-                  onEdit={(task) => setEditTask(task)}
-                />
-              ))
-            )}
+        {tasks.length === 0 ? (
+          <div className="text-center p-8 border border-dashed border-gray-300 rounded-md bg-gray-50">
+            <Bell className="mx-auto h-12 w-12 text-gray-400 mb-3" />
+            <h3 className="text-lg font-medium text-gray-900 mb-1">
+              No tasks found
+            </h3>
+            <p className="text-gray-500 mb-4">
+              You don't have any tasks yet.
+            </p>
+            <button
+              onClick={() => setAddTaskOpen(true)}
+              className="inline-flex items-center bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-md hover:shadow-lg transition-all"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Your First Task
+            </button>
           </div>
-        )}
-
-        {activeTab === 'priority' && (
-          <div>
-            <h4 className="text-base font-semibold mb-2">High Priority</h4>
-            {priorityGroups.high.length === 0 ? (
-              <p className="text-sm text-gray-400 mb-4 ml-4">
-                No high priority tasks
-              </p>
-            ) : (
-              <div className="ml-4">
-                {priorityGroups.high.map((task) => (
-                  <TaskCard
-                    key={task._id}
-                    task={task}
-                    onTaskUpdated={loadTasks}
-                    onEdit={(task) => setEditTask(task)}
-                  />
-                ))}
-              </div>
-            )}
-
-            <hr className="my-6" />
-
-            <h4 className="text-base font-semibold mb-2">Medium Priority</h4>
-            {priorityGroups.medium.length === 0 ? (
-              <p className="text-sm text-gray-400 mb-4 ml-4">
-                No medium priority tasks
-              </p>
-            ) : (
-              <div className="ml-4">
-                {priorityGroups.medium.map((task) => (
-                  <TaskCard
-                    key={task._id}
-                    task={task}
-                    onTaskUpdated={loadTasks}
-                    onEdit={(task) => setEditTask(task)}
-                  />
-                ))}
-              </div>
-            )}
-
-            <hr className="my-6" />
-
-            <h4 className="text-base font-semibold mb-2">Low Priority</h4>
-            {priorityGroups.low.length === 0 ? (
-              <p className="text-sm text-gray-400 mb-4 ml-4">
-                No low priority tasks
-              </p>
-            ) : (
-              <div className="ml-4">
-                {priorityGroups.low.map((task) => (
-                  <TaskCard
-                    key={task._id}
-                    task={task}
-                    onTaskUpdated={loadTasks}
-                    onEdit={(task) => setEditTask(task)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+        ) : (
+          tasks.map(task => (
+            <TaskCard
+              key={task._id}
+              task={task}
+              onTaskUpdated={loadTasks}
+              onEdit={t => setEditTask(t)}
+            />
+          ))
         )}
       </main>
 
-      <Modal open={addTaskOpen} onClose={() => setAddTaskOpen(false)}>
+     
+      <Modal open={addTaskOpen} onClose={() => setAddTaskOpen(false)}>  
         <h2 className="text-xl font-bold mb-4">Add New Task</h2>
         <NewTaskForm
           onSuccess={() => {
@@ -537,11 +409,12 @@ const TasksPage = () => {
         />
       </Modal>
 
+     
       <Modal open={Boolean(editTask)} onClose={() => setEditTask(null)}>
         {editTask && (
           <>
             <h2 className="text-xl font-bold mb-4">Edit Task</h2>
-            <EditTaskForm
+            <NewTaskForm
               task={editTask}
               onSuccess={() => {
                 setEditTask(null);
