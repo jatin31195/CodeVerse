@@ -1,11 +1,28 @@
 const mongoose = require("mongoose");
 const DailyTaskRepository = require("../repositories/taskRepository");
 const DailyTask = require("../models/Task");
-
+const { scheduleReminder, cancelReminder } = require('.././utils/scheduler');
 const DailyTaskService = {
+
+   setReminder: async (userId, taskId, enabled) => {
+    
+    const updated = await DailyTaskRepository.updateTask(
+      taskId,
+      { reminderEnabled: enabled },
+      userId
+    );
+    if (!updated) return null;
+
+    if (enabled && !updated.completed) {
+      await scheduleReminder(updated);
+    } else {
+      cancelReminder(taskId);
+    }
+    return updated;
+  },
    getTasks : async (userId, date) => {
     try {
-      // console.log(`Service: Fetching tasks for user: ${userId} on date: ${date}`);
+      
       
  
       let query = {
@@ -48,6 +65,9 @@ const DailyTaskService = {
 
   completeTask: async (taskId,userId) => {
     return await DailyTaskRepository.deleteTask(taskId,userId);
+  },
+  deleteOverdueIncompleteTasks: async () => {
+    return await DailyTaskRepository.deleteOverdueIncompleteTasks();
   },
 };
 
