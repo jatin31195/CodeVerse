@@ -9,7 +9,7 @@ import {
   PanelRight,
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
-
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const API_BASE = 'http://localhost:8080/api';
 
@@ -38,10 +38,9 @@ const TaskCard = ({ task, onTaskUpdated, onEdit }) => {
   const dueDate = new Date(task.endDateTime);
   const hoursUntilDue = (dueDate - now) / 36e5;
   const isDueSoon = !task.completed && hoursUntilDue <= 24 && hoursUntilDue > 0;
-
- 
   const [reminderEnabled, setReminderEnabled] = useState(Boolean(task.reminderEnabled));
-
+  const location = useLocation();
+  const navigate = useNavigate();
   
   useEffect(() => {
     setReminderEnabled(Boolean(task.reminderEnabled));
@@ -273,9 +272,22 @@ const TasksPage = () => {
   const [editTask, setEditTask] = useState(null);
   const [dueSoonCount, setDueSoonCount] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
+    const [user, setUser] = useState(null);
+    const [showUserMenu, setShowUserMenu] = useState(false);
   const toggleSidebar = () => setSidebarOpen(prev => !prev);
+   const handleLogout = () => {
+    sessionStorage.removeItem('token');
+    setUser(null);
+    setShowUserMenu(false);
+    navigate('/login');
+  };
 
+  const getInitials = (name) =>
+    name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
   const loadTasks = async () => {
     const token = sessionStorage.getItem('token');
     const res = await fetch(`${API_BASE}/tasks/`, {
@@ -334,28 +346,94 @@ const TasksPage = () => {
         )}
       </AnimatePresence>
 
-      <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-50 bg-white bg-opacity-95 backdrop-blur-sm shadow-md">
+  <div className="container mx-auto relative flex h-16 items-center px-6">
+    
+    <div className="flex items-center">
+      <button
+        onClick={toggleSidebar}
+        className="p-2 rounded hover:bg-gray-100 transition"
+        aria-label="Toggle sidebar"
+      >
+        <PanelRight className="w-6 h-6 text-gray-700" />
+      </button>
+    </div>
+
+    <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <Link to="/home" className="flex-shrink-0">
+            <img
+              src="/codelogo1.png"
+              alt="CodeVerse"
+              className="h-12 w-auto"
+            />
+          </Link>
+      <p className="text-xs text-gray-500 -mt-1 ml-6">Task Management</p>
+        </div>
+
+   
+    <div className="ml-auto flex items-center gap-4">
+      
+      <button className="flex items-center gap-2 text-sm bg-yellow-100 text-yellow-700 px-3 py-2 rounded-md hover:bg-yellow-200 transition-all">
+        <Bell className="w-4 h-4" />
+        {dueSoonCount} task{dueSoonCount !== 1 && 's'} due soon
+      </button>
+
+     
+      {user && (
+        <div className="relative">
           <button
-            onClick={toggleSidebar}
-            className="p-2 rounded hover:bg-gray-100 transition"
+            onClick={() => setShowUserMenu(prev => !prev)}
+            className="w-10 h-10 rounded-full border-2 border-blue-500 hover:border-green-400 transition overflow-hidden flex items-center justify-center bg-gray-100"
+            aria-label="User menu"
           >
-            <PanelRight className="w-6 h-6 text-gray-700" />
+            {user.profilePic ? (
+              <img
+                src={user.profilePic}
+                alt={user.name}
+                className="w-full h-full object-cover rounded-full"
+              />
+            ) : (
+              <span className="text-sm font-semibold text-gray-700">
+                {getInitials(user.name)}
+              </span>
+            )}
           </button>
-          <div>
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">
-              Codeverse
-            </h1>
-            <p className="text-xs text-gray-500 -mt-1">Task Management</p>
-          </div>
+
+          <AnimatePresence>
+            {showUserMenu && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden z-50"
+              >
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    toggleSidebar();
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm"
+                >
+                  <LayoutPanelLeft className="w-4 h-4" />
+                  Open Sidebar
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm text-red-600"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-        <div className="flex items-center gap-4">
-          <button className="flex items-center gap-2 text-sm bg-yellow-100 text-yellow-700 px-3 py-2 rounded-md hover:bg-yellow-200 transition-all">
-            <Bell className="w-4 h-4" />
-            {dueSoonCount} task{dueSoonCount !== 1 && 's'} due soon
-          </button>
-        </div>
-      </header>
+      )}
+    </div>
+  </div>
+</header>
+
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center gap-4 mb-6">
