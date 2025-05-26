@@ -8,7 +8,10 @@ import {
   TrendingUp,
   Calendar,
   Trophy,
-  PanelRight
+  PanelRight,
+  X,
+  LayoutPanelLeft,
+  LogOut
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import GoalsPanel from './GoalsPanel';
@@ -86,9 +89,30 @@ const ProblemCard = ({ title, description, platform, link }) => {
 const Home = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen(prev => !prev);
-
- 
+  const [user, setUser] = useState(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [leetProblem, setLeetProblem] = useState(null);
+  const handleLogout = () => {
+    sessionStorage.removeItem('token');
+    setUser(null);
+    setShowUserMenu(false);
+    navigate('/login');
+  };
+
+  
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    if (!token) return;
+    fetch('http://localhost:8080/api/auth/profile', {
+      headers: { Authorization: token }
+    })
+      .then(r => r.json())
+      .then(json => setUser(json.data.user))
+      .catch(() => {
+        sessionStorage.removeItem('token');
+        setUser(null);
+      });
+  }, []);
   useEffect(() => {
     const now = new Date();
     const istOffset = 5 * 60 + 30;
@@ -164,19 +188,80 @@ const Home = () => {
       </AnimatePresence>
 
       <header className="sticky top-0 z-10 bg-white px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between shadow-md">
-        <button
-          onClick={toggleSidebar}
-          aria-label="Open Sidebar"
-          className="group flex flex-col items-center p-2 rounded-md hover:bg-gray-100"
-        >
-          <PanelRight className="h-6 w-6 text-gray-700" />
-          <span className="mt-1 text-xs text-gray-500 group-hover:text-purple-600">
-            Open Sidebar
-          </span>
-        </button>
-        <h1 className="text-xl font-bold">CodeVerse</h1>
-        <div />
-      </header>
+  
+  <button
+    onClick={toggleSidebar}
+    aria-label="Open Sidebar"
+    className="cursor-pointer group flex flex-col items-center p-2 rounded-md hover:bg-gray-100"
+  >
+    <PanelRight className="h-6 w-6 text-gray-700" />
+    <span className="cursor-pointer mt-1 text-xs text-gray-500 group-hover:text-purple-600">
+      Open Sidebar
+    </span>
+  </button>
+
+ 
+  <Link to="/home" className="flex-shrink-0">
+    <img
+      src="/codelogo1.png"
+      alt="CodeVerse"
+      className="h-12 w-auto"
+    />
+  </Link>
+
+  
+  {user && (
+                <div className="relative ml-3">
+                  <button
+                    onClick={() => setShowUserMenu((prev) => !prev)}
+                    className="w-12 h-12 cursor-pointer rounded-full border-3 border-blue-500 hover:border-green-400  transition overflow-hidden flex items-center justify-center bg-gray-100"
+                  >
+                    {user.profilePic ? (
+                      <img
+                        src={user.profilePic}
+                        alt={user.name}
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    ) : (
+                      <span className="text-sm font-semibold text-gray-700">
+                        {getInitials(user.name)}
+                      </span>
+                    )}
+                  </button>
+  
+                  <AnimatePresence>
+                    {showUserMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden z-50"
+                      >
+                        <button
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            toggleSidebar();
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm"
+                        >
+                          <LayoutPanelLeft className="w-4 h-4" />
+                          Open Sidebar
+                        </button>
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm text-red-600"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Logout
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+</header>
+
 
       <motion.div
         initial="hidden"

@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const nodemailer = require('nodemailer');
 const fs = require('fs').promises;
+const { OAuth2Client } = require('google-auth-library');
 const path = require('path');
 const authRepository = require('../repositories/authRepository');
 const { generateOTP } = require('../utils/otpHelper');
@@ -17,7 +18,65 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const googleSignup=async(idToken)=> {
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const { email, name, picture } = ticket.getPayload();
 
+  
+  const existing = await authRepository.findUserByEmail(email);
+  if (existing) {
+    const error = new Error('User already registered. Please login instead.');
+    error.status = 400;
+    throw error;
+  }
+
+  
+  const username = email.split('@')[0];
+  const newUser = await authRepository.createUser({
+    email,
+    name,
+    username,
+    profilePic: picture,
+    password: Math.random().toString(36).slice(-8),  
+    dateOfBirth: new Date(),                         
+    gender: 'male',                                  
+    isVerified: true,
+  });
+
+  const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
+    expiresIn: '7d',
+  });
+
+  return { user: newUser, token };
+}
+
+const googleLogin=async(idToken) =>{
+  
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const { email } = ticket.getPayload();
+
+  
+  const user = await authRepository.findUserByEmail(email);
+  if (!user) {
+    const error = new Error('User not found. Please sign up first.');
+    error.status = 404;
+    throw error;
+  }
+
+  
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: '7d',
+  });
+
+  return { user, token };
+}
 const loadTemplate = async (templateName, data) => {
   const templatePath = path.join(__dirname, '..', 'template', templateName);
   let content = await fs.readFile(templatePath, 'utf8');
@@ -169,7 +228,7 @@ const getUsernameById = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
-updatePlatformUsernameService = async (userId, platform, username) => {
+const updatePlatformUsernameService = async (userId, platform, username) => {
   const validPlatforms = ['leetcode', 'codeforces', 'gfg'];
   if (!validPlatforms.includes(platform)) {
     throw new Error("Invalid platform specified.");
@@ -257,4 +316,16 @@ const resetPassword = async (resetToken, newPassword, confirmPassword) => {
   await user.save();
 return { status: 200, message: "Password has been reset successfully." };
 };
-module.exports = {updateProfile, registerUser, loginUser,getUserProfileService, verifyEmail,getUsernameById,updatePlatformUsernameService,forgotPassword,resetPassword };
+module.exports = {
+  updateProfile, 
+  registerUser, 
+  loginUser,
+  getUserProfileService, 
+  verifyEmail,
+  getUsernameById,
+  updatePlatformUsernameService,
+  forgotPassword,
+  resetPassword,
+  googleLogin,
+  googleSignup
+};

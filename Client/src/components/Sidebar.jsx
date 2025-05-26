@@ -1,23 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  Home, 
-  Calendar, 
-  Star, 
-  Users, 
-  MessageSquare, 
-  Settings, 
-  LayoutDashboard,
-  Clock,
-  BookOpen,
-  PlusCircle,
-  PanelLeftClose
+import {
+  Home, Calendar, Star, Users, MessageSquare, Settings, LayoutDashboard,
+  Clock, BookOpen, PlusCircle, PanelLeftClose
 } from "lucide-react";
 
 export function Sidebar({ toggleSidebar }) {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const token = sessionStorage.getItem('token');
@@ -57,61 +49,61 @@ export function Sidebar({ toggleSidebar }) {
   ];
 
   return (
-    <motion.div 
-      className="fixed top-0 left-0 bg-white border-r border-gray-200 h-screen w-70 flex flex-col overflow-y-auto scrollbar-thin"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+    <motion.div
+      className="fixed top-0 left-0 h-screen w-72 bg-gradient-to-b from-white to-gray-50 border-r border-gray-200 shadow-lg z-40 flex flex-col"
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <img src="/org_codeverse.png" alt="CodeVerse Logo" className="w-10 h-10" />
+      <div className="flex items-center justify-between px-5 py-4 bg-white border-b border-gray-200 shadow-sm">
+        <div className="flex items-center gap-3">
+          <img src="/org_codeverse.png" alt="CodeVerse Logo" className="w-10 h-10 rounded-lg" />
           <div>
-            <h3 className="font-semibold text-gray-800">CodeVerse</h3>
+            <h3 className="font-semibold text-gray-900 text-base tracking-wide">CodeVerse</h3>
             <p className="text-xs text-gray-500">Improve your coding skills</p>
           </div>
         </div>
-        <button onClick={toggleSidebar} className="text-gray-600 hover:text-black transition">
-          <PanelLeftClose className="w-6 h-6" />
+        <button onClick={toggleSidebar} className="text-gray-600 hover:text-gray-900 transition">
+          <PanelLeftClose className="w-8 h-8 cursor-pointer hover:text-blue-600" />
         </button>
       </div>
-
-      {/* Navigation */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin">
-        <ul className="mt-4">
-          {navigationItems.map(item => (
-            <li key={item.title}>
-              <Link 
-                to={item.path} 
-                className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-primary hover:bg-gray-50"
-              >
-                <item.icon className="w-5 h-5" />
-                <span>{item.title}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Footer - User Info */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-2">
+        {navigationItems.map(item => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.title}
+              to={item.path}
+              className={`flex items-center gap-3 px-4 py-2 rounded-md font-medium  transition-all duration-200
+                ${isActive
+                  ? 'bg-purple-100 text-purple-700'
+                  : 'text-gray-700 hover:bg-gray-100 hover:text-purple-700'}
+              `}
+            >
+              <item.icon className={`w-5 h-5 ${isActive ? 'text-purple-700' : 'text-gray-500'}`} />
+              {item.title}
+            </Link>
+          );
+        })}
+      </nav>
       <div className="px-4 py-3 border-t border-gray-200 bg-white">
         {user ? (
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <img
                 src={user.profilePic}
                 alt={user.username}
-                className="w-10 h-10 rounded-full object-cover"
+                className="w-10 h-10 rounded-full object-cover shadow-sm"
               />
-              <div>
-                <p className="text-sm font-medium text-gray-800">{user.name}</p>
-                <p className="text-xs text-gray-500">{user.email}</p>
+              <div className="text-sm">
+                <p className="font-semibold text-gray-800">{user.name}</p>
+                <p className="text-xs text-gray-500 truncate">{user.email}</p>
               </div>
             </div>
             <button
               onClick={handleLogout}
-              className="text-sm text-red-600 hover:text-red-800 transition cursor-pointer"
+              className="text-sm text-red-600 hover:text-red-700 transition"
             >
               Logout
             </button>
@@ -119,7 +111,7 @@ export function Sidebar({ toggleSidebar }) {
         ) : (
           <button
             onClick={() => { toggleSidebar(); navigate('/login'); }}
-            className="w-full text-center border border-purple-600 text-purple-600 px-4 py-2 rounded hover:bg-purple-50 transition-all duration-150"
+            className="w-full text-center border border-purple-600 text-purple-600 px-4 py-2 rounded hover:bg-purple-50 font-medium transition-all"
           >
             Sign In
           </button>
@@ -128,5 +120,4 @@ export function Sidebar({ toggleSidebar }) {
     </motion.div>
   );
 }
-
 export default Sidebar;

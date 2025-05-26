@@ -21,4 +21,6 @@ router.patch(
 router.get('/:id', authController.getUsernameById);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
+router.post('/google-signup', authController.googleSignupHandler);
+router.post('/google-login',  authController.googleLoginHandler);
 module.exports = router;
