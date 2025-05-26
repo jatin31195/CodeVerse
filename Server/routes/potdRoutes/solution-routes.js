@@ -1,12 +1,12 @@
 const express = require("express");
 const { addSolution, getSolutionsByQuestion, voteSolution } = require("../../controllers/potdControllers/solution-controller");
-const  analyzeSolutionComplexity  = require("../../controllers/potdControllers/solution-complexity-controller");
+const authMiddleware = require("../../middlewares/authMiddlewares");
 
 const router = express.Router();
 
-router.post("/add", addSolution);  
+router.post("/add",authMiddleware, addSolution);  
 router.get("/:questionId", getSolutionsByQuestion); 
-router.post("/vote", voteSolution); 
-router.post("/complexity",analyzeSolutionComplexity);
+router.post("/vote",authMiddleware, voteSolution); 
+
 
 module.exports = router;
