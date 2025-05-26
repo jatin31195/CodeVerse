@@ -1,6 +1,43 @@
 const authService = require('../services/authService');
 const authRepository=require('../repositories/authRepository');
 const User=require('../models/User');
+
+
+
+const googleSignupHandler=async(req, res)=> {
+  try {
+    const { idToken } = req.body;
+    const { user, token } = await authService.googleSignup(idToken);
+    res.status(201).json({
+      message: 'Google signup successful',
+      user,
+      token,
+    });
+  } catch (err) {
+    console.error('Google signup error:', err);
+    res
+      .status(err.status || 500)
+      .json({ message: err.message || 'Signup failed' });
+  }
+}
+
+const googleLoginHandler=async(req, res) =>{
+  try {
+    const { idToken } = req.body;
+    const { user, token } = await authService.googleLogin(idToken);
+    res.status(200).json({
+      message: 'Google login successful',
+      user,
+      token,
+    });
+  } catch (err) {
+    console.error('Google login error:', err);
+    res
+      .status(err.status || 500)
+      .json({ message: err.message || 'Login failed' });
+  }
+}
+
 const register = async (req, res) => {
   try {
     const response = await authService.registerUser(req.body);
@@ -47,7 +84,7 @@ const updateProfile = async (req, res) => {
     const userId = req.user.userId; 
     const updates = {};
     console.log(userId)
-    // Only include fields if provided in the request
+   
     if (req.body.name) {
       updates.name = req.body.name.trim();
     }
@@ -58,13 +95,12 @@ const updateProfile = async (req, res) => {
       updates.gender = req.body.gender;
     }
 
-    // —— NEW: use Multer’s req.file.path exactly like uploadProfilePic
+    
     if (req.file) {
-      // this will be something like 'uploads/avatars/filename.jpg'
+     
       updates.profilePic = req.file.path;
     }
 
-    // Call service to apply the updates
     const updated = await authService.updateProfile(userId, updates);
 
     res.json({
@@ -75,7 +111,7 @@ const updateProfile = async (req, res) => {
         email: updated.email,
         dateOfBirth: updated.dateOfBirth,
         gender: updated.gender,
-        profilePic: updated.profilePic,    // match the field you just set
+        profilePic: updated.profilePic,    
       },
     });
   } catch (err) {
@@ -147,4 +183,17 @@ const resetPassword = async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 };
-module.exports = {updateProfile, register, login, verifyOTP,uploadProfilePic ,getUsernameById,updatePlatformUsername,getUserProfile,forgotPassword,resetPassword};
+module.exports = {
+  updateProfile, 
+  register, 
+  login, 
+  verifyOTP,
+  uploadProfilePic ,
+  getUsernameById,
+  updatePlatformUsername,
+  getUserProfile,
+  forgotPassword,
+  resetPassword,
+  googleLoginHandler,
+  googleSignupHandler
+};
