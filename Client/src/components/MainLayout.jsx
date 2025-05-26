@@ -123,7 +123,7 @@ const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
               />
             ) : (
               <span className="text-sm font-semibold text-gray-700">
-                {getInitials(user.name)}
+                {getInitials(user.username)}
               </span>
             )}
           </button>

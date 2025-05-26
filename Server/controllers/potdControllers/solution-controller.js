@@ -2,13 +2,12 @@ const Solution = require("../../models/Solution");
 const Question = require("../../models/Question");
 const CustomPotd = require("../../models/CustomUserPOTD");
 
-// Add a solution
 const addSolution = async (req, res) => {
   try {
-    const { questionId, userId, type, language, content } = req.body;
+    const userId = req.user.userId; 
+    const { questionId, type, language, content } = req.body;
 
-    // Check if the question exists in the main Question collection
-    // If not, check in the CustomUserPOTD collection
+    
     let question = await Question.findById(questionId);
     if (!question) {
       question = await CustomPotd.findById(questionId);
@@ -17,7 +16,7 @@ const addSolution = async (req, res) => {
       return res.status(404).json({ message: "Question not found in either collection" });
     }
 
-    // Save the solution linked to the found question
+    
     const newSolution = new Solution({
       question: questionId,
       user: userId,
@@ -34,7 +33,6 @@ const addSolution = async (req, res) => {
   }
 };
 
-// Get solutions for a question
 const getSolutionsByQuestion = async (req, res) => {
   try {
     const { questionId } = req.params;
@@ -46,21 +44,61 @@ const getSolutionsByQuestion = async (req, res) => {
   }
 };
 
-// Upvote or Downvote a solution
 const voteSolution = async (req, res) => {
   try {
-    const { solutionId, vote } = req.body; // vote should be 'up' or 'down'
+    const userId = req.user.userId;
+    const { solutionId, vote } = req.body;
+
+    if (!["up", "down"].includes(vote)) {
+      return res.status(400).json({ message: "Invalid vote type" });
+    }
+
     const solution = await Solution.findById(solutionId);
     if (!solution) {
       return res.status(404).json({ message: "Solution not found" });
     }
-    solution.votes += vote === "up" ? 1 : (vote === "down" ? -1 : 0);
+
+    const hasUpvoted = solution.upvotedBy.includes(userId);
+    const hasDownvoted = solution.downvotedBy.includes(userId);
+
+    
+    if (vote === "up") {
+      if (hasUpvoted) {
+        return res.status(400).json({ message: "You already upvoted this solution" });
+      }
+      if (hasDownvoted) {
+        
+        solution.downvotedBy.pull(userId);
+        solution.votes += 1; 
+      }
+      solution.upvotedBy.push(userId);
+      solution.votes += 1; 
+    } else if (vote === "down") {
+      if (hasDownvoted) {
+        return res.status(400).json({ message: "You already downvoted this solution" });
+      }
+      if (hasUpvoted) {
+        
+        solution.upvotedBy.pull(userId);
+        solution.votes -= 1; 
+      }
+      solution.downvotedBy.push(userId);
+      solution.votes -= 1; 
+    }
+
     await solution.save();
-    return res.json({ message: "Vote updated successfully", votes: solution.votes });
+
+    return res.json({
+      message: `Successfully ${vote === "up" ? "upvoted" : "downvoted"} solution`,
+      totalVotes: solution.votes,
+      upvotes: solution.upvotedBy.length,
+      downvotes: solution.downvotedBy.length,
+    });
   } catch (error) {
     console.error("Error voting solution:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };
+
 
 module.exports = { addSolution, getSolutionsByQuestion, voteSolution };

@@ -92,6 +92,7 @@ const Home = () => {
   const [user, setUser] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [leetProblem, setLeetProblem] = useState(null);
+  
   const handleLogout = () => {
     sessionStorage.removeItem('token');
     setUser(null);
@@ -99,20 +100,37 @@ const Home = () => {
     navigate('/login');
   };
 
-  
   useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    if (!token) return;
-    fetch('http://localhost:8080/api/auth/profile', {
-      headers: { Authorization: token }
+  const token = sessionStorage.getItem('token');
+  if (!token) return;
+
+  fetch('http://localhost:8080/api/auth/profile', {
+    headers: {
+      'Authorization': token,
+    },
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error('Not authenticated');
+      return res.json();
     })
-      .then(r => r.json())
-      .then(json => setUser(json.data.user))
-      .catch(() => {
-        sessionStorage.removeItem('token');
-        setUser(null);
-      });
-  }, []);
+    .then((json) => {
+      setUser(json.data.user);
+      console.log('Fetched user:', json.data.user);
+    })
+    .catch((err) => {
+      console.error('Authentication error:', err);
+      sessionStorage.removeItem('token');
+      setUser(null);
+    });
+}, []);
+   const getInitials = (name) =>
+    name
+      .split(' ')
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
+  
   useEffect(() => {
     const now = new Date();
     const istOffset = 5 * 60 + 30;
@@ -223,8 +241,8 @@ const Home = () => {
                         className="w-full h-full object-cover rounded-full"
                       />
                     ) : (
-                      <span className="text-sm font-semibold text-gray-700">
-                        {getInitials(user.name)}
+                      <span className="text-lg font-semibold text-black">
+                        {getInitials(user.username)}
                       </span>
                     )}
                   </button>

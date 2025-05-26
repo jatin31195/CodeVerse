@@ -5,7 +5,7 @@ import LiveChat from "./components/LiveChat";
 import RaiseTicket from "./components/RaiseTicket";
 import VideoMeeting from "./components/VideoMeeting";
 import LandingPage from "./components/LandingPage";
-import SignUpPage from "./components/SignupPage";
+import SignUpPage from "./components/SignUpPage";
 import LoginPage from "./components/LoginPage";
 import Home from "./components/Home";
 import SchedulePage from "./components/SchedulePage";

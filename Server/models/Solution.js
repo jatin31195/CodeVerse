@@ -9,6 +9,8 @@ const SolutionSchema = new mongoose.Schema({
     language: { type: String, enum: ["C++", "Java"], required: true },
     content: { type: String, required: true },
     votes: { type: Number, default: 0 },
+    upvotedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    downvotedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 }, { timestamps: true });
 SolutionSchema.index({ question: 1, user: 1 }, { unique: true });
 module.exports = mongoose.model("Solution", SolutionSchema);
