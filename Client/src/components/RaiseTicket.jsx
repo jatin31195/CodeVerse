@@ -357,7 +357,7 @@ const RaiseTicket = () => {
           <button
             type="submit"
             disabled={!selectedQuestion}
-            className="bg-gradient-to-r from-codeverse-cyan to-codeverse-purple text-white px-4 py-2 rounded-lg font-medium hover:scale-105 transition-transform duration-300 disabled:opacity-50"
+            className="cursor-pointer bg-gradient-to-r from-blue-600 to-purple-600 text-white px-2 py-1 rounded-lg font-medium hover:scale-105 transition-transform duration-300 "
           >
             Raise Ticket
           </button>

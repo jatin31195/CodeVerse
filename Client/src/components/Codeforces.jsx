@@ -197,7 +197,7 @@ export default function Codeforces() {
           className="fixed bottom-6 right-6 rounded-full w-14 h-14 flex items-center justify-center shadow-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white"
           whileHover={{ scale: 1.1 }}
         >
-          <MessageCircle size={24} />
+          <MessageCircle size={24} className='cursor-pointer'/>
         </motion.button>
 
         <AnimatePresence>

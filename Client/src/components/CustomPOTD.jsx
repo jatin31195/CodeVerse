@@ -123,7 +123,7 @@ export default function CustomPOTD() {
             <Link to="/add-problem">
               <motion.button
                 whileHover={{ scale: 1.05 }}
-                className="flex items-center gap-2 border border-purple-600 text-purple-600 px-5 py-2 rounded-lg font-semibold"
+                className="cursor-pointer flex items-center gap-2 border border-purple-600 text-purple-600 px-5 py-2 rounded-lg font-semibold"
               >
                 <Code size={18} /> Add Problem
               </motion.button>
@@ -131,7 +131,7 @@ export default function CustomPOTD() {
             <motion.button
               onClick={handleRandomize}
               whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-5 py-2 rounded-lg font-semibold"
+              className="cursor-pointer flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-5 py-2 rounded-lg font-semibold"
             >
               <Shuffle size={18} /> Randomize
             </motion.button>
@@ -313,7 +313,7 @@ export default function CustomPOTD() {
                     >
                       <motion.button
                         whileHover={{ scale: 1.05 }}
-                        className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-5 py-2 rounded-lg font-semibold"
+                        className="cursor-pointer flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-5 py-2 rounded-lg font-semibold"
                       >
                         <Code size={18} /> Add Problem
                       </motion.button>
@@ -329,7 +329,7 @@ export default function CustomPOTD() {
                 <Link to={selectedProblem.link} target="_blank">
                   <motion.button
                     whileHover={{ scale: 1.03 }}
-                    className="w-full flex items-center justify-center bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg font-semibold"
+                    className="cursor-pointer w-full flex items-center justify-center bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg font-semibold"
                   >
                     <ExternalLink className="mr-2" /> Solve on{' '}
                     {selectedProblem.platform}
@@ -339,7 +339,7 @@ export default function CustomPOTD() {
                 <Link to="/my-problems">
                   <motion.button
                     whileHover={{ scale: 1.03 }}
-                    className="w-full border border-purple-600 text-purple-600 px-4 py-2 rounded-lg font-semibold"
+                    className="cursor-pointer w-full border border-purple-600 text-purple-600 px-4 py-2 rounded-lg font-semibold"
                   >
                     Browse My Problem Lists
                   </motion.button>
@@ -397,7 +397,7 @@ export default function CustomPOTD() {
                 </p>
                 {card.to ? (
                   <Link to={card.to}>
-                    <button className="flex items-center gap-2 border border-purple-600 text-purple-600 px-4 py-2 rounded-lg font-medium">
+                    <button className="cursor-pointer flex items-center gap-2 border border-purple-600 text-purple-600 px-4 py-2 rounded-lg font-medium">
                       {card.icon}{' '}
                       {card.title.includes('Add') ? 'Add' : 'Go'}
                     </button>
@@ -405,7 +405,7 @@ export default function CustomPOTD() {
                 ) : (
                   <button
                     onClick={card.onClick}
-                    className="flex items-center gap-2 border border-purple-600 text-purple-600 px-4 py-2 rounded-lg font-medium"
+                    className="cursor-pointer flex items-center gap-2 border border-purple-600 text-purple-600 px-4 py-2 rounded-lg font-medium"
                   >
                     {card.icon} Randomize
                   </button>

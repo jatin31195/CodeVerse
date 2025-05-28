@@ -442,7 +442,7 @@ const TasksPage = () => {
             onClick={() => setAddTaskOpen(true)}
             className="ml-auto inline-flex items-center gap-2 text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-md hover:shadow-md transition-all"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 cursor-pointer" />
             Add New Task
           </button>
         </div>
@@ -458,9 +458,9 @@ const TasksPage = () => {
             </p>
             <button
               onClick={() => setAddTaskOpen(true)}
-              className="inline-flex items-center bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-md hover:shadow-lg transition-all"
+              className="cursor-pointer inline-flex items-center bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-md hover:shadow-lg transition-all"
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-2 h-4 w-4 cursor-pointer" />
               Add Your First Task
             </button>
           </div>
@@ -478,7 +478,7 @@ const TasksPage = () => {
 
      
       <Modal open={addTaskOpen} onClose={() => setAddTaskOpen(false)}>  
-        <h2 className="text-xl font-bold mb-4">Add New Task</h2>
+        <h2 className="text-xl font-bold mb-4 cursor-pointer">Add New Task</h2>
         <NewTaskForm
           onSuccess={() => {
             setAddTaskOpen(false);
@@ -491,7 +491,7 @@ const TasksPage = () => {
       <Modal open={Boolean(editTask)} onClose={() => setEditTask(null)}>
         {editTask && (
           <>
-            <h2 className="text-xl font-bold mb-4">Edit Task</h2>
+            <h2 className="text-xl font-bold mb-4 cursor-pointer">Edit Task</h2>
             <NewTaskForm
               task={editTask}
               onSuccess={() => {

@@ -110,7 +110,7 @@ export default function POTD() {
     hover:shadow-2xl
     hover:border-transparent
     hover:bg-gradient-to-r hover:from-purple-600 hover:to-blue-600
-    hover:text-white"
+    hover:text-white cursor-pointer"
         >
           LeetCode POTD <ArrowRight className="h-5 w-5" />
         </motion.button>
@@ -127,7 +127,7 @@ export default function POTD() {
     hover:shadow-2xl
     hover:border-transparent
     hover:bg-gradient-to-r hover:from-purple-600 hover:to-blue-600
-    hover:text-white"
+    hover:text-white cursor-pointer"
         >
           GFG POTD <ArrowRight className="h-5 w-5" />
         </motion.button>
@@ -144,7 +144,7 @@ export default function POTD() {
     hover:shadow-2xl
     hover:border-transparent
     hover:bg-gradient-to-r hover:from-purple-600 hover:to-blue-600
-    hover:text-white"
+    hover:text-white cursor-pointer"
         >
           Codeforces POTD <ArrowRight className="h-5 w-5" />
         </motion.button>

@@ -106,9 +106,9 @@ const FavoriteList = () => {
               onClick={() => setCreateModalOpen(true)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg transition"
+              className="cursor-pointer flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg transition"
             >
-              <PlusCircle size={20} />
+              <PlusCircle size={20} className="cursor-pointer"/>
               Create New List
             </motion.button>
           </div>
