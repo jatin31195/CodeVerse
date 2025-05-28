@@ -219,13 +219,15 @@ const Home = () => {
   </button>
 
  
-  <Link to="/home" className="flex-shrink-0">
-    <img
-      src="/codelogo1.png"
-      alt="CodeVerse"
-      className="h-12 w-auto"
-    />
-  </Link>
+  <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        <Link to="/home" className="flex-shrink-0">
+          <img
+            src="/codelogo1.png"
+            alt="CodeVerse"
+            className="h-12 w-auto"
+          />
+        </Link>
+      </div>
 
   
   {user && (

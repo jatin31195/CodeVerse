@@ -203,7 +203,7 @@ const FavoriteList = () => {
           )}
         </motion.main>
 
-        {/* Create Modal */}
+        
         <AnimatePresence>
           {createModalOpen && (
             <motion.div
@@ -241,7 +241,7 @@ const FavoriteList = () => {
                     <motion.button
                       type="submit"
                       whileHover={{ scale: 1.05 }}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg transition"
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg transition cursor-pointer"
                     >
                       Create
                     </motion.button>

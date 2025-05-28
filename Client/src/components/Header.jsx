@@ -58,9 +58,16 @@ const Header = ({ onNewTicket }) => {
             />
             <div>
               <h1 className="text-3xl font-bold bg-codeverse-gradient bg-clip-text text-transparent">
-                CodeVerse Support
+                CodeVerse Doubt Support
               </h1>
-              <p className="text-gray-300">Welcome to the MultiVerse of Code</p>
+              <p className="text-gray-300">
+  Welcome to the{' '}
+  <span className="font-semibold  bg-gradient-to-r from-blue-200 via-purple-300 to-pink-200 text-transparent bg-clip-text">
+    MultiVerse
+  </span>{' '}
+  of Coding
+</p>
+
             </div>
           </div>
         </div>
