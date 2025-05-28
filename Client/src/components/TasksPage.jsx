@@ -56,6 +56,7 @@ const TaskCard = ({ task, onTaskUpdated, onEdit }) => {
       },
     });
     onTaskUpdated();
+    toast.success("Task completed")
   };
 
   
@@ -196,6 +197,7 @@ const NewTaskForm = ({ task, onSuccess }) => {
     }
 
     onSuccess();
+    toast.success("Task Added Successfully");
   };
 
   return (

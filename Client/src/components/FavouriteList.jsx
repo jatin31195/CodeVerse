@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { PlusCircle, Code, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import MainLayout from "./MainLayout";
-
+import {toast} from 'react-toastify'
 const API_BASE_URL = "http://localhost:8080/api/fav";
 
 const fadeIn = {
@@ -61,6 +61,7 @@ const FavoriteList = () => {
         setNewListName("");
         setCreateModalOpen(false);
         fetchLists();
+        toast.success("List Created Successfully");
       }
     } catch (error) {
       taost.error("Error creating list:", error);
@@ -76,6 +77,7 @@ const FavoriteList = () => {
       });
       if (res.ok) {
         setLists(lists.filter((list) => list._id !== id));
+        toast.success("List Deleted Successfully");
       }
     } catch (error) {
       toast.error("Error deleting list:", error);
