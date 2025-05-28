@@ -7,7 +7,7 @@ import Header from '../components/Header';
 import TicketCard from '../components/TicketCard';
 import { Combobox } from '@headlessui/react';
 import { Check, ChevronDown } from 'lucide-react';
-
+import { toast } from 'react-toastify';
 const getUserId = (user) => {
   if (!user) return "";
   if (typeof user === "string") return user;
@@ -144,7 +144,7 @@ const RaiseTicket = () => {
   const handleRaiseTicket = async (e) => {
     e.preventDefault();
     if (!selectedQuestion) {
-      alert('Please select a question.');
+      toast.warning('Please select a question.');
       return;
     }
     try {
@@ -154,17 +154,17 @@ const RaiseTicket = () => {
         getAuthConfig()
       );
       setTicketRaised(true);
-      alert('Ticket raised successfully');
+      toast.success('Ticket raised successfully');
       refreshTickets();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Error raising ticket');
+      toast.error(err.response?.data?.message || 'Error raising ticket');
     }
   };
 
   const handleProvideTextSolution = async (ticketId) => {
     if (!solutionText) {
-      alert('Enter a solution text');
+      toast.info('Enter a solution text');
       return;
     }
     try {
@@ -173,13 +173,13 @@ const RaiseTicket = () => {
         { solutionText },
         getAuthConfig()
       );
-      alert('Solution submitted successfully');
+      toast.success('Solution submitted successfully');
       setSolutionText('');
       setCurrentTicket(null);
       refreshTickets();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Error submitting solution');
+      toast.error(err.response?.data?.message || 'Error submitting solution');
     }
   };
 
@@ -191,11 +191,11 @@ const RaiseTicket = () => {
         {},
         getAuthConfig()
       );
-      alert('Video meet request sent');
+      toast.success('Video meet request sent');
       refreshTickets();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Error requesting video meet');
+      toast.error(err.response?.data?.message || 'Error requesting video meet');
     }
   };
 
@@ -206,11 +206,11 @@ const RaiseTicket = () => {
         {},
         getAuthConfig()
       );
-      alert('Video meet accepted. Meeting room created.');
+      toast.success('Video meet accepted. Meeting room created.');
       refreshTickets();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Error accepting video meet request');
+      toast.error(err.response?.data?.message || 'Error accepting video meet request');
     }
   };
 
@@ -221,11 +221,11 @@ const RaiseTicket = () => {
         {},
         getAuthConfig()
       );
-      alert('Video meet closed and ticket updated.');
+      toast.success('Video meet closed and ticket updated.');
       refreshTickets();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Error closing video meet');
+      toast.error(err.response?.data?.message || 'Error closing video meet');
     }
   };
 
@@ -248,15 +248,15 @@ const RaiseTicket = () => {
         if (updatedTicket.videoMeetRoom && updatedTicket.videoMeetRoom.trim() !== "") {
           window.location.href = `/video-meeting/${updatedTicket.videoMeetRoom}`;
         } else {
-          alert("Failed to create meeting room. Please try again later.");
+          toast.error("Failed to create meeting room. Please try again later.");
         }
       } catch (error) {
         console.error(error);
-        alert("Error creating meeting room.");
+        toast.error("Error creating meeting room.");
       }
     } else {
      
-      alert("Meeting room not available. Please wait for the ticket raiser to accept the video meet request.");
+      toast.warning("Meeting room not available. Please wait for the ticket raiser to accept the video meet request.");
     }
   };
 

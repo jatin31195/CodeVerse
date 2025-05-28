@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Calendar, User, Edit2, X } from "lucide-react";
-
+import {toast} from 'react-toastify'
 const API_BASE = "http://localhost:8080/api/auth";
 
 const UserProfileCard = () => {
@@ -32,7 +32,7 @@ const UserProfileCard = () => {
           avatarUrl: user.profilePic || ""
         });
       } catch (err) {
-        console.error("Failed to load profile", err);
+        toast.error("Failed to load profile", err);
       }
     };
     fetchProfile();
@@ -77,7 +77,7 @@ const UserProfileCard = () => {
       });
       setAvatarFile(null);
     } catch (err) {
-      console.error("Update failed", err);
+      toast.error("Update failed", err);
     }
   };
 

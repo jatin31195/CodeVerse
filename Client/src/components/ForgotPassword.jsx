@@ -1,56 +1,77 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { MailIcon } from 'lucide-react';
+import { toast } from 'sonner';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
-    setError('');
 
     try {
       const response = await fetch('http://localhost:8080/api/auth/forgot-password', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setMessage(data.message || 'Check your email for the reset link.');
+        toast.success(data.message || 'Check your email for the reset link.');
       } else {
-        setError(data.message || 'Something went wrong.');
+        toast.error(data.message || 'Something went wrong.');
       }
     } catch (err) {
-      setError('Server error. Please try again later.');
+      toast.error('Server error. Please try again later.');
     }
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '2rem auto' }}>
-      <h2>Forgot Password</h2>
-      {message && <p style={{ color: 'green' }}>{message}</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="email">Email Address</label>
-          <input
-            type="email"
-            id="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
+    <motion.div
+      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100 p-4"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="w-full max-w-md bg-white shadow-2xl rounded-2xl p-8 space-y-6">
+        <div className="text-center">
+          <div className="flex justify-center mb-2">
+            <MailIcon className="h-10 w-10 text-blue-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800">Forgot Password</h2>
+          <p className="text-gray-500 text-sm">We'll send you a link to reset your password</p>
         </div>
-        <button type="submit" style={{ padding: '0.5rem 1rem' }}>Send Reset Link</button>
-      </form>
-    </div>
+
+        {message && <p className="text-green-600 text-sm text-center">{message}</p>}
+        {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              Email Address
+            </label>
+            <input
+              type="email"
+              id="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="you@example.com"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white font-medium py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Send Reset Link
+          </button>
+        </form>
+      </div>
+    </motion.div>
   );
 };
 

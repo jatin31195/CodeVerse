@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { ChevronDown, Search, Shuffle, ExternalLink, Code } from 'lucide-react';
 import { motion } from 'framer-motion';
-
+import {toast} from 'react-toastify'
 import MainLayout from './MainLayout';
 import POTDCalendar from './POTDCalendar';
 
@@ -55,7 +55,7 @@ export default function CustomPOTD() {
           selectList(combined[0]._id);
         }
       } catch (err) {
-        console.error('Failed to fetch lists:', err);
+        toast.error('Failed to fetch lists:', err);
       } finally {
         setLoadingLists(false);
       }
@@ -76,7 +76,7 @@ export default function CustomPOTD() {
       }, {});
       setProblemsMap(map);
     } catch (err) {
-      console.error('Failed to fetch list questions:', err);
+      toast.error('Failed to fetch list questions:', err);
       setProblemsMap({});
     } finally {
       setLoadingProblems(false);

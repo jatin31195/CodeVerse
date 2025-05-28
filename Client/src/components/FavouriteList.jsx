@@ -29,7 +29,7 @@ const FavoriteList = () => {
         setLists(data);
       }
     } catch (error) {
-      console.error("Error fetching lists:", error);
+      toast.error("Error fetching lists:", error);
     }
   };
 
@@ -63,7 +63,7 @@ const FavoriteList = () => {
         fetchLists();
       }
     } catch (error) {
-      console.error("Error creating list:", error);
+      taost.error("Error creating list:", error);
     }
   };
 
@@ -78,7 +78,7 @@ const FavoriteList = () => {
         setLists(lists.filter((list) => list._id !== id));
       }
     } catch (error) {
-      console.error("Error deleting list:", error);
+      toast.error("Error deleting list:", error);
     }
   };
 

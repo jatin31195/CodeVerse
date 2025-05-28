@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import MainLayout from './MainLayout';
+import {toast} from 'react-toastify'
 
 const navLinks = [
   { name: 'POTD Calendar', path: '/custom' },
@@ -56,7 +57,7 @@ export default function MyProblem() {
           }
         }
       } catch (err) {
-        console.error('Error loading lists:', err);
+        toast.error('Error loading lists:', err);
       }
     })();
   }, []);
@@ -64,13 +65,13 @@ export default function MyProblem() {
   const handleSelectList = (listId) => {
     setCurrentListId(listId);
     localStorage.setItem('currentList', listId);
-    alert('Selected problem list changed');
+    toast.success('Selected problem list changed');
   };
 
   const handleCreateList = async (e) => {
     e.preventDefault();
     const name = newListName.trim();
-    if (name.length < 3) return alert('Name must be at least 3 characters');
+    if (name.length < 3){ toast.error('Name must be at least 3 characters');return; }
     try {
       const res = await api.post('/list', { name, isPublic });
       if (res.data.success) {
@@ -80,13 +81,13 @@ export default function MyProblem() {
         setIsDialogOpen(false);
         setCurrentListId(created._id);
         localStorage.setItem('currentList', created._id);
-        alert('Problem list created successfully!');
+        toast.success('Problem list created successfully!');
       } else {
-        alert(res.data.message || 'Error creating list');
+        toast.error(res.data.message || 'Error creating list');
       }
     } catch (err) {
       console.error('Create list failed:', err);
-      alert('Could not create list');
+      toast.error('Could not create list');
     }
   };
 
@@ -239,11 +240,11 @@ function ListCard({ list, isCurrent, onSelect, api }) {
       });
       if (res.data.success) {
         setPublicState(res.data.list.isPublic);
-        alert(`List is now ${res.data.list.isPublic ? 'Public' : 'Private'}`);
+        toast.success(`List is now ${res.data.list.isPublic ? 'Public' : 'Private'}`);
       }
     } catch (err) {
       console.error('Visibility update failed:', err);
-      alert('Could not update visibility');
+      toast.error('Could not update visibility');
     }
   };
 

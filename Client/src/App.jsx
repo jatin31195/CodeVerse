@@ -13,7 +13,7 @@ import TasksPage from "./components/TasksPage";
 import FavouriteList from "./components/FavouriteList";
 import ListView from "./components/ListView";
 import POTD from "./components/POTD";
-import LeetCode from "./components/Leetcode";
+import LeetCode from "./components/LeetCode";
 import GFG from "./components/GFG";
 import Codeforces from "./components/Codeforces";
 import CustomPOTD from "./components/CustomPOTD";

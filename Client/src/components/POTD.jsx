@@ -12,7 +12,7 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import MainLayout from './MainLayout';
-
+import {toast} from 'react-toastify'
 const navLinks = [
   { name: 'LeetCode', path: '/leetcode' },
   { name: 'CodeForces', path: '/codeforces' },

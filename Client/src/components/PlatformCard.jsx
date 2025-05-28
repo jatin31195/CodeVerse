@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Link as LinkIcon } from "lucide-react";
-
+import {toast} from 'react-toastify'
 const PlatformCard = ({ platform, username, onSave, isConnected }) => {
   const [newUsername, setNewUsername] = useState(username || "");
   const [isOpen, setIsOpen] = useState(false);
@@ -30,7 +30,7 @@ const PlatformCard = ({ platform, username, onSave, isConnected }) => {
     if (newUsername.trim()) {
       onSave(newUsername);
       setIsOpen(false);
-      alert(`Connected to ${name}!`);
+      toast.success(`Connected to ${name}!`);
     }
   };
 

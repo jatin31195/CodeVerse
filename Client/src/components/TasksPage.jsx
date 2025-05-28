@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-
+import {toast} from 'react-toastify'
 const API_BASE = 'http://localhost:8080/api';
 
 
@@ -71,7 +71,7 @@ const TaskCard = ({ task, onTaskUpdated, onEdit }) => {
     });
     if (!res.ok) {
       setReminderEnabled(prev => !prev);
-      console.error('Failed toggling reminder');
+      toast.error('Failed toggling reminder');
     } else {
       onTaskUpdated();
     }
@@ -191,7 +191,7 @@ const NewTaskForm = ({ task, onSuccess }) => {
     });
 
     if (!res.ok) {
-      console.error('Failed to save task', await res.json());
+      toast.error('Failed to save task', await res.json());
       return;
     }
 

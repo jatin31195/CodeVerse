@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { format, addMonths, subMonths } from 'date-fns';
 import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
-import { toast } from 'sonner';
+import {toast} from 'react-toastify'
 import axios from 'axios';
 import { AnimatePresence, motion } from 'framer-motion';
 
