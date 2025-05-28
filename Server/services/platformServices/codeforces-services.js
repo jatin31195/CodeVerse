@@ -8,19 +8,24 @@ const difficultySchedule = [
   [800,  900,  1000],  // Week 1
   [900,  1000, 1100],  // Week 2
   [1000, 1100, 1200],  // Week 3
-  [1100, 1200, 1300]   // Week 4
+  [1100, 1200, 1300],   // Week 4
+  [1200, 1300, 1400] 
 ];
 
 function getDifficultyForToday() {
   const today      = new Date();
   const dayOfMonth = today.getDate();
-  const week       = Math.floor((dayOfMonth - 1) / 7);  // 0–3
-  const dayOfWeek  = (dayOfMonth - 1) % 7;              // 0–6
+  let   week       = Math.floor((dayOfMonth - 1) / 7);  
+  const dayOfWeek  = (dayOfMonth - 1) % 7;              
+
+  const maxWeek = difficultySchedule.length - 1;
+  if (week > maxWeek) week = maxWeek;
 
   if (dayOfWeek < 3)        return difficultySchedule[week][0];
   else if (dayOfWeek < 5)   return difficultySchedule[week][1];
   else                      return difficultySchedule[week][2];
 }
+
 
 
 async function fetchEasyExplanation({ title, platform, link, questionId }) {
