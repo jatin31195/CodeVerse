@@ -23,6 +23,7 @@ import PasswordReset from "./components/PasswordReset";
 import ForgotPassword from "./components/ForgotPassword";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ReportIssuePage from "./components/ReportIssuePage";
 function App() {
     return (
         <Router>
@@ -59,6 +60,7 @@ function App() {
                 <Route path="/add-problem" element={<AddProblem/>} />
                 <Route path="/reset" element={<PasswordReset/>}/>
                 <Route path="/forgot-password" element={<ForgotPassword/>} />
+                <Route path="/report-issue" element={<ReportIssuePage/>}/>
             </Routes>
         </Router>
     );
