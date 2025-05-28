@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import MainLayout from './MainLayout';
-
+import {toast} from 'react-toastify'
+import { Toaster } from 'sonner';
 export default function ReportIssuePage() {
  const [description, setDescription] = useState('');
   const [files, setFiles] = useState([]);
@@ -35,10 +36,11 @@ export default function ReportIssuePage() {
       if (res.ok) {
         setSubmitted(true);
       } else {
-        console.error('Report failed:', await res.text());
+        Toaster.error('Report failed:', await res.text());
+        return ;
       }
     } catch (err) {
-      console.error('Error submitting report:', err);
+      toast.error('Error submitting report:', err);
     }
   };
 

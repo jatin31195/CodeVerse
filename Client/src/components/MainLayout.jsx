@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './Sidebar';
-
+import {toast} from 'react-toastify'
 const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);

@@ -77,12 +77,13 @@ const SignUpPage = () => {
         localStorage.setItem("userEmail", data.user.email);
         setShowVerification(true);
       } else {
-        alert(data.message || "Registration failed");
+        toast.error(data.message || "Registration failed");
+        return ;
       }
     }
   } catch (error) {
     console.error("Registration error:", error);
-    alert("Something went wrong");
+    toast.error("Something went wrong");
   } finally {
     setIsLoading(false);
   }
@@ -108,12 +109,13 @@ const SignUpPage = () => {
           navigate('/login');
         }, 1500);
       } else {
-        alert(data.message || "Invalid verification code");
+        toast.error(data.message || "Invalid verification code");
         setVerificationLoading(false);
+        return;
       }
     } catch (error) {
       console.error("Verification error:", error);
-      alert("Something went wrong during verification");
+      toast.warning("Something went wrong during verification");
       setVerificationLoading(false);
     }
   };

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import {toast} from 'react-toastify'
 const AuthPage = () => {
     const [email, setEmail] = useState("");
     const [username, setUsername] = useState("");
@@ -29,11 +29,11 @@ const AuthPage = () => {
                 sessionStorage.setItem("token", data.token);
                 navigate("/dashboard");
             } else {
-                alert(data.message || "Authentication failed");
+                toast.error(data.message || "Authentication failed");
             }
         } catch (error) {
             console.error("Error:", error);
-            alert("Something went wrong");
+            toast.error("Something went wrong");
         }
     };
 

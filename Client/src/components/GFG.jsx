@@ -12,7 +12,7 @@ import { SocketContext } from './SocketContext';
 import SolutionCard from './SolutionCard';
 import POTDCalendar from './POTDCalendar';
 import MainLayout from './MainLayout';
-
+import {toast} from 'react-toastify'
 const navLinks = [
   { name: 'LeetCode', path: '/leetcode' },
   { name: 'CodeForces', path: '/codeforces' },
@@ -85,7 +85,7 @@ export default function GFG() {
           });
         }
       } catch (err) {
-        console.error('Error fetching POTD:', err);
+        toast.error('Error fetching POTD:', err);
         setProblemData(null);
       } finally {
         setLoading(false);
@@ -111,7 +111,7 @@ export default function GFG() {
           }))
         );
       } catch (err) {
-        console.error('Error loading chat history:', err);
+        toast.error('Error loading chat history:', err);
       }
     })();
   }, [questionId]);
@@ -173,7 +173,7 @@ export default function GFG() {
         socket.emit('sendChatMessage', saved);
         setNewMessage('');
       } catch (err) {
-        console.error('Error sending message:', err);
+        toast.error('Error sending message:', err);
       }
     },
     [newMessage, questionId, currentUserId, socket]

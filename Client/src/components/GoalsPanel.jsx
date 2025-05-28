@@ -6,7 +6,6 @@ export default function DailyGoalsCard() {
   const [goals, setGoals] = useState([]);
   const [newGoal, setNewGoal] = useState('');
 
-  // Fetch top 3 most recent tasks
   const loadGoals = async () => {
     const token = sessionStorage.getItem('token') || '';
     const res = await fetch('http://localhost:8080/api/tasks/', {
@@ -25,7 +24,7 @@ export default function DailyGoalsCard() {
     loadGoals();
   }, []);
 
-  // Add a new task
+ 
   const addGoal = async () => {
     if (!newGoal.trim()) return;
     const token = sessionStorage.getItem('token') || '';

@@ -11,7 +11,7 @@ import {
   Trash2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
+import {toast} from 'react-toastify'
 
 const API_BASE = "http://localhost:8080/api/fav";
 
@@ -34,7 +34,7 @@ const fetchListById = async (id) => {
     if (!response.ok) throw new Error("Failed to fetch list");
     return await response.json();
   } catch (error) {
-    console.error(error);
+    toast.error(error);
     return null;
   }
 };
@@ -49,7 +49,7 @@ export const addQuestionToListAPI = async (listId, questionId) => {
     if (!response.ok) throw new Error("Failed to add question");
     return await response.json();
   } catch (error) {
-    console.error(error);
+    toast.error(error);
     throw error;
   }
 };
@@ -65,7 +65,7 @@ const removeQuestionFromListAPI = async (listId, questionId) => {
     if (!response.ok) throw new Error("Failed to remove question");
     return await response.json();
   } catch (error) {
-    console.error(error);
+    toast.error(error);
     throw error;
   }
 };
@@ -80,7 +80,7 @@ const searchQuestionsAPI = async (query) => {
     if (!response.ok) throw new Error("Failed to search questions");
     return await response.json();
   } catch (error) {
-    console.error(error);
+    toast.error(error);
     return [];
   }
 };
@@ -108,12 +108,12 @@ const SearchBar = ({ onSearch, placeholder, listId, onQuestionAdded, className }
   if (!listId || !onQuestionAdded) return;
   try {
     await addQuestionToListAPI(listId, question._id);
-    alert(`Added "${question.title}" to your list`);
+    toast.success(`Added "${question.title}" to your list`);
     onQuestionAdded();
     setShowResults(false);
     setQuery("");
   } catch (error) {
-    alert("Failed to add question");
+    toast.error("Failed to add question");
   }
 };
 
@@ -183,10 +183,10 @@ const QuestionCard = ({ question, listId, onDeleted }) => {
     e.stopPropagation();
     try {
       await removeQuestionFromListAPI(listId, question._id);
-      alert(`Deleted question "${question.title}"`);
+      toast.success(`Deleted question "${question.title}"`);
       onDeleted();
     } catch (error) {
-      alert("Failed to delete question");
+      toast.error("Failed to delete question");
     }
   };
 
@@ -264,17 +264,17 @@ const AddQuestionModal = ({ listId, onQuestionAdded }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim()) {
-      alert("Please enter a question title");
+      toast.warning("Please enter a question title");
       return;
     }
     if (!link.trim()) {
-      alert("Please enter a valid link");
+      toast.warning("Please enter a valid link");
       return;
     }
     try {
       new URL(link);
     } catch (e) {
-      alert("Please enter a valid link");
+      toast.warning("Please enter a valid link");
       return;
     }
     setIsSubmitting(true);
@@ -286,12 +286,12 @@ const AddQuestionModal = ({ listId, onQuestionAdded }) => {
     };
     try {
       await addQuestionToListAPI(listId, questionData);
-      alert("Question added to list");
+      toast.success("Question added to list");
       resetForm();
       setOpen(false);
       onQuestionAdded();
     } catch (error) {
-      alert("Failed to add question");
+      toast.error("Failed to add question");
     } finally {
       setIsSubmitting(false);
     }

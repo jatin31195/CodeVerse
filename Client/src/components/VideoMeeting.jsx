@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import Peer from 'simple-peer';
 import { Phone, PhoneOff, MonitorUp, MonitorX, Mic, MicOff, Video, VideoOff } from 'lucide-react';
-
+import {toast} from 'react-toastify'
 const socket = io('http://localhost:8080', {
   transports: ['websocket'],
   withCredentials: true,
@@ -183,7 +183,7 @@ const VideoMeeting = () => {
       };
       setScreenSharing(true);
     } catch (error) {
-      console.error("Error sharing screen:", error);
+      toast.error("Error sharing screen:", error);
     }
   };
 

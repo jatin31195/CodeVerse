@@ -44,7 +44,7 @@ export default function AddProblem() {
         }
       } catch (err) {
         console.error(err);
-        alert('Could not load your problem lists.');
+        toast.warning('Could not load your problem lists.');
       }
     })();
   }, []);
@@ -157,9 +157,10 @@ export default function AddProblem() {
 
   const handleAddProblem = async () => {
     if (!selectedList || !link || !date) {
-      return alert(
+      toast.warning(
         'Please choose a list, paste the URL, and pick a date.'
       );
+      return;
     }
     try {
       await api.post('/list/add-question', {

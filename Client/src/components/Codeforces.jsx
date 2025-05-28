@@ -7,7 +7,7 @@ import { SocketContext } from './SocketContext';
 import SolutionCard from './SolutionCard';
 import POTDCalendar from './POTDCalendar';
 import MainLayout from './MainLayout';
-
+import {toast} from 'react-toastify'
 const navLinks = [
   { name: 'LeetCode', path: '/leetcode' },
   { name: 'CodeForces', path: '/codeforces' },
@@ -78,7 +78,7 @@ export default function Codeforces() {
         if (!res.ok) throw new Error(body.message);
         setChatMessages(body.messages.map(m => ({ ...m, userId: String(m.userId) })));
       } catch (err) {
-        console.error('Error loading chat history:', err);
+        toast.error('Error loading chat history:', err);
       }
     })();
   }, [questionId]);
@@ -131,7 +131,7 @@ export default function Codeforces() {
       socket.emit('sendChatMessage', saved);
       setNewMessage('');
     } catch (err) {
-      console.error('Error sending message:', err);
+      toast.error('Error sending message:', err);
     }
   }, [newMessage, questionId, currentUserId, socket]);
 
