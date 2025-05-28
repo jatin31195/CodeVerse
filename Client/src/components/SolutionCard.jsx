@@ -133,9 +133,9 @@ const raiseTicket = () => {
           </div>
           <button
             onClick={raiseTicket}
-            className="flex items-center gap-2 text-sm px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition"
+            className="cursor-pointer flex items-center gap-2 text-sm px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition"
           >
-            <LifeBuoy size={18} />
+            <LifeBuoy size={18} className='cursor-pointer'/>
             Raise Ticket
           </button>
         </div>
@@ -150,12 +150,12 @@ const raiseTicket = () => {
           setExpanded={setUserSolutionsExpanded}
         >
           <div className="pb-4">
-            <div className="flex gap-2 mb-4">
+            <div className=" flex gap-2 mb-4">
               {['All', 'C++', 'Java'].map(lang => (
                 <button
                   key={lang}
                   onClick={() => setCurrentTab(lang)}
-                  className={`px-3 py-1 text-sm rounded-full border ${
+                  className={`cursor-pointer px-3 py-1 text-sm rounded-full border ${
                     currentTab === lang
                       ? 'bg-blue-600 text-white border-blue-600'
                       : 'bg-gray-100 text-gray-700 border-gray-300'
@@ -219,14 +219,14 @@ const raiseTicket = () => {
                         onClick={() => voteSolution(sol._id, 'up')}
                         className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
                       >
-                        <ThumbsUp size={16} />
+                        <ThumbsUp size={16} className='cursor-pointer'/>
                         {sol.upvotedBy.length}
                       </button>
                       <button
                         onClick={() => voteSolution(sol._id, 'down')}
                         className="flex items-center gap-1 text-red-600 hover:text-red-800"
                       >
-                        <ThumbsDown size={16} />
+                        <ThumbsDown size={16} className='cursor-pointer'/>
                         {sol.downvotedBy.length}
                       </button>
                       <span className="ml-auto text-sm text-gray-500">

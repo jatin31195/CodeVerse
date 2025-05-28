@@ -18,6 +18,18 @@ const fadeIn = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 const slideIn = { hidden: { x: 300 }, show: { x: 0 } };
 
 const getInitialDate = () => new Date();
+const getDisplayDate = (date) => {
+  const viewDate = new Date(date);
+  const hours = viewDate.getHours();
+  const minutes = viewDate.getMinutes();
+
+  if (hours < 5 || (hours === 5 && minutes < 30)) {
+    viewDate.setDate(viewDate.getDate() - 1);
+  }
+
+  return viewDate;
+};
+
 const getCurrentUserId = () => {
   const token = sessionStorage.getItem('token');
   if (!token) return null;
@@ -118,18 +130,21 @@ export default function LeetCode() {
   }, [newMessage, questionId, currentUserId, socket]);
 
   useEffect(() => {
-    setProblemLoading(true);
-    setProblemError(null);
-    const ds = format(selectedDate, 'yyyy-MM-dd');
-    fetch(`http://localhost:8080/api/ques/leetcode/potd/${encodeURIComponent(ds)}`)
-      .then(r => r.json().then(data => {
-        if (!r.ok) throw new Error(data.message || 'Fetch failed');
-        return data.data;
-      }))
-      .then(q => setProblem(q || null))
-      .catch(e => { setProblemError(e.message); setProblem(null); })
-      .finally(() => setProblemLoading(false));
-  }, [selectedDate]);
+  setProblemLoading(true);
+  setProblemError(null);
+  const displayDate = getDisplayDate(selectedDate);
+  const ds = format(displayDate, 'yyyy-MM-dd');
+
+  fetch(`http://localhost:8080/api/ques/leetcode/potd/${encodeURIComponent(ds)}`)
+    .then(r => r.json().then(data => {
+      if (!r.ok) throw new Error(data.message || 'Fetch failed');
+      return data.data;
+    }))
+    .then(q => setProblem(q || null))
+    .catch(e => { setProblemError(e.message); setProblem(null); })
+    .finally(() => setProblemLoading(false));
+}, [selectedDate]);
+
 
   return (
     <MainLayout navLinks={navLinks}>
@@ -162,7 +177,7 @@ export default function LeetCode() {
 
         <motion.section className="mb-8" variants={fadeIn} transition={{ delay: 0.4 }}>
           <h2 className="text-2xl font-semibold mb-4">
-            Problem for {format(selectedDate, 'MMMM d, yyyy')}
+            Problem for {format(getDisplayDate(selectedDate), 'MMMM d, yyyy')}
           </h2>
           {problemLoading ? (
             <motion.p variants={fadeIn} transition={{ delay: 0.5 }}>
@@ -200,7 +215,7 @@ export default function LeetCode() {
           className="fixed bottom-6 right-6 rounded-full w-14 h-14 flex items-center justify-center shadow-lg bg-gradient-to-r from-red-500 to-yellow-500 text-white"
           whileHover={{ scale: 1.1 }}
         >
-          <MessageCircle size={24} />
+          <MessageCircle size={24} className='cursor-pointer'/>
         </motion.button>
 
         <AnimatePresence>

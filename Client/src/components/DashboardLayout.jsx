@@ -44,7 +44,7 @@ const DashboardLayout = ({
               <button
                 key={tab}
                 onClick={() => onTabChange(tab)}
-                className={`py-2 px-6 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 ${
+                className={`cursor-pointer py-2 px-6 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 ${
                   activeTab === tab
                     ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow"
                     : "text-gray-700 hover:bg-gray-100"

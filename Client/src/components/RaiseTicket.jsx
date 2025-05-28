@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { useNavigate,useLocation } from 'react-router-dom';
 import Header from '../components/Header';
 import TicketCard from '../components/TicketCard';
+import { Combobox } from '@headlessui/react';
+import { Check, ChevronDown } from 'lucide-react';
 
 const getUserId = (user) => {
   if (!user) return "";
@@ -25,16 +27,15 @@ const RaiseTicket = () => {
 
   const [questions, setQuestions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredQuestions, setFilteredQuestions] = useState([]);
+  const [filteredQuestions, setFilteredQuestions] = useState(questions);
   const [selectedQuestion, setSelectedQuestion] = useState('');
-
   const [myTickets, setMyTickets] = useState([]);
   const [otherTickets, setOtherTickets] = useState([]);
-
   const [ticketRaised, setTicketRaised] = useState(false);
   const [solutionText, setSolutionText] = useState('');
   const [currentTicket, setCurrentTicket] = useState(null);
-
+  const [query, setQuery]             = useState('');
+  const [isOpen, setIsOpen]           = useState(false);
   const currentUserId = sessionStorage.getItem('userId');
   useEffect(() => {
   if (location.state && location.state.problemId) {
@@ -81,17 +82,26 @@ const RaiseTicket = () => {
     return () => socket.off("ticketsUpdated", refreshTickets);
   }, []);
 
+  useEffect(() => {
+    if (location.state?.problemId && questions.length) {
+      const match = questions.find(q => q._id === location.state.problemId);
+      if (match) {
+        setSelectedQuestion(match);
+        setSearchTerm(match.title);
+        setTicketRaised(false);
+      }
+    }
+  }, [location.state, questions]);
   // 4) Filter questions as user types
   useEffect(() => {
     setFilteredQuestions(
       !searchTerm
         ? questions
-        : questions.filter((q) =>
+        : questions.filter(q =>
             q.title.toLowerCase().includes(searchTerm.toLowerCase())
           )
     );
   }, [searchTerm, questions]);
-
   const fetchQuestions = async () => {
     try {
       const res = await axios.get('http://localhost:8080/api/questions', {
@@ -276,55 +286,87 @@ const RaiseTicket = () => {
           </h2>
 
           {!ticketRaised ? (
-            <form
-              onSubmit={handleRaiseTicket}
-              className="bg-black/30 p-6 rounded-lg backdrop-blur-sm border border-white/10"
+        <form
+          id="raise-ticket-section"
+          onSubmit={handleRaiseTicket}
+          className="bg-black/30 p-6 rounded-xl backdrop-blur-sm border border-white/10 shadow-xl space-y-5"
+        >
+          <div>
+            <label className="block text-gray-300 mb-2 text-sm font-medium">
+              Search & Select Question:
+            </label>
+            <Combobox
+              value={selectedQuestion}
+              onChange={q => {
+                setSelectedQuestion(q);
+                setIsOpen(false);
+                setSearchTerm(q.title);
+              }}
             >
-              <div className="mb-4">
-                <label className="block text-gray-300 mb-1">
-                  Search Question:
-                </label>
-                <input
-                  type="text"
-                  placeholder="Search question by name"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full p-2 rounded-md bg-black/20 border border-white/10 text-white"
+              <div className="relative">
+                <Combobox.Input
+                  className="w-full p-2 pl-3 pr-10 rounded-md bg-black/20 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-codeverse-purple"
+                  displayValue={q => q?.title || ''}
+                  onChange={e => {
+                    setSearchTerm(e.target.value);
+                    setIsOpen(true);
+                  }}
+                  onFocus={() => setIsOpen(true)}
+                  placeholder="Search question by title..."
                 />
+                <Combobox.Button className="absolute inset-y-0 right-2 flex items-center text-gray-400">
+                  <ChevronDown className="h-4 w-4" />
+                </Combobox.Button>
+
+                {isOpen && filteredQuestions.length > 0 && (
+                  <Combobox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-black/80 text-white ring-1 ring-white/10 shadow-lg z-10">
+                    {filteredQuestions.map(q => (
+                      <Combobox.Option
+                        key={q._id}
+                        value={q}
+                        className={({ active }) =>
+                          `cursor-pointer select-none relative px-4 py-2 ${
+                            active ? 'bg-codeverse-purple/20 text-codeverse-purple' : ''
+                          }`
+                        }
+                      >
+                        {({ selected, active }) => (
+                          <>
+                            <span
+                              className={`block truncate ${
+                                selected ? 'font-medium' : 'font-normal'
+                              }`}
+                            >
+                              {q.title}
+                            </span>
+                            {selected && (
+                              <span className="absolute inset-y-0 right-4 flex items-center">
+                                <Check className="w-4 h-4" />
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </Combobox.Option>
+                    ))}
+                  </Combobox.Options>
+                )}
               </div>
-              <div className="mb-4">
-                <label className="block text-gray-300 mb-1">
-                  Select Question:
-                </label>
-                <select
-                  value={selectedQuestion}
-                  onChange={(e) => setSelectedQuestion(e.target.value)}
-                  className="w-full p-2 rounded-md bg-black/20 border border-white/10 text-white"
-                >
-                  <option value="">--Select a Question--</option>
-                  {filteredQuestions.length > 0 ? (
-                    filteredQuestions.map((q) => (
-                      <option key={q._id} value={q._id}>
-                        {q.title}
-                      </option>
-                    ))
-                  ) : (
-                    <option disabled>No questions found</option>
-                  )}
-                </select>
-              </div>
-              <button
-                type="submit"
-                className="bg-gradient-to-r from-codeverse-cyan to-codeverse-purple text-white px-4 py-2 rounded-md font-medium hover:scale-105 transition-transform duration-300"
-              >
-                Raise Ticket
-              </button>
-            </form>
-          ) : (
-            <p className="bg-black/30 p-4 rounded-lg text-gray-300">
-              You have already raised a ticket.
-            </p>
-          )}
+            </Combobox>
+          </div>
+
+          <button
+            type="submit"
+            disabled={!selectedQuestion}
+            className="cursor-pointer bg-gradient-to-r from-blue-600 to-purple-600 text-white px-2 py-1 rounded-lg font-medium hover:scale-105 transition-transform duration-300 "
+          >
+            Raise Ticket
+          </button>
+        </form>
+      ) : (
+        <p className="bg-black/30 p-4 rounded-lg text-gray-300">
+          You have already raised a ticket.
+        </p>
+      )}
         </motion.section>
 
         {/* My Tickets */}

@@ -170,22 +170,22 @@ const TicketCard = ({
               <div className="flex items-center space-x-2">
                 <button
                   onClick={onAcceptMeet}
-                  className="bg-gradient-to-r from-green-600 to-green-500 text-white rounded-md px-3 py-1 text-xs font-medium hover:opacity-90 transition-opacity flex items-center"
+                  className="cursor-pointer bg-gradient-to-r from-green-600 to-green-500 text-white rounded-md px-3 py-1 text-xs font-medium hover:opacity-90 transition-opacity flex items-center"
                 >
-                  <Check className="h-3 w-3 mr-1" /> Accept Request
+                  <Check className="h-3 w-3 mr-1 " /> Accept Request
                 </button>
                 <button
                   onClick={onCloseMeet}
-                  className="bg-black/30 text-white rounded-md px-3 py-1 text-xs font-medium hover:bg-black/50 transition-colors flex items-center border border-white/10"
+                  className="cursor-pointer bg-black/30 text-white rounded-md px-3 py-1 text-xs font-medium hover:bg-black/50 transition-colors flex items-center border border-white/10"
                 >
-                  <X className="h-3 w-3 mr-1" /> Decline
+                  <X className="h-3 w-3 mr-1 " /> Decline
                 </button>
               </div>
             ) : ticket.status === 'video-accepted' ? (
               <div className="flex items-center space-x-2">
                 <button
                   onClick={onJoinMeet}
-                  className="relative overflow-hidden group bg-gradient-to-r from-codeverse-cyan to-codeverse-blue text-white rounded-md px-3 py-1 text-xs font-medium transition-all duration-300 hover:shadow-lg hover:shadow-codeverse-cyan/30"
+                  className="cursor-pointer relative overflow-hidden group bg-gradient-to-r from-codeverse-cyan to-codeverse-blue text-white rounded-md px-3 py-1 text-xs font-medium transition-all duration-300 hover:shadow-lg hover:shadow-codeverse-cyan/30"
                 >
                   <span className="relative flex items-center">
                     <Video className="h-3 w-3 mr-1" /> Join Meet
@@ -193,7 +193,7 @@ const TicketCard = ({
                 </button>
                 <button
                   onClick={onCloseMeet}
-                  className="bg-gradient-to-r from-red-600 to-red-500 text-white rounded-md px-3 py-1 text-xs font-medium hover:opacity-90 transition-opacity flex items-center"
+                  className="cursor-pointer bg-gradient-to-r from-red-600 to-red-500 text-white rounded-md px-3 py-1 text-xs font-medium hover:opacity-90 transition-opacity flex items-center"
                 >
                   <VideoOff className="h-3 w-3 mr-1" /> Close Meet
                 </button>
@@ -201,7 +201,7 @@ const TicketCard = ({
             ) : ticket.status === 'video-active' ? (
               <button
                 onClick={onCloseMeet}
-                className="bg-gradient-to-r from-red-600 to-red-500 text-white rounded-md px-3 py-1 text-xs font-medium hover:opacity-90 transition-opacity flex items-center"
+                className="cursor-pointer bg-gradient-to-r from-red-600 to-red-500 text-white rounded-md px-3 py-1 text-xs font-medium hover:opacity-90 transition-opacity flex items-center"
               >
                 <VideoOff className="h-3 w-3 mr-1" /> End Meet
               </button>
@@ -218,7 +218,7 @@ const TicketCard = ({
                 onClick={onJoinMeet}
                 className="relative overflow-hidden group bg-gradient-to-r from-codeverse-cyan to-codeverse-blue text-white rounded-md px-3 py-1 text-xs font-medium transition-all duration-300 hover:shadow-lg hover:shadow-codeverse-cyan/30"
               >
-                <span className="relative flex items-center">
+                <span className="cursor-pointer relative flex items-center">
                   <Video className="h-3 w-3 mr-1" /> Join Meet
                 </span>
               </button>
@@ -227,17 +227,17 @@ const TicketCard = ({
                 <div className="flex space-x-2">
                   <button
                     onClick={() => onOpenTextSolution && onOpenTextSolution(ticket)}
-                    className="w-1/2 bg-black/30 border border-white/10 text-white rounded-md px-3 py-1 text-xs font-medium hover:bg-black/50 transition-colors flex items-center justify-center"
+                    className="w-1/2 bg-black/30 border border-white/10 cursor-pointer text-white rounded-md px-3 py-1 text-xs font-medium hover:bg-black/50 transition-colors flex items-center justify-center"
                   >
-                    <MessageSquare className="h-3 w-3 mr-1" /> Text Solution
+                    <MessageSquare className="h-3 w-3 mr-1" /> Provide Text Solution
                   </button>
                   <button
                     onClick={() => onRequestMeet && onRequestMeet(ticket._id)}
-                    className="w-1/2 relative overflow-hidden group bg-gradient-to-r from-codeverse-cyan to-codeverse-purple text-white rounded-md px-3 py-1 text-xs font-medium transition-all duration-300 hover:shadow-lg hover:shadow-codeverse-purple/30"
+                    className="w-1/2 bg-black/30 border border-white/10 cursor-pointer relative overflow-hidden group bg-gradient-to-r from-codeverse-cyan to-codeverse-purple text-white rounded-md px-3 py-1 text-xs font-medium transition-all duration-300 hover:shadow-lg hover:shadow-codeverse-purple/30"
                   >
                     <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-codeverse-purple to-codeverse-cyan opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                     <span className="relative flex items-center justify-center">
-                      <Video className="h-3 w-3 mr-1" /> Request Meet
+                      <Video className="h-3 w-3 mr-1" /> Request Video Meet
                     </span>
                   </button>
                 </div>

@@ -219,13 +219,15 @@ const Home = () => {
   </button>
 
  
-  <Link to="/home" className="flex-shrink-0">
-    <img
-      src="/codelogo1.png"
-      alt="CodeVerse"
-      className="h-12 w-auto"
-    />
-  </Link>
+  <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        <Link to="/home" className="flex-shrink-0">
+          <img
+            src="/codelogo1.png"
+            alt="CodeVerse"
+            className="h-12 w-auto"
+          />
+        </Link>
+      </div>
 
   
   {user && (
@@ -427,7 +429,7 @@ const Home = () => {
               </span>
               <h2 className="text-4xl font-bold mb-6">Why Use CodeVerse?</h2>
               <p className="text-xl text-gray-600 mb-8">
-                CodeVerse offers a comprehensive solution to help you master coding challenges and ace technical interviews.
+                CodeVerse is your all-in-one coding companion — solve daily curated challenges, learn from the community, and track your progress like a pro. From personalized POTDs to AI-powered study plans, it’s built to boost your prep and productivity.
               </p>
               <div className="space-y-6">
                 {[
