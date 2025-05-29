@@ -33,10 +33,9 @@ export default function CustomPOTD() {
   const [loadingLists, setLoadingLists] = useState(true);
   const [loadingProblems, setLoadingProblems] = useState(false);
 
-  const token = sessionStorage.getItem('token');
   const api = axios.create({
     baseURL: 'http://localhost:8080/api/custom/user-potd',
-    headers: { Authorization: token },
+    withCredentials: true,
   });
 
 

@@ -135,7 +135,6 @@ const SignUpPage = () => {
 
     if (res.ok) {
       toast.success(data.message || 'Signup successful!');
-      sessionStorage.setItem('token', data.token);
       navigate('/home');
     } else {
       toast.error(data.message || 'Google signup failed');

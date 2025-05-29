@@ -8,7 +8,6 @@ export default function ReportIssuePage() {
   const [files, setFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [submitted, setSubmitted] = useState(false);
-  const token = sessionStorage.getItem('token');
 
   const handleFilesChange = (e) => {
     const chosenFiles = Array.from(e.target.files).slice(0, 1); 
@@ -27,9 +26,7 @@ export default function ReportIssuePage() {
     try {
       const res = await fetch('http://localhost:8080/api/issue/report-issue', {
         method: 'POST',
-        headers: {
-          Authorization: token,
-        },
+        credentials:'include',
         body: formData,
       });
 

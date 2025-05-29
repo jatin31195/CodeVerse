@@ -45,10 +45,8 @@ const RaiseTicket = () => {
 }, [location.state]);
 
   const getAuthConfig = () => {
-    const token = sessionStorage.getItem('token');
     return {
       headers: {
-        Authorization: token,
         "Content-Type": "application/json",
       },
     };
@@ -119,7 +117,10 @@ const RaiseTicket = () => {
 
   const fetchMyTickets = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/ticket-Raise/my', getAuthConfig());
+      const res = await axios.get('http://localhost:8080/api/ticket-Raise/my', {
+      ...getAuthConfig(),
+      withCredentials:true,}
+    );
       setMyTickets(res.data.tickets || []);
     } catch (err) {
       console.error('Error fetching my tickets:', err);
@@ -128,7 +129,10 @@ const RaiseTicket = () => {
 
   const fetchOtherTickets = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/ticket-Raise', getAuthConfig());
+      const res = await axios.get('http://localhost:8080/api/ticket-Raise', {
+      ...getAuthConfig(),
+      withCredentials:true,
+    });
       const all = res.data.tickets || res.data || [];
       setOtherTickets(all.filter((t) => getUserId(t.raisedBy) !== currentUserId));
     } catch (err) {
@@ -150,8 +154,9 @@ const RaiseTicket = () => {
     try {
       await axios.post(
         'http://localhost:8080/api/ticket-Raise/raise',
-        { questionIdentifier: selectedQuestion },
-        getAuthConfig()
+        { questionIdentifier: selectedQuestion },{
+        ...getAuthConfig(),
+        withCredentials:true,}
       );
       setTicketRaised(true);
       toast.success('Ticket raised successfully');
@@ -170,9 +175,10 @@ const RaiseTicket = () => {
     try {
       await axios.post(
         `http://localhost:8080/api/ticket-Raise/${ticketId}/solution`,
-        { solutionText },
-        getAuthConfig()
-      );
+        { solutionText },{
+        ...getAuthConfig(),
+        withCredentials:true,
+    });
       toast.success('Solution submitted successfully');
       setSolutionText('');
       setCurrentTicket(null);
@@ -188,9 +194,10 @@ const RaiseTicket = () => {
     try {
       await axios.post(
         `http://localhost:8080/api/ticket-Raise/${ticketId}/request-video`,
-        {},
-        getAuthConfig()
-      );
+        {},{
+        ...getAuthConfig(),
+        withCredentials:true,
+    });
       toast.success('Video meet request sent');
       refreshTickets();
     } catch (err) {
@@ -203,9 +210,10 @@ const RaiseTicket = () => {
     try {
       const res = await axios.put(
         `http://localhost:8080/api/ticket-Raise/${ticketId}/accept-video`,
-        {},
-        getAuthConfig()
-      );
+        {},{
+        ...getAuthConfig(),
+        withCredentials:true,
+    });
       toast.success('Video meet accepted. Meeting room created.');
       refreshTickets();
     } catch (err) {
@@ -218,8 +226,10 @@ const RaiseTicket = () => {
     try {
       await axios.put(
         `http://localhost:8080/api/ticket-Raise/${ticketId}/close-video`,
-        {},
-        getAuthConfig()
+        {},{
+        ...getAuthConfig(),
+        withCredentials:true,
+        }
       );
       toast.success('Video meet closed and ticket updated.');
       refreshTickets();
@@ -241,8 +251,10 @@ const RaiseTicket = () => {
       try {
         const res = await axios.put(
           `http://localhost:8080/api/ticket-Raise/${ticket._id}/accept-video`,
-          {},
-          getAuthConfig()
+          {},{
+          ...getAuthConfig(),
+          withCredentials:true,
+          }
         );
         const updatedTicket = res.data.ticket || res.data;
         if (updatedTicket.videoMeetRoom && updatedTicket.videoMeetRoom.trim() !== "") {

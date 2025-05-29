@@ -93,21 +93,24 @@ const Home = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [leetProblem, setLeetProblem] = useState(null);
   
-  const handleLogout = () => {
-    sessionStorage.removeItem('token');
+  const handleLogout = async () => {
+  try {
+    await fetch('http://localhost:8080/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',   
+    });
+  } catch (err) {
+    console.error('Logout failed', err);
+  } finally {
     setUser(null);
-    setShowUserMenu(false);
     navigate('/login');
-  };
+  }
+};
+
 
   useEffect(() => {
-  const token = sessionStorage.getItem('token');
-  if (!token) return;
-
   fetch('http://localhost:8080/api/auth/profile', {
-    headers: {
-      'Authorization': token,
-    },
+   credentials: 'include',
   })
     .then((res) => {
       if (!res.ok) throw new Error('Not authenticated');
@@ -115,11 +118,10 @@ const Home = () => {
     })
     .then((json) => {
       setUser(json.data.user);
-      console.log('Fetched user:', json.data.user);
+      // console.log('Fetched user:', json.data.user);
     })
     .catch((err) => {
       console.error('Authentication error:', err);
-      sessionStorage.removeItem('token');
       setUser(null);
     });
 }, []);
@@ -145,7 +147,9 @@ const Home = () => {
     const dd = String(target.getDate()).padStart(2, '0');
     const dateKey = `${yyyy}-${mm}-${dd}`;
     const url = `http://localhost:8080/api/ques/leetcode/potd/${encodeURIComponent(dateKey)}`;
-    fetch(url)
+    fetch(url,{
+      credentials: 'include',
+    })
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();

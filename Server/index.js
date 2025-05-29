@@ -7,7 +7,7 @@ const initializeSocket = require("./socket/socket");
 const { startCleanupJob } = require('./utils/taskCleanupScheduler');
 const app = express();
 const server = http.createServer(app); 
-
+const cookieParser = require('cookie-parser');
 dbConnection();
 
 app.use(cors({
@@ -16,7 +16,7 @@ app.use(cors({
     allowedHeaders: "Content-Type, Authorization",
     credentials: true
 }));
-
+app.use(cookieParser());
 app.use(express.json()); 
 app.use("/api", apiRoutes);
 
@@ -40,6 +40,6 @@ startCleanupJob();
 
 const io = initializeSocket(server);
 app.set('socketio', io);
-server.listen(serverConfig.PORT, () => {
+server.listen(serverConfig.PORT, '0.0.0.0', () => {
     console.log(`Successfully started the server on PORT : ${serverConfig.PORT}`);
 });

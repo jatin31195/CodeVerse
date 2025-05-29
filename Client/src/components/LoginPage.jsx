@@ -34,13 +34,12 @@ const LoginPage = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
-        
+        credentials: 'include',
       });
       const data = await response.json();
       if (response.ok) {
         
         toast.success("Login successful!");
-        sessionStorage.setItem('token',data.token);
         navigate('/home');
       } else {
         const data = await response.json();
@@ -62,20 +61,21 @@ const LoginPage = () => {
     let res = await fetch('http://localhost:8080/api/auth/google-login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken: credential }),
+      body: JSON.stringify({ idToken: credentialResponse.credential }),
+      credentials: 'include',
     });
     let data = await res.json();
     if (!res.ok && res.status === 404) {
       res = await fetch('http://localhost:8080/api/auth/google-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken: credential }),
+        body: JSON.stringify({ idToken: credentialResponse.credential }),
+        credentials: 'include',
       });
       data = await res.json();
     }
     if (res.ok) {
       toast.success(data.message);
-      sessionStorage.setItem('token', data.token);
       navigate('/home');
     } else {
       toast.error(data.message || 'Google authentication failed');

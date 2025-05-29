@@ -30,11 +30,14 @@ const getDisplayDate = (date) => {
   return viewDate;
 };
 
-const getCurrentUserId = () => {
-  const token = sessionStorage.getItem('token');
-  if (!token) return null;
+const getCurrentUserId = async () => {
   try {
-    return JSON.parse(atob(token.split('.')[1])).id;
+    const res = await fetch('http://localhost:8080/api/auth/profile', {
+      credentials: 'include',
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data?.user?._id || null;
   } catch {
     return null;
   }
@@ -49,23 +52,36 @@ export default function LeetCode() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [currentUserId, setCurrentUserId] = useState(null);
   const socket = useContext(SocketContext);
-
   useEffect(() => {
-    if (!sessionStorage.getItem('token')) navigate('/login');
-  }, [navigate]);
+    (async () => {
+      const id = await getCurrentUserId();
+      setCurrentUserId(id);
+    })();
+  }, []);
+ useEffect(() => {
+     (async () => {
+       try {
+         const res = await fetch('http://localhost:8080/api/auth/profile', {
+           credentials: 'include',
+         });
+         if (!res.ok) throw new Error('Not authenticated');
+       } catch (err) {
+         navigate('/login');
+       }
+     })();
+   }, [navigate]);
 
   const questionId = problem?._id || null;
-  const rawUserId = getCurrentUserId();
-  const currentUserId = rawUserId != null ? String(rawUserId) : null;
+  
 
   useEffect(() => {
     if (!questionId) return;
     (async () => {
       try {
-        const token = sessionStorage.getItem('token');
         const res = await fetch(`http://localhost:8080/api/chat/${questionId}`, {
-          headers: { Authorization: token },
+          credentials:'include',
         });
         const body = await res.json();
         if (!res.ok) throw new Error(body.message);
@@ -104,12 +120,12 @@ export default function LeetCode() {
     const text = newMessage.trim();
     if (!text || !questionId || !currentUserId) return;
     try {
-      const token = sessionStorage.getItem('token');
       const res = await fetch(
         `http://localhost:8080/api/chat/${questionId}/message`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: token },
+          headers: { 'Content-Type': 'application/json'},
+          credentials:'include',
           body: JSON.stringify({ text }),
         }
       );
@@ -135,7 +151,9 @@ export default function LeetCode() {
   const displayDate = getDisplayDate(selectedDate);
   const ds = format(displayDate, 'yyyy-MM-dd');
 
-  fetch(`http://localhost:8080/api/ques/leetcode/potd/${encodeURIComponent(ds)}`)
+  fetch(`http://localhost:8080/api/ques/leetcode/potd/${encodeURIComponent(ds)}`,{
+    credentials:'include',
+  })
     .then(r => r.json().then(data => {
       if (!r.ok) throw new Error(data.message || 'Fetch failed');
       return data.data;
@@ -269,7 +287,7 @@ export default function LeetCode() {
                           whileHover={{ scale: 1.02 }}
                         >
                           <p className="font-semibold mb-1">
-                            {isMe ? 'You' : msg.userId}
+                            {isMe ? 'You' : 'Anonymous'}
                           </p>
                           <p>{msg.text}</p>
                           <span

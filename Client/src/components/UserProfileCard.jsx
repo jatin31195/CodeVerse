@@ -15,13 +15,12 @@ const UserProfileCard = () => {
     avatarUrl: ""
   });
   const [avatarFile, setAvatarFile] = useState(null);
-  const token = sessionStorage.getItem("token");
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const res = await axios.get(`${API_BASE}/profile`, {
-          headers: { Authorization: token }
+         withCredentials:true,
         });
         const user = res.data.data.user;
         setEditData({
@@ -36,7 +35,7 @@ const UserProfileCard = () => {
       }
     };
     fetchProfile();
-  }, [token]);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -60,12 +59,12 @@ const UserProfileCard = () => {
       if (avatarFile) formData.append("profilePic", avatarFile);
 
       await axios.patch(`${API_BASE}/update-profile`, formData, {
-        headers: { Authorization: token }
+        withCredentials:true,
       });
 
       setIsEditing(false);
       const res = await axios.get(`${API_BASE}/profile`, {
-        headers: { Authorization: token }
+        withCredentials:true,
       });
       const user = res.data.data.user;
       setEditData({

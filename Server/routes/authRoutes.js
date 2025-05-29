@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController.js'); 
 const { validateRegister, validateLogin } = require('../utils/validation.js');
-const authMiddleware = require('../middlewares/authMiddlewares.js'); // make sure this path is correct
+const authMiddleware = require('../middlewares/authMiddlewares.js'); 
 const upload = require('../config/multer-config.js');
 const {uploadProfilePic}=require('../controllers/authController.js')
 router.post('/register', validateRegister, authController.register);
@@ -23,4 +23,7 @@ router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
 router.post('/google-signup', authController.googleSignupHandler);
 router.post('/google-login',  authController.googleLoginHandler);
+router.post('/logout', authMiddleware, authController.logout);
+
+
 module.exports = router;

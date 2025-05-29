@@ -184,14 +184,13 @@ const TimeTableEntry = ({ entry, onEdit }) => {
       endDateTime: endDateTimeISO,
     };
   
-    const token = sessionStorage.getItem("token");
     try {
       const response = await fetch("http://localhost:8080/api/tasks/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": token,
         },
+        credentials:'include',
         body: JSON.stringify(payload),
       });
       if (response.ok) {
@@ -427,19 +426,17 @@ const SchedulePage = () => {
   const [currentEditEntry, setCurrentEditEntry] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
   
-    const toggleSidebar = () => setSidebarOpen((prev) => !prev);
-  const token = sessionStorage.getItem("token");
+  const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
   
   const fetchTimetable = async () => {
-    if (!token) return;
     try {
       setIsLoading(true);
       const response = await fetch("http://localhost:8080/api/tt/schedule", {
         headers: {
           "Content-Type": "application/json",
-          "Authorization": token,
         },
+        credentials:'include',
       });
       if (response.ok) {
         const jsonData = await response.json();
@@ -471,7 +468,7 @@ const SchedulePage = () => {
 
   useEffect(() => {
     fetchTimetable();
-  }, [token]);
+  }, []);
 
   const handlePromptChange = (e) => setPrompt(e.target.value);
 
@@ -486,8 +483,8 @@ const SchedulePage = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": token,
         },
+        credentials:'include',
         body: JSON.stringify({ dailySchedule: prompt }),
       });
       if (!response.ok) throw new Error("Network response was not ok");
@@ -521,14 +518,13 @@ const SchedulePage = () => {
   };
 
   const handleReset = async () => {
-    if (!token) return;
     try {
       const response = await fetch("http://localhost:8080/api/tt/schedule", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": token,
         },
+        credentials:'include',
       });
       if (!response.ok) throw new Error("Failed to delete timetable");
       toast.success("Timetable removed");

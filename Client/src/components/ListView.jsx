@@ -17,10 +17,9 @@ const API_BASE = "http://localhost:8080/api/fav";
 
 
 const getAuthHeaders = () => {
-  const token = sessionStorage.getItem("token");
   return {
     "Content-Type": "application/json",
-    ...(token && { "Authorization": token })
+    
   };
 };
 
@@ -29,7 +28,8 @@ const fetchListById = async (id) => {
   try {
     const response = await fetch(`${API_BASE}/list/${id}`, {
       method: "GET",
-      headers: getAuthHeaders()
+      headers: getAuthHeaders(),
+      credentials:"include",
     });
     if (!response.ok) throw new Error("Failed to fetch list");
     return await response.json();
@@ -44,6 +44,7 @@ export const addQuestionToListAPI = async (listId, questionId) => {
     const response = await fetch(`${API_BASE}/add-question`, {
       method: "POST",
       headers: getAuthHeaders(),
+       credentials:"include",
       body: JSON.stringify({ listId, questionId }),
     });
     if (!response.ok) throw new Error("Failed to add question");
@@ -60,6 +61,7 @@ const removeQuestionFromListAPI = async (listId, questionId) => {
     const response = await fetch(`${API_BASE}/remove-question`, {
       method: "POST",
       headers: getAuthHeaders(),
+       credentials:"include",
       body: JSON.stringify({ listId, questionId })
     });
     if (!response.ok) throw new Error("Failed to remove question");
@@ -75,7 +77,8 @@ const searchQuestionsAPI = async (query) => {
     const url = `${API_BASE}/search?query=${encodeURIComponent(query)}`;
     const response = await fetch(url, {
       method: "GET",
-      headers: getAuthHeaders()
+      headers: getAuthHeaders(),
+       credentials:"include",
     });
     if (!response.ok) throw new Error("Failed to search questions");
     return await response.json();

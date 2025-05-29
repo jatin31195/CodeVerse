@@ -19,5 +19,12 @@ const getUserProfile = async (userId) => {
  
   return await UserModel.findById(userId).select('-password');
 };
+const setRefreshToken = async (userId, token) => {
+  return UserModel.findByIdAndUpdate(userId, { refreshToken: token });
+};
 
-module.exports = { findUserByEmail, findUserByUsername, createUser ,findUserById,getUserProfile};
+const getRefreshToken = async (userId) => {
+  const user = await UserModel.findById(userId);
+  return user ? user.refreshToken : null;
+};
+module.exports = { findUserByEmail, findUserByUsername, createUser ,findUserById,getUserProfile,setRefreshToken,getRefreshToken};

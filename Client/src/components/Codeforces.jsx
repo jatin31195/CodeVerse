@@ -17,19 +17,42 @@ const navLinks = [
 const fadeIn = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 const slideIn = { hidden: { x: 300 }, show: { x: 0 } };
 
-const getCurrentUserId = () => {
-  const token = sessionStorage.getItem('token');
-  if (!token) return null;
-  try { return JSON.parse(atob(token.split('.')[1])).id; }
-  catch { return null; }
+const getCurrentUserId = async () => {
+  try {
+    const res = await fetch('http://localhost:8080/api/auth/profile', {
+      credentials: 'include',
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data?.user?._id || null;
+  } catch {
+    return null;
+  }
 };
+
 
 export default function Codeforces() {
   const navigate = useNavigate();
+  useEffect(() => {
+  (async () => {
+    const id = await getCurrentUserId();
+    setCurrentUserId(id);
+  })();
+}, []);
 
   useEffect(() => {
-    if (!sessionStorage.getItem('token')) navigate('/login');
-  }, [navigate]);
+  (async () => {
+    try {
+      const res = await fetch('http://localhost:8080/api/auth/profile', {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Not authenticated');
+    } catch (err) {
+      navigate('/login');
+    }
+  })();
+}, [navigate]);
+
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [question, setQuestion] = useState(null);
@@ -42,8 +65,8 @@ export default function Codeforces() {
   const [newMessage, setNewMessage] = useState('');
 
   const questionId = question?._id || null;
-  const rawUserId = getCurrentUserId();
-  const currentUserId = rawUserId != null ? String(rawUserId) : null;
+  const [currentUserId, setCurrentUserId] = useState(null);
+
   const dateKey = format(selectedDate, 'yyyy-MM-dd');
 
  
@@ -52,7 +75,9 @@ export default function Codeforces() {
       setQuestionLoading(true);
       setQuestionError(null);
       try {
-        const res = await fetch(`http://localhost:8080/api/ques/codeforces/potd/${dateKey}`);
+        const res = await fetch(`http://localhost:8080/api/ques/codeforces/potd/${dateKey}`,{
+          credentials: 'include',
+        });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Error fetching question');
         setQuestion(data.data ?? null);
@@ -70,9 +95,8 @@ export default function Codeforces() {
     if (!questionId) return;
     (async () => {
       try {
-        const token = sessionStorage.getItem('token');
         const res = await fetch(`http://localhost:8080/api/chat/${questionId}`, {
-          headers: { Authorization: token },
+         credentials: 'include',
         });
         const body = await res.json();
         if (!res.ok) throw new Error(body.message);
@@ -110,12 +134,12 @@ export default function Codeforces() {
     const text = newMessage.trim();
     if (!text || !questionId || !currentUserId) return;
     try {
-      const token = sessionStorage.getItem('token');
       const res = await fetch(
         `http://localhost:8080/api/chat/${questionId}/message`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: token },
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ text }),
         }
       );
@@ -251,7 +275,7 @@ export default function Codeforces() {
                           whileHover={{ scale: 1.02 }}
                         >
                           <p className="font-semibold mb-1">
-                            {isMe ? 'You' : msg.userId}
+                            {isMe ? 'You' : 'Anonymous'}
                           </p>
                           <p>{msg.text}</p>
                           <span

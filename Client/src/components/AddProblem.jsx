@@ -26,11 +26,9 @@ export default function AddProblem() {
   const [date, setDate] = useState('');
   const [platform, setPlatform] = useState('');
   const [title, setTitle] = useState('');
-
-  const token = sessionStorage.getItem('token');
   const api = axios.create({
     baseURL: 'http://localhost:8080/api/custom/user-potd',
-    headers: { Authorization: token },
+    withCredentials:true
   });
 
  

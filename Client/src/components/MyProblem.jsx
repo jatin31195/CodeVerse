@@ -33,18 +33,13 @@ export default function MyProblem() {
   const [newListName, setNewListName] = useState('');
   const [isPublic, setIsPublic] = useState(false);
 
-  const raw = sessionStorage.getItem('token') || '';
-  const token = (() => {
-    try { return JSON.parse(raw).token; }
-    catch { return raw; }
-  })();
+ 
 
   const api = axios.create({
     baseURL: 'http://localhost:8080/api/custom/user-potd',
-    headers: { Authorization: token },
+    withCredentials:true,
   });
 
-  // fetch own lists
   useEffect(() => {
     (async () => {
       try {
