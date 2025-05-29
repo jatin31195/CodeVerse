@@ -66,8 +66,13 @@ const initializeSocket = (server) => {
     socket.on("ice-candidate", data => {
       socket.to(data.meetingRoom).emit("ice-candidate", data);
     });
-  });
+    socket.on("leave-room", ({ meetingRoom, userId }) => {
+  socket.to(meetingRoom).emit("user-left", { userId });
+  socket.leave(meetingRoom);
+});
 
+  });
+  
   io.emitTicketsUpdated = () => io.emit("ticketsUpdated");
 
   return io;
