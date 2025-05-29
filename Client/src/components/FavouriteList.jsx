@@ -17,12 +17,11 @@ const FavoriteList = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [newListName, setNewListName] = useState("");
   const navigate = useNavigate();
-  const token = sessionStorage.getItem("token");
 
   const fetchLists = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/lists`, {
-        headers: { Authorization: token },
+        credentials: 'include',
       });
       if (res.ok) {
         const data = await res.json();
@@ -53,8 +52,8 @@ const FavoriteList = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: token,
         },
+        credentials: 'include',
         body: JSON.stringify({ name: newListName.trim() }),
       });
       if (res.ok) {
@@ -73,7 +72,7 @@ const FavoriteList = () => {
     try {
       const res = await fetch(`${API_BASE_URL}/list/delete/${id}`, {
         method: "DELETE",
-        headers: { Authorization: token },
+        credentials: 'include',
       });
       if (res.ok) {
         setLists(lists.filter((list) => list._id !== id));

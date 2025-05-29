@@ -49,11 +49,9 @@ export default function Dashboard() {
 
   
   useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    if (!token) return;
 
     fetch('http://localhost:8080/api/auth/profile', {
-      headers: { Authorization: token }
+      credentials: 'include',
     })
       .then(r => r.json())
       .then(json => {
@@ -80,7 +78,9 @@ export default function Dashboard() {
     useEffect(() => {
     if (!platforms.leetcode) return;
 
-    fetch(`http://localhost:8080/api/leetcode-user/${platforms.leetcode}`)
+    fetch(`http://localhost:8080/api/leetcode-user/${platforms.leetcode}`,{
+      credentials: 'include',
+    })
       .then(res => res.json())
       .then(json => {
         if (json.status !== 'success') return;
@@ -119,7 +119,9 @@ export default function Dashboard() {
   useEffect(() => {
     if (!platforms.codeforces) return;
 
-    fetch(`http://localhost:8080/api/codeforces-user/${platforms.codeforces}`)
+    fetch(`http://localhost:8080/api/codeforces-user/${platforms.codeforces}`,{
+      credentials: 'include',
+    })
       .then(res => res.json())
       .then(json => {
         if (json.status !== 'success') return;
@@ -159,7 +161,9 @@ export default function Dashboard() {
   useEffect(() => {
     if (!platforms.gfg) return;
 
-    fetch(`http://localhost:8080/api/gfg-user/${platforms.gfg}`)
+    fetch(`http://localhost:8080/api/gfg-user/${platforms.gfg}`,{
+      credentials: 'include',
+    })
       .then(res => res.json())
       .then(json => {
         if (json.status !== 'success') return;
@@ -263,18 +267,14 @@ export default function Dashboard() {
   const isConnected = activeTab === 'all' || !!platforms[activeTab];
 
 const savePlatform = async (platform, username) => {
-  const token = sessionStorage.getItem('token');
-  if (!token) throw new Error('User is not authenticated');
-
- 
   const payload = { platform, username };
 
   const response = await fetch('http://localhost:8080/api/auth/update-platform', {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token,
     },
+    credentials: 'include',
     body: JSON.stringify(payload),
   });
 

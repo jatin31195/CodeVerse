@@ -25,6 +25,7 @@ const PasswordReset = () => {
       const response = await fetch('http://localhost:8080/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials:'include',
         body: JSON.stringify({ token, newPassword, confirmPassword }),
       });
 

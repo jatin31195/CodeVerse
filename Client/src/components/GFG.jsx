@@ -28,11 +28,14 @@ const slideIn = {
   show: { x: 0 }
 };
 
-const getCurrentUserId = () => {
-  const token = sessionStorage.getItem('token');
-  if (!token) return null;
+const getCurrentUserId = async () => {
   try {
-    return JSON.parse(atob(token.split('.')[1])).id;
+    const res = await fetch('http://localhost:8080/api/auth/profile', {
+      credentials: 'include',
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data?.user?._id || null;
   } catch {
     return null;
   }
@@ -40,33 +43,52 @@ const getCurrentUserId = () => {
 
 export default function GFG() {
   const navigate = useNavigate();
-
   useEffect(() => {
-    if (!sessionStorage.getItem('token')) {
-      navigate('/login');
-    }
+    (async () => {
+      const id = await getCurrentUserId();
+      setCurrentUserId(id);
+    })();
+  }, []);
+  
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('http://localhost:8080/api/auth/profile', {
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error('Not authenticated');
+      } catch (err) {
+        navigate('/login');
+      }
+    })();
   }, [navigate]);
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [problemData, setProblemData] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const [currentUserId, setCurrentUserId] = useState(null);
   const socket = useContext(SocketContext);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
   const questionId = problemData?._id || null;
-  const rawUserId = getCurrentUserId();
-  const currentUserId = rawUserId != null ? String(rawUserId) : null;
-
+  
+  useEffect(() => {
+    (async () => {
+      const id = await getCurrentUserId();
+      setCurrentUserId(id);
+    })();
+  }, []);
   // === Fetch GFG POTD ===
   useEffect(() => {
     setLoading(true);
     (async () => {
       try {
         const ds = format(selectedDate, 'yyyy-MM-dd');
-        const res = await fetch(`http://localhost:8080/api/ques/gfg/potd/${ds}`);
+        const res = await fetch(`http://localhost:8080/api/ques/gfg/potd/${ds}`,{
+          credentials:'include',
+        });
         const json = await res.json();
 
         if (json.status !== 'success' || !json.data) {
@@ -98,9 +120,8 @@ export default function GFG() {
     if (!questionId) return;
     (async () => {
       try {
-        const token = sessionStorage.getItem('token');
         const res = await fetch(`http://localhost:8080/api/chat/${questionId}`, {
-          headers: { Authorization: token }
+          credentials:'include',
         });
         const body = await res.json();
         if (!res.ok) throw new Error(body.message);
@@ -148,15 +169,14 @@ export default function GFG() {
       if (!text || !questionId || !currentUserId) return;
 
       try {
-        const token = sessionStorage.getItem('token');
         const res = await fetch(
           `http://localhost:8080/api/chat/${questionId}/message`,
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: token
             },
+            credentials:'include',
             body: JSON.stringify({ text })
           }
         );
@@ -297,7 +317,7 @@ export default function GFG() {
                           whileHover={{ scale: 1.02 }}
                         >
                           <p className="font-semibold mb-1">
-                            {isMe ? 'You' : msg.userId}
+                            {isMe ? 'You' : 'Anonymous'}
                           </p>
                           <p>{msg.text}</p>
                           <span

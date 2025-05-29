@@ -26,8 +26,7 @@ const SolutionCard = ({ problem, explanation }) => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const token = sessionStorage.getItem('token');
-  const authConfig = { headers: { Authorization: token } };
+  const authConfig = { withCredentials:true };
 
   useEffect(() => {
     if (!problem?._id) return;

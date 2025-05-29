@@ -52,8 +52,8 @@ const TaskCard = ({ task, onTaskUpdated, onEdit }) => {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: sessionStorage.getItem('token') || '',
       },
+      credentials:'include',
     });
     onTaskUpdated();
     toast.success("Task completed")
@@ -66,8 +66,8 @@ const TaskCard = ({ task, onTaskUpdated, onEdit }) => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: sessionStorage.getItem('token') || '',
       },
+      credentials:'include',
       body: JSON.stringify({ enabled: newVal }),
     });
     if (!res.ok) {
@@ -183,8 +183,8 @@ const NewTaskForm = ({ task, onSuccess }) => {
       method,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: sessionStorage.getItem('token') || '',
       },
+      credentials:'include',
       body: JSON.stringify({
         task: taskTitle,
         endDateTime: endISO,
@@ -277,12 +277,19 @@ const TasksPage = () => {
     const [user, setUser] = useState(null);
     const [showUserMenu, setShowUserMenu] = useState(false);
   const toggleSidebar = () => setSidebarOpen(prev => !prev);
-   const handleLogout = () => {
-    sessionStorage.removeItem('token');
+   const handleLogout = async () => {
+  try {
+    await fetch('http://localhost:8080/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',   
+    });
+  } catch (err) {
+    console.error('Logout failed', err);
+  } finally {
     setUser(null);
-    setShowUserMenu(false);
     navigate('/login');
-  };
+  }
+};
 
   const getInitials = (name) =>
     name
@@ -291,9 +298,8 @@ const TasksPage = () => {
       .join('')
       .toUpperCase();
   const loadTasks = async () => {
-    const token = sessionStorage.getItem('token');
     const res = await fetch(`${API_BASE}/tasks/`, {
-      headers: { Authorization: token || '' },
+      credentials:'include',
     });
     const data = await res.json();
     if (!Array.isArray(data)) return;

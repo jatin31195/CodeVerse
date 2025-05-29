@@ -7,9 +7,8 @@ export default function DailyGoalsCard() {
   const [newGoal, setNewGoal] = useState('');
 
   const loadGoals = async () => {
-    const token = sessionStorage.getItem('token') || '';
     const res = await fetch('http://localhost:8080/api/tasks/', {
-      headers: { Authorization: token }
+      credentials: 'include',
     });
     const data = await res.json();
     if (Array.isArray(data)) {
@@ -27,13 +26,12 @@ export default function DailyGoalsCard() {
  
   const addGoal = async () => {
     if (!newGoal.trim()) return;
-    const token = sessionStorage.getItem('token') || '';
     await fetch('http://localhost:8080/api/tasks/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: token
       },
+      credentials: 'include',
       body: JSON.stringify({
         task: newGoal,
         date: new Date().toISOString().slice(0,10),
@@ -46,10 +44,9 @@ export default function DailyGoalsCard() {
 
   // Toggle completion (DELETE)
   const toggleGoal = async (id) => {
-    const token = sessionStorage.getItem('token') || '';
     await fetch(`http://localhost:8080/api/tasks/${id}`, {
       method: 'DELETE',
-      headers: { Authorization: token }
+      credentials: 'include',
     });
     loadGoals();
   };
@@ -104,9 +101,9 @@ export default function DailyGoalsCard() {
         ))}
       </div>
 
-      {/* Manage All Tasks */}
+      
       <Link
-        to="/tasks"
+        to="/task"
         className="w-full inline-block text-center border border-blue-600 text-blue-600 px-4 py-2 rounded-full hover:bg-blue-600 hover:text-white transition"
       >
         Manage All Tasks

@@ -43,9 +43,8 @@ const POTDCalendar = ({ selectedDate, onSelectDate, platform,showAddIcon = true 
 
   const fetchFavoriteLists = async () => {
     try {
-      const token = sessionStorage.getItem('token');
       const res = await axios.get(`${API_BASE_URL}/lists`, {
-        headers: { Authorization: token },
+        withCredentials:true,
       });
       Array.isArray(res.data) ? setFavoriteLists(res.data) : setFavoriteLists([]);
     } catch {
@@ -56,7 +55,6 @@ const POTDCalendar = ({ selectedDate, onSelectDate, platform,showAddIcon = true 
   const addToTask = async () => {
     if (!selectedDateForModal) return toast.error('No date selected');
     try {
-      const token = sessionStorage.getItem('token');
       const end = new Date(selectedDateForModal);
       end.setHours(23, 59, 59, 999);
 
@@ -70,7 +68,7 @@ const POTDCalendar = ({ selectedDate, onSelectDate, platform,showAddIcon = true 
           date: selectedDateForModal,
           endDateTime: end.toISOString(),
         },
-        { headers: { Authorization: token } }
+        {withCredentials:true}
       );
       toast.success('Added to daily task!');
       setModalOpen(false);
@@ -82,13 +80,12 @@ const POTDCalendar = ({ selectedDate, onSelectDate, platform,showAddIcon = true 
   const addToFavorites = async (listId) => {
     if (!selectedDateForModal) return toast.error('No date selected');
     try {
-      const token = sessionStorage.getItem('token');
       const potdRes = await axios.get(
         `http://localhost:8080/api/ques/${platform}/potd/${format(
           selectedDateForModal,
           'yyyy-MM-dd'
         )}`,
-        { headers: { Authorization: token } }
+        { withCredentials:true}
       );
       const potd = potdRes.data?.data;
       if (!potd?._id) return toast.error('No question on that date');
@@ -98,9 +95,9 @@ const POTDCalendar = ({ selectedDate, onSelectDate, platform,showAddIcon = true 
         { listId, questionId: potd._id },
         {
           headers: {
-            Authorization: token,
             'Content-Type': 'application/json',
           },
+          withCredentials:true,
         }
       );
       toast.success('Added to favorite list!');

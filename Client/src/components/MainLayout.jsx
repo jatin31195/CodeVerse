@@ -19,28 +19,32 @@ const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
   const isActive = (path) => location.pathname === path;
 
   useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    if (!token) return;
 
     fetch('http://localhost:8080/api/auth/profile', {
-      headers: { Authorization: token },
+       credentials:"include",
     })
       .then((res) => res.json())
       .then((json) => {
         setUser(json.data.user);
       })
       .catch(() => {
-        sessionStorage.removeItem('token');
         setUser(null);
       });
   }, []);
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('token');
+  const handleLogout = async () => {
+  try {
+    await fetch('http://localhost:8080/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',   
+    });
+  } catch (err) {
+    console.error('Logout failed', err);
+  } finally {
     setUser(null);
-    setShowUserMenu(false);
     navigate('/login');
-  };
+  }
+};
 
   const getInitials = (name) =>
     name
@@ -99,15 +103,7 @@ const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
         ))}
       </nav>
 
-      <div className="md:hidden">
-        <button
-          className="p-2"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          aria-label="Toggle menu"
-        >
-          {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
-      </div>
+     
 
       {user && (
         <div className="relative ml-3">

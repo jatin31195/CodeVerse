@@ -63,6 +63,10 @@ const UserSchema = new mongoose.Schema({
   resetPasswordExpires: {
     type: Date,
   },
+  refreshToken: {
+    type: String,
+    default: null,
+  },
   tasks: [{ type: mongoose.Schema.Types.ObjectId, ref: "DailyTask" }], 
   favoriteLists: [{ type: mongoose.Schema.Types.ObjectId, ref: "FavoriteList" }],
   solutions: [{ type: String, ref: "Solution" }],

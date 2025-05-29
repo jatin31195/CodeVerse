@@ -13,7 +13,7 @@ exports.postMessage = async (req, res) => {
   try {
     const saved = await ChatService.addMessage(
       req.params.questionId,
-      req.user.id,
+      req.user.userId,
       req.body.text
     );
     res.status(201).json({ message: saved });

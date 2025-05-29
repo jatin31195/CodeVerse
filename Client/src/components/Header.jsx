@@ -17,27 +17,37 @@ const Header = ({ onNewTicket }) => {
       .join('')
       .toUpperCase();
 
-  // Fetch profile once
+  
   useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    if (!token) return;
-    fetch('http://localhost:8080/api/auth/profile', {
-      headers: { Authorization: token },
+  fetch('http://localhost:8080/api/auth/profile', {
+    credentials: 'include',  
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('Not authenticated');
+      return res.json();
     })
-      .then(res => res.json())
-      .then(json => setUser(json.data.user))
-      .catch(() => {
-        sessionStorage.removeItem('token');
-        setUser(null);
-      });
-  }, []);
+    .then(json => setUser(json.data.user))
+    .catch(() => {
+      setUser(null);
+      navigate('/login');  
+    });
+}, [navigate]);
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('token');
+const handleLogout = async () => {
+  try {
+    await fetch('http://localhost:8080/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+    });
+  } catch (err) {
+    console.error('Logout failed', err);
+  } finally {
     setUser(null);
     setShowUserMenu(false);
     navigate('/login');
-  };
+  }
+};
+
 
   return (
     <>

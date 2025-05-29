@@ -2,17 +2,27 @@ const authService = require('../services/authService');
 const authRepository=require('../repositories/authRepository');
 const User=require('../models/User');
 
-
+const cookieOptions = {
+  httpOnly: true,
+  secure: false,      
+  sameSite: 'lax',
+};
 
 const googleSignupHandler=async(req, res)=> {
   try {
     const { idToken } = req.body;
-    const { user, token } = await authService.googleSignup(idToken);
-    res.status(201).json({
-      message: 'Google signup successful',
-      user,
-      token,
-    });
+    const { user, accessToken, refreshToken } = await authService.googleSignup(idToken);
+    res
+      .cookie('accessToken', accessToken, {
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000,    
+      })
+      .cookie('refreshToken', refreshToken, {
+        ...cookieOptions,
+        maxAge: 30 * 24 * 60 * 60 * 1000, 
+      })
+      .status(201)
+      .json({ message: 'Google signup successful', user });
   } catch (err) {
     console.error('Google signup error:', err);
     res
@@ -24,12 +34,19 @@ const googleSignupHandler=async(req, res)=> {
 const googleLoginHandler=async(req, res) =>{
   try {
     const { idToken } = req.body;
-    const { user, token } = await authService.googleLogin(idToken);
-    res.status(200).json({
-      message: 'Google login successful',
-      user,
-      token,
-    });
+    const { user, accessToken, refreshToken } = await authService.googleLogin(idToken);
+
+    res
+      .cookie('accessToken', accessToken, {
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000,
+      })
+      .cookie('refreshToken', refreshToken, {
+        ...cookieOptions,
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+      })
+      .status(200)
+      .json({ message: 'Google login successful', user });
   } catch (err) {
     console.error('Google login error:', err);
     res
@@ -40,22 +57,55 @@ const googleLoginHandler=async(req, res) =>{
 
 const register = async (req, res) => {
   try {
-    const response = await authService.registerUser(req.body);
-    res.status(response.status).json(response);
+    const { status, message, user, accessToken, refreshToken } = await authService.registerUser(req.body);
+    res
+      .cookie('accessToken', accessToken, {
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000,
+      })
+      .cookie('refreshToken', refreshToken, {
+        ...cookieOptions,
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+      })
+      .status(status)
+      .json({ message, user });
   } catch (error) {
+    console.error('Register error:', error);
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 };
 
 const login = async (req, res) => {
   try {
-    const response = await authService.loginUser(req.body);
-    res.status(response.status).json(response);
+    const { status, message, user, accessToken, refreshToken } = await authService.loginUser(req.body);
+    res
+      .cookie('accessToken', accessToken, {
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000,
+      })
+      .cookie('refreshToken', refreshToken, {
+        ...cookieOptions,
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+      })
+      .status(status)
+      .json({ message, user });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 };
-
+const logout = async (req, res) => {
+  try {
+    res
+      .clearCookie('accessToken', { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production' })
+      .clearCookie('refreshToken', { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production' })
+      .status(200)
+      .json({ message: 'Logged out successfully' });
+  } catch (err) {
+    console.error('Logout error:', err);
+    res.status(500).json({ message: 'Could not log out' });
+  }
+};
 const verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -195,5 +245,6 @@ module.exports = {
   forgotPassword,
   resetPassword,
   googleLoginHandler,
-  googleSignupHandler
+  googleSignupHandler,
+  logout
 };

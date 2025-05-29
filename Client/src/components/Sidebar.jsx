@@ -12,30 +12,35 @@ export function Sidebar({ toggleSidebar }) {
   const location = useLocation();
 
   useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    if (!token) return;
-    fetch('http://localhost:8080/api/auth/profile', {
-      headers: { 'Authorization': token }
+  fetch('http://localhost:8080/api/auth/profile', {
+    credentials: 'include',  
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('Not authenticated');
+      return res.json();
     })
-      .then(res => {
-        if (!res.ok) throw new Error('Not authenticated');
-        return res.json();
-      })
-      .then(json => {
-        setUser(json.data.user);
-      })
-      .catch(() => {
-        sessionStorage.removeItem('token');
-        setUser(null);
-      });
-  }, []);
+    .then(json => {
+      setUser(json.data.user);
+    })
+    .catch(() => {
+      setUser(null);
+    });
+}, []);
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('token');
+const handleLogout = async () => {
+  try {
+    await fetch('http://localhost:8080/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include', 
+    });
+  } catch (err) {
+    console.error('Logout failed', err);
+  } finally {
     setUser(null);
-    toggleSidebar();
     navigate('/login');
-  };
+  }
+};
+
 
   const navigationItems = [
     { title: "Home", icon: Home, path: "/home" },
