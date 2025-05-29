@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import AuthPage from "./components/AuthPage";
 import Dashboard from "./components/Dashboard";
 import LiveChat from "./components/LiveChat";
 import RaiseTicket from "./components/RaiseTicket";
