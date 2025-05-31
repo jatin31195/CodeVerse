@@ -15,7 +15,7 @@ const googleSignupHandler=async(req, res)=> {
     res
       .cookie('accessToken', accessToken, {
         ...cookieOptions,
-        maxAge: 15 * 60 * 1000,    
+        maxAge: 24 * 60 * 60 * 1000,    
       })
       .cookie('refreshToken', refreshToken, {
         ...cookieOptions,
@@ -39,7 +39,7 @@ const googleLoginHandler=async(req, res) =>{
     res
       .cookie('accessToken', accessToken, {
         ...cookieOptions,
-        maxAge: 15 * 60 * 1000,
+        maxAge: 24 * 60 * 60 * 1000,
       })
       .cookie('refreshToken', refreshToken, {
         ...cookieOptions,
@@ -61,7 +61,7 @@ const register = async (req, res) => {
     res
       .cookie('accessToken', accessToken, {
         ...cookieOptions,
-        maxAge: 15 * 60 * 1000,
+        maxAge: 24 * 60 * 60 * 1000,
       })
       .cookie('refreshToken', refreshToken, {
         ...cookieOptions,
@@ -81,7 +81,7 @@ const login = async (req, res) => {
     res
       .cookie('accessToken', accessToken, {
         ...cookieOptions,
-        maxAge: 15 * 60 * 1000,
+        maxAge: 24 * 60 * 60 * 1000,
       })
       .cookie('refreshToken', refreshToken, {
         ...cookieOptions,
