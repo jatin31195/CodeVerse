@@ -31,10 +31,9 @@ export default function Dashboard() {
     avatarUrl: '',
   });
 
-  const [leetcodeStats, setLeetcodeStats] = useState({ totalQuestions: 0, activeDays: 0, totalContests: 0 });
+  const [leetcodeStats, setLeetcodeStats] = useState({ totalQuestions: 0, activeDays: 0, totalContests: 0, streak: 0, ranking: 0, reputation: 0 });
   const [cfStats, setCfStats] = useState({ totalQuestions: 0, activeDays: 0, totalContests: 0 });
   const [gfgStats, setGfgStats] = useState({ totalQuestions: 0, activeDays: 0, totalContests: 0 });
-
   const [leetcodeContest, setLeetcodeContest] = useState([]);
   const [cfContest, setCfContest] = useState([]);
   const [gfgContest, setGfgContest] = useState([]);
@@ -43,13 +42,13 @@ export default function Dashboard() {
   const [cfHeatmap, setCfHeatmap] = useState([]);
   const [gfgHeatmap, setGfgHeatmap] = useState([]);
 
-  const [leetcodeProblems, setLeetcodeProblems] = useState({ dsaCount: 0, cpCount: 0 });
-  const [cfCpCount, setCfCpCount] = useState(0);
-  const [gfgProblems, setGfgProblems] = useState({ dsaCount: 0 });
+  const [leetcodeDifficultyCounts, setLeetcodeDifficultyCounts] = useState({ Easy: 0, Medium: 0, Hard: 0 });
+  const [cfDifficultyCounts, setCfDifficultyCounts] = useState({ Easy: 0, Medium: 0, Hard: 0 });
+  const [gfgDifficultyCounts, setGfgDifficultyCounts] = useState({ School: 0, Basic: 0, Easy: 0, Medium: 0, Hard: 0 });
 
-  
+  const [combinedDsaCount, setCombinedDsaCount] = useState(0);
+  const [combinedCpCount, setCombinedCpCount] = useState(0);
   useEffect(() => {
-
     fetch('http://localhost:8080/api/auth/profile', {
       credentials: 'include',
     })
@@ -64,142 +63,212 @@ export default function Dashboard() {
             gender: u.gender,
             avatarUrl: u.profilePic,
           });
-          
           setPlatforms({
             leetcode: u.leetcodeUsername || null,
             codeforces: u.codeforcesUsername || null,
             gfg: u.gfgUsername || null,
           });
+        } else {
+          toast.error('Failed to load user profile.');
         }
       })
-      .catch(console.error);
+      .catch(err => {
+        console.error(err);
+        toast.error('Error fetching user profile.');
+      });
   }, []);
 
-    useEffect(() => {
-    if (!platforms.leetcode) return;
+  useEffect(() => {
+  if (!platforms.leetcode) return;
 
-    fetch(`http://localhost:8080/api/leetcode-user/${platforms.leetcode}`,{
-      credentials: 'include',
+  fetch(`http://localhost:8080/api/leetcode-user/${platforms.leetcode}`, {
+    credentials: 'include',
+  })
+    .then(res => res.json())
+    .then(json => {
+      if (json.status !== 'success') return;
+      const data = json.data || json;
+      setLeetcodeStats({
+        totalQuestions: data.totalSolved,
+        activeDays: data.totalActiveDays,
+        totalContests: data.contest.totalContests,
+        streak: data.streak,
+        ranking: data.ranking,
+        reputation: data.reputation,
+      });
+
+      const difficultyCounts = {
+        Easy: Number(data.easySolved || 0),
+        Medium: Number(data.mediumSolved || 0),
+        Hard: Number(data.hardSolved || 0),
+      };
+      setLeetcodeDifficultyCounts(difficultyCounts);
+      const contests = Array.isArray(data.contest.history)
+        ? data.contest.history.map((contest, idx) => ({
+            id: `leetcode-contest-${idx}`,
+            name: contest.title,
+            date: new Date(contest.startTime * 1000)
+              .toISOString()
+              .split('T')[0],
+            rating: contest.rating,
+            rank: contest.ranking,
+            participants: 10000,
+            platform: 'leetcode',
+          }))
+        : [];
+      setLeetcodeContest(contests);
+      const heatmap =
+        data.heatmap && typeof data.heatmap === 'object'
+          ? Object.entries(data.heatmap).map(([ts, count]) => ({
+              date: new Date(Number(ts) * 1000)
+                .toISOString()
+                .split('T')[0],
+              count: Number(count),
+            }))
+          : [];
+      setLeetcodeHeatmap(heatmap);
     })
-      .then(res => res.json())
-      .then(json => {
-        if (json.status !== 'success') return;
-        const data = json.data;
-        const allSubs = Number(
-          data.submissions.difficultyBreakdown.find(d => d.difficulty === 'All')?.count || 0
-        );
-        setLeetcodeStats({
-          totalQuestions: allSubs,
-          activeDays: data.totalActiveDays,
-          totalContests: data.contest.totalContests,
-        });
-        setLeetcodeProblems({ dsaCount: allSubs, cpCount: 0 });
+    .catch(err => {
+      console.error(err);
+      toast.error('Error fetching LeetCode data.');
+    });
+}, [platforms.leetcode]);
 
-        const contests = data.contest.history.map((contest, index) => ({
-          id: `leetcode-contest-${index}`,
-          name: contest.title,
-          date: new Date(contest.startTime * 1000).toISOString().split('T')[0],
-          rating: contest.rating,
-          rank: contest.ranking,
-          participants: 10000,
-          platform: 'leetcode',
-        }));
-        setLeetcodeContest(contests);
 
-        const heatmap = Object.entries(data.heatmap).map(([ts, count]) => ({
-          date: new Date(Number(ts) * 1000).toISOString().split('T')[0],
-          count: Number(count),
-        }));
-        setLeetcodeHeatmap(heatmap);
-      })
-      .catch(console.error);
-  }, [platforms.leetcode]);
-
-  
   useEffect(() => {
     if (!platforms.codeforces) return;
 
-    fetch(`http://localhost:8080/api/codeforces-user/${platforms.codeforces}`,{
+    fetch(`http://localhost:8080/api/codeforces-user/${platforms.codeforces}`, {
       credentials: 'include',
     })
       .then(res => res.json())
       .then(json => {
         if (json.status !== 'success') return;
         const data = json.data;
-        const solved =
-          (data.difficultyWiseSolved.easy || 0) +
-          (data.difficultyWiseSolved.medium || 0) +
-          (data.difficultyWiseSolved.hard || 0);
+
+        const easyCount = Number(data.difficultyWiseSolved.easy || 0);
+        const mediumCount = Number(data.difficultyWiseSolved.medium || 0);
+        const hardCount = Number(data.difficultyWiseSolved.hard || 0);
+        const totalSolved = easyCount + mediumCount + hardCount;
         setCfStats({
-          totalQuestions: solved,
+          totalQuestions: totalSolved,
           activeDays: data.totalActiveDays,
           totalContests: data.contestGraph.length,
         });
-        setCfCpCount(solved);
 
-        const contests = data.contestGraph.map(contest => ({
-          id: `codeforces-${contest.contestId}`,
-          name: contest.contestName,
-          date: new Date(contest.date).toISOString().split('T')[0],
-          rating: contest.newRating,
-          rank: contest.rank,
-          participants: 10000,
-          platform: 'codeforces',
-        }));
+        setCfDifficultyCounts({
+          Easy: easyCount,
+          Medium: mediumCount,
+          Hard: hardCount,
+        });
+
+        const contests = Array.isArray(data.contestGraph)
+          ? data.contestGraph.map(contest => ({
+              id: `codeforces-${contest.contestId}`,
+              name: contest.contestName,
+              date: new Date(contest.date).toISOString().split('T')[0],
+              rating: contest.newRating,
+              rank: contest.rank,
+              participants: 10000,
+              platform: 'codeforces',
+            }))
+          : [];
         setCfContest(contests);
 
-        const heatmap = Object.entries(data.heatmapData).map(([ts, count]) => ({
-          date: new Date(Number(ts) * 1000).toISOString().split('T')[0],
-          count: Number(count),
-        }));
+        const heatmap =
+          data.heatmapData && typeof data.heatmapData === 'object'
+            ? Object.entries(data.heatmapData).map(([ts, count]) => ({
+                date: new Date(Number(ts) * 1000).toISOString().split('T')[0],
+                count: Number(count),
+              }))
+            : [];
         setCfHeatmap(heatmap);
       })
-      .catch(console.error);
+      .catch(err => {
+        console.error(err);
+        toast.error('Error fetching Codeforces data.');
+      });
   }, [platforms.codeforces]);
 
-  
   useEffect(() => {
     if (!platforms.gfg) return;
 
-    fetch(`http://localhost:8080/api/gfg-user/${platforms.gfg}`,{
+    fetch(`http://localhost:8080/api/gfg-user/${platforms.gfg}`, {
       credentials: 'include',
     })
       .then(res => res.json())
       .then(json => {
         if (json.status !== 'success') return;
         const data = json.data;
-        const allSubs = Number(
+
+        const allCount = Number(
           data.submissions.difficultyBreakdown.find(d => d.difficulty === 'All')?.count || 0
         );
+
         setGfgStats({
-          totalQuestions: allSubs,
+          totalQuestions: allCount,
           activeDays: data.totalActiveDays,
           totalContests: data.contest.totalContests,
         });
-        setGfgProblems({ dsaCount: allSubs });
-        setGfgContest([]); 
 
-        const heatmap = Object.entries(data.heatmaps.problems.heatmapData).map(([ts, count]) => ({
-          date: new Date(Number(ts) * 1000).toISOString().split('T')[0],
-          count: Number(count),
-        }));
+        const breakdownCounts = {
+          School: 0,
+          Basic: 0,
+          Easy: 0,
+          Medium: 0,
+          Hard: 0,
+        };
+        if (Array.isArray(data.submissions.difficultyBreakdown)) {
+          data.submissions.difficultyBreakdown.forEach(item => {
+            const key = item.difficulty; 
+            if (key !== 'All' && breakdownCounts.hasOwnProperty(key)) {
+              breakdownCounts[key] = Number(item.count || 0);
+            }
+          });
+        }
+        setGfgDifficultyCounts(breakdownCounts);
+
+        setGfgContest([]);
+
+        const heatmap =
+          data.heatmaps &&
+          data.heatmaps.problems &&
+          typeof data.heatmaps.problems.heatmapData === 'object'
+            ? Object.entries(data.heatmaps.problems.heatmapData).map(([ts, count]) => ({
+                date: new Date(Number(ts) * 1000).toISOString().split('T')[0],
+                count: Number(count),
+              }))
+            : [];
         setGfgHeatmap(heatmap);
       })
-      .catch(console.error);
+      .catch(err => {
+        console.error(err);
+        toast.error('Error fetching GFG data.');
+      });
   }, [platforms.gfg]);
 
-  
+  useEffect(() => {
+    const leetDsaApprox = leetcodeStats.totalQuestions;
+    const gfgDsa = gfgStats.totalQuestions;
+    setCombinedDsaCount(leetDsaApprox + gfgDsa);
+    setCombinedCpCount(cfStats.totalQuestions);
+  }, [leetcodeStats.totalQuestions, gfgStats.totalQuestions, cfStats.totalQuestions]);
+
   const combinedData = useMemo(() => {
-    const all = [...leetcodeContest, ...cfContest, ...gfgContest];
-    const valid = all.filter(c => c.date && c.rating != null);
+    const allContests = [...leetcodeContest, ...cfContest, ...gfgContest];
+    const validContests = allContests.filter(c => c.date && c.rating != null);
     const byDate = {};
-    valid.forEach(c => {
+    validContests.forEach(c => {
       if (!byDate[c.date]) byDate[c.date] = { rating: 0, contests: [] };
       byDate[c.date].rating += c.rating;
       byDate[c.date].contests.push({ name: c.name, platform: c.platform });
     });
     const series = Object.keys(byDate)
-      .map(date => ({ date, rating: byDate[date].rating, contests: byDate[date].contests }))
+      .map(date => ({
+        date,
+        rating: byDate[date].rating,
+        contests: byDate[date].contests,
+      }))
       .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     return {
@@ -208,24 +277,44 @@ export default function Dashboard() {
         activeDays: leetcodeStats.activeDays + cfStats.activeDays + gfgStats.activeDays,
         totalContests: leetcodeStats.totalContests + cfStats.totalContests + gfgStats.totalContests,
       },
-      problemTypes: { dsaCount: leetcodeProblems.dsaCount + gfgProblems.dsaCount, cpCount: cfCpCount },
+      problemTypes: {
+        counts: { DSA: combinedDsaCount, CP: combinedCpCount },
+      },
       contestData: series,
-      contestRankings: valid.sort((a, b) => new Date(b.date) - new Date(a.date)),
+      contestRankings: validContests.sort((a, b) => new Date(b.date) - new Date(a.date)),
       heatmapData: [...leetcodeHeatmap, ...cfHeatmap, ...gfgHeatmap],
     };
   }, [
-    leetcodeContest, cfContest, gfgContest,
-    leetcodeStats, cfStats, gfgStats,
-    leetcodeProblems, cfCpCount, gfgProblems,
-    leetcodeHeatmap, cfHeatmap, gfgHeatmap,
+    leetcodeStats,
+    cfStats,
+    gfgStats,
+    leetcodeContest,
+    cfContest,
+    gfgContest,
+    leetcodeHeatmap,
+    cfHeatmap,
+    gfgHeatmap,
+    combinedDsaCount,
+    combinedCpCount,
   ]);
 
   const filteredData = useMemo(() => {
-    if (activeTab === 'all') return combinedData;
+    if (activeTab === 'all') {
+      return {
+        statistics: combinedData.statistics,
+
+        platform: 'All',
+        counts: combinedData.problemTypes.counts,
+        contestData: combinedData.contestData,
+        contestRankings: combinedData.contestRankings,
+        heatmapData: combinedData.heatmapData,
+      };
+    }
     if (activeTab === 'leetcode') {
       return {
         statistics: leetcodeStats,
-        problemTypes: { dsaCount: leetcodeProblems.dsaCount, cpCount: 0 },
+        platform: 'LeetCode',
+        counts: leetcodeDifficultyCounts,
         contestData: leetcodeContest,
         contestRankings: leetcodeContest,
         heatmapData: leetcodeHeatmap,
@@ -234,25 +323,37 @@ export default function Dashboard() {
     if (activeTab === 'codeforces') {
       return {
         statistics: cfStats,
-        problemTypes: { dsaCount: 0, cpCount: cfCpCount },
+        platform: 'Codeforces',
+        counts: cfDifficultyCounts,
         contestData: cfContest,
         contestRankings: cfContest,
         heatmapData: cfHeatmap,
       };
     }
+
     return {
       statistics: gfgStats,
-      problemTypes: { dsaCount: gfgProblems.dsaCount, cpCount: 0 },
+      platform: 'GFG',
+      counts: gfgDifficultyCounts,
       contestData: gfgContest,
       contestRankings: gfgContest,
       heatmapData: gfgHeatmap,
     };
   }, [
-    activeTab, combinedData,
-    leetcodeStats, cfStats, gfgStats,
-    leetcodeProblems, cfCpCount, gfgProblems,
-    leetcodeContest, cfContest, gfgContest,
-    leetcodeHeatmap, cfHeatmap, gfgHeatmap,
+    activeTab,
+    combinedData,
+    leetcodeStats,
+    cfStats,
+    gfgStats,
+    leetcodeDifficultyCounts,
+    cfDifficultyCounts,
+    gfgDifficultyCounts,
+    leetcodeContest,
+    cfContest,
+    gfgContest,
+    leetcodeHeatmap,
+    cfHeatmap,
+    gfgHeatmap,
   ]);
 
   const platformName =
@@ -266,30 +367,28 @@ export default function Dashboard() {
 
   const isConnected = activeTab === 'all' || !!platforms[activeTab];
 
-const savePlatform = async (platform, username) => {
-  const payload = { platform, username };
-
-  const response = await fetch('http://localhost:8080/api/auth/update-platform', {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify(payload),
-  });
-
-  const data = await response.json();
-  if (!response.ok || data.status !== 'success') {
-    
-    throw new Error(data.message || `Failed to update ${platform} username`);
-  }
-
- 
-  setPlatforms(prev => ({ ...prev, [platform]: username }));
-  return data;
-};
-
-
+  const savePlatform = async (platform, username) => {
+    try {
+      const payload = { platform, username };
+      const response = await fetch('http://localhost:8080/api/auth/update-platform', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok || data.status !== 'success') {
+        throw new Error(data.message || `Failed to update ${platform} username`);
+      }
+      setPlatforms(prev => ({ ...prev, [platform]: username }));
+      toast.success(`Connected to ${platform} successfully!`);
+      return data;
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || `Unable to connect ${platform}.`);
+      throw err;
+    }
+  };
 
   return (
     <MainLayout>
@@ -300,8 +399,6 @@ const savePlatform = async (platform, username) => {
         toggleSidebar={toggleSidebar}
       >
         <div className="max-w-7xl mx-auto py-8 space-y-12">
-
-          
           <motion.div
             className="grid grid-cols-1 gap-6"
             initial="hidden"
@@ -335,7 +432,6 @@ const savePlatform = async (platform, username) => {
             </motion.section>
           </motion.div>
 
-          
           {isConnected && (
             <AnimatePresence mode="popLayout">
               <motion.div
@@ -346,14 +442,19 @@ const savePlatform = async (platform, username) => {
                 transition={{ duration: 0.3 }}
                 className="space-y-12"
               >
+             
                 <section>
                   <h2 className="text-2xl font-bold mb-4">{platformName} Statistics</h2>
                   <StatisticsCard {...filteredData.statistics} />
                 </section>
 
+               
                 <section>
                   <h2 className="text-2xl font-bold mb-4">Problem Analysis</h2>
-                  <ProblemTypeStats {...filteredData.problemTypes} />
+                  <ProblemTypeStats
+                    platform={filteredData.platform}
+                    counts={filteredData.counts}
+                  />
                 </section>
 
                 <section>
@@ -361,11 +462,13 @@ const savePlatform = async (platform, username) => {
                   <ContestRatingChart data={filteredData.contestData} />
                 </section>
 
+              
                 <section>
                   <h2 className="text-2xl font-bold mb-4">Activity Heatmap</h2>
                   <ActivityHeatmap data={filteredData.heatmapData} />
                 </section>
 
+             
                 <section>
                   <h2 className="text-2xl font-bold mb-4">Recent Contest Rankings</h2>
                   <ContestRankingTable rankings={filteredData.contestRankings} />
@@ -374,7 +477,7 @@ const savePlatform = async (platform, username) => {
             </AnimatePresence>
           )}
 
-         
+      
           {!isConnected && activeTab !== 'all' && (
             <motion.div
               className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl text-gray-500"

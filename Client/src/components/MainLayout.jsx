@@ -6,6 +6,7 @@ import {
 import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './Sidebar';
 import {toast} from 'react-toastify'
+import '../App.css'
 const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -207,7 +208,7 @@ const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
 </header>
 
 
-      <main className={`${fullPage ? '' : 'container mx-auto px-4'} pb-20`}>
+      <main className={`${fullPage ? '' : 'container mx-auto px-4 scrollbar-hide overflow-x-hidden'} pb-20`}>
         {title && !fullPage && (
           <h1 className="text-3xl font-bold mb-6 font-display bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
             {title}
