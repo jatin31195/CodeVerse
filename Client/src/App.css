@@ -6,7 +6,6 @@
   --codeverse-purple: #A374FF;
 }
 
-/* Use these definitions for btn-primary and gradient-text */
 .btn-primary {
   background-image: linear-gradient(to right, var(--tw-gradient-stops));
   --tw-gradient-from: #33C3F0 var(--tw-gradient-from-position);
@@ -31,7 +30,6 @@
   color: transparent;
 }
 
-/* Keyframes for float animation */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(20px); }
@@ -45,4 +43,12 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+  
+.scrollbar-hide {
+  -ms-overflow-style: none; 
+  scrollbar-width: none; 
 }

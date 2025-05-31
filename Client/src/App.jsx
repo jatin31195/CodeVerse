@@ -23,6 +23,7 @@ import ForgotPassword from "./components/ForgotPassword";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ReportIssuePage from "./components/ReportIssuePage";
+
 function App() {
     return (
         <Router>
