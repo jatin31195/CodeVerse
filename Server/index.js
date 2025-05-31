@@ -8,8 +8,16 @@ const { startCleanupJob } = require('./utils/taskCleanupScheduler');
 const app = express();
 const server = http.createServer(app); 
 const cookieParser = require('cookie-parser');
+const { rateLimit } = require("express-rate-limit");
 dbConnection();
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100,
+  standardHeaders: "draft-7",
+  legacyHeaders: false
+});
 
+app.use(generalLimiter);
 app.use(cors({
     origin: "http://localhost:5173", 
     methods: "GET, POST, PUT, DELETE, PATCH",
