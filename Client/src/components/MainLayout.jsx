@@ -218,30 +218,69 @@ const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
       </main>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t md:hidden">
-        <div className="grid grid-cols-3 gap-1 p-2">
-          {navLinks.map((link, index) => {
-            let Icon;
-            if (index === 0) Icon = CalendarDays;
-            else if (index === 1) Icon = List;
-            else if (index === 2) Icon = Plus;
-            else Icon = Menu;
-            return (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`flex flex-col items-center p-2 ${
-                  isActive(link.path)
-                    ? 'text-purple-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <Icon size={20} />
-                <span className="text-xs mt-1">{link.name}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
+  <div className="grid grid-cols-3 gap-1 p-2">
+    {navLinks.map((link) => {
+      let iconElement;
+      switch (link.name) {
+        case 'POTD Calendar':
+          iconElement = <CalendarDays size={20} />;
+          break;
+        case 'My Problems':
+          iconElement = <List size={20} />;
+          break;
+        case 'Add Problem':
+          iconElement = <Plus size={20} />;
+          break;
+        case 'LeetCode':
+          iconElement = (
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/1/19/LeetCode_logo_black.png"
+              alt="LeetCode"
+              className="h-5 w-5"
+            />
+          );
+          break;
+        case 'Geeks for Geeks':
+          iconElement = (
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/GeeksforGeeks.svg/120px-GeeksforGeeks.svg.png
+"
+              alt="GFG"
+              className="h-5 w-6"
+            />
+          );
+          break;
+        case 'CodeForces':
+          iconElement = (
+            <img
+              src="https://i.imghippo.com/files/vgS4569f.png"
+              alt="CodeForces"
+              className="h-5 w-5"
+            />
+          );
+          break;
+        default:
+          iconElement = <Menu size={20} />;
+      }
+
+      return (
+        <Link
+          key={link.path}
+          to={link.path}
+          className={`flex flex-col items-center p-2 ${
+            isActive(link.path)
+              ? 'text-purple-600'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          {iconElement}
+          <span className="text-xs mt-1">{link.name}</span>
+        </Link>
+      );
+    })}
+  </div>
+</div>
+
     </div>
   );
 };

@@ -354,9 +354,9 @@ const TasksPage = () => {
         )}
       </AnimatePresence>
 
-      <header className="sticky top-0 z-50 bg-white bg-opacity-95 backdrop-blur-sm shadow-md">
-  <div className="container mx-auto relative flex h-16 items-center px-6">
-    
+      <header className="sticky top-0 z-0 bg-white bg-opacity-95 backdrop-blur-sm shadow-md">
+  <div className="container mx-auto relative flex h-16 items-center px-4 sm:px-6 lg:px-8">
+    {/* Sidebar toggle */}
     <div className="flex items-center">
       <button
         onClick={toggleSidebar}
@@ -367,31 +367,33 @@ const TasksPage = () => {
       </button>
     </div>
 
-    <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <Link to="/home" className="flex-shrink-0">
-            <img
-              src="/codelogo1.png"
-              alt="CodeVerse"
-              className="h-12 w-auto"
-            />
-          </Link>
-      <p className="text-xs text-gray-500 -mt-1 ml-6">Task Management</p>
-        </div>
+    {/* Logo & Title */}
+    <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+      <Link to="/home" className="flex-shrink-0">
+        <img src="/codelogo1.png" alt="CodeVerse" className="h-10 w-auto sm:h-12" />
+      </Link>
+      <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Task Management</p>
+    </div>
 
-   
-    <div className="ml-auto flex items-center gap-4">
-      
-      <button className="flex items-center gap-2 text-sm bg-yellow-100 text-yellow-700 px-3 py-2 rounded-md hover:bg-yellow-200 transition-all">
+    {/* Right-side controls */}
+    <div className="ml-auto flex items-center gap-2 sm:gap-4">
+      {/* Bell button */}
+      <button className="hidden sm:flex items-center gap-2 text-xs sm:text-sm bg-yellow-100 text-yellow-700 px-2 sm:px-3 py-1 sm:py-2 rounded-md hover:bg-yellow-200 transition-all">
         <Bell className="w-4 h-4" />
-        {dueSoonCount} task{dueSoonCount !== 1 && 's'} due soon
+        <span>
+          {dueSoonCount} task{dueSoonCount !== 1 && 's'} due soon
+        </span>
+      </button>
+      <button className="flex sm:hidden items-center text-gray-700 p-2 hover:bg-gray-100 rounded transition">
+        <Bell className="w-5 h-5" />
       </button>
 
-     
+      {/* User avatar */}
       {user && (
         <div className="relative">
           <button
-            onClick={() => setShowUserMenu(prev => !prev)}
-            className="w-10 h-10 rounded-full border-2 border-blue-500 hover:border-green-400 transition overflow-hidden flex items-center justify-center bg-gray-100"
+            onClick={() => setShowUserMenu((prev) => !prev)}
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-blue-500 hover:border-green-400 transition overflow-hidden flex items-center justify-center bg-gray-100"
             aria-label="User menu"
           >
             {user.profilePic ? (
@@ -401,7 +403,7 @@ const TasksPage = () => {
                 className="w-full h-full object-cover rounded-full"
               />
             ) : (
-              <span className="text-sm font-semibold text-gray-700">
+              <span className="text-xs sm:text-sm font-semibold text-gray-700">
                 {getInitials(user.name)}
               </span>
             )}
@@ -414,21 +416,21 @@ const TasksPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.15 }}
-                className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden z-50"
+                className="absolute right-0 mt-2 w-40 sm:w-44 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden z-50"
               >
                 <button
                   onClick={() => {
                     setShowUserMenu(false);
                     toggleSidebar();
                   }}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm"
+                  className="w-full text-left px-3 py-2 hover:bg-gray-100 flex items-center gap-2 text-xs sm:text-sm"
                 >
                   <LayoutPanelLeft className="w-4 h-4" />
                   Open Sidebar
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm text-red-600"
+                  className="w-full text-left px-3 py-2 hover:bg-gray-100 flex items-center gap-2 text-xs sm:text-sm text-red-600"
                 >
                   <LogOut className="w-4 h-4" />
                   Logout
@@ -441,6 +443,7 @@ const TasksPage = () => {
     </div>
   </div>
 </header>
+
 
 
       <main className="max-w-6xl mx-auto px-6 py-8">
