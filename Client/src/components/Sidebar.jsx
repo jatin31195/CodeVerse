@@ -28,6 +28,7 @@ export function Sidebar({ toggleSidebar }) {
 
 const handleLogout = async () => {
   try {
+    document.cookie = 'token=; Max-Age=0; path=/;';
     await fetch(`${BASE_URL}/api/auth/logout`, {
       method: 'POST',
       credentials: 'include', 

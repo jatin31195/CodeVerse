@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Check,X  } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { GoogleLogin } from '@react-oauth/google';
+import { useGoogleLogin } from '@react-oauth/google';
 import { BASE_URL } from '../config';
 import { apiRequest } from '../utils/api';
 const SignUpPage = () => {
@@ -163,7 +163,11 @@ const handleGoogleSignUp = async (credentialResponse) => {
   }
 };
 
-
+const signup = useGoogleLogin({
+    onSuccess: handleGoogleSignUp,
+    onError: () => toast.error("Google sign-in failed"),
+    prompt: 'select_account',
+  });
   return (
     <div className="min-h-screen bg-white flex flex-col">
       
@@ -279,14 +283,12 @@ const handleGoogleSignUp = async (credentialResponse) => {
     whileTap={{ scale: 0.98 }}
     className="w-full"
   >
-    <GoogleLogin
-      onSuccess={handleGoogleSignUp}
-      onError={() => toast.error("Google sign-up failed")}
-      theme="outline"       
-      shape="pill"
-      width="100%"
-      text="signup_with"      
-    />
+    <button
+      onClick={() => signup()}
+      className="w-full rounded-full border px-4 py-2 text-sm"
+    >
+      Continue with Google
+    </button>
   </motion.div>
 </div>
 
