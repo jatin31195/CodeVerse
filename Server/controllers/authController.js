@@ -8,7 +8,7 @@ const cookieOptions = {
   sameSite: 'None',
 };
 
-const googleSignupHandler=async(req, res)=> {
+const googleSignupHandler = async (req, res) => {
   try {
     const { idToken } = req.body;
     const { user, accessToken, refreshToken } = await authService.googleSignup(idToken);
@@ -25,13 +25,11 @@ const googleSignupHandler=async(req, res)=> {
       .json({ message: 'Google signup successful', user });
   } catch (err) {
     console.error('Google signup error:', err);
-    res
-      .status(err.status || 500)
-      .json({ message: err.message || 'Signup failed' });
+    res.status(err.status || 500).json({ message: err.message || 'Signup failed' });
   }
 }
 
-const googleLoginHandler=async(req, res) =>{
+const googleLoginHandler = async (req, res) => {
   try {
     const { idToken } = req.body;
     const { user, accessToken, refreshToken } = await authService.googleLogin(idToken);
@@ -49,15 +47,18 @@ const googleLoginHandler=async(req, res) =>{
       .json({ message: 'Google login successful', user });
   } catch (err) {
     console.error('Google login error:', err);
-    res
-      .status(err.status || 500)
-      .json({ message: err.message || 'Login failed' });
+    res.status(err.status || 500).json({ message: err.message || 'Login failed' });
   }
 }
 
 const register = async (req, res) => {
   try {
-    const { status, message, user, accessToken, refreshToken } = await authService.registerUser(req.body);
+    const { status, message, user } = await authService.registerUser(req.body);
+    const payload = { id: user._id };
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
+    await authRepository.setRefreshToken(user._id, refreshToken);
+
     res
       .cookie('accessToken', accessToken, {
         ...cookieOptions,
@@ -77,7 +78,12 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { status, message, user, accessToken, refreshToken } = await authService.loginUser(req.body);
+    const { status, message, user } = await authService.loginUser(req.body);
+    const payload = { id: user._id };
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
+    await authRepository.setRefreshToken(user._id, refreshToken);
+
     res
       .cookie('accessToken', accessToken, {
         ...cookieOptions,
@@ -94,6 +100,7 @@ const login = async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 };
+
 const logout = async (req, res) => {
   try {
     res
