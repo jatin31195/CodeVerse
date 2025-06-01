@@ -24,7 +24,7 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
 }));
-app.options("*", cors());
+
 app.use(cookieParser());
 app.use(express.json()); 
 app.use("/api", apiRoutes);
