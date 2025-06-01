@@ -23,17 +23,17 @@ const googleSignup = async (idToken) => {
   const ticket = await client.verifyIdToken({
     idToken,
     audience: process.env.GOOGLE_CLIENT_ID,
-  });
-  const { email, name, picture } = ticket.getPayload();
+  })
+  const { email, name, picture } = ticket.getPayload()
 
-  const existing = await authRepository.findUserByEmail(email);
+  const existing = await authRepository.findUserByEmail(email)
   if (existing) {
-    const error = new Error('User already registered. Please login instead.');
-    error.status = 400;
-    throw error;
+    const error = new Error('User already registered. Please login instead.')
+    error.status = 400
+    throw error
   }
 
-  const username = email.split('@')[0];
+  const username = email.split('@')[0]
   const newUser = await authRepository.createUser({
     email,
     name,
@@ -43,79 +43,55 @@ const googleSignup = async (idToken) => {
     dateOfBirth: new Date(),
     gender: 'male',
     isVerified: true,
-  });
+  })
 
-  const payload = { id: newUser._id };
-  const accessToken  = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
-  const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
-
-  // Persist the refresh token in DB
-  await authRepository.setRefreshToken(newUser._id, refreshToken);
-
-  return {
-    user: newUser,
-    accessToken,
-    refreshToken,
-  };
-};
+  return newUser
+}
 
 const googleLogin = async (idToken) => {
   const ticket = await client.verifyIdToken({
     idToken,
     audience: process.env.GOOGLE_CLIENT_ID,
-  });
-  const { email } = ticket.getPayload();
+  })
+  const { email } = ticket.getPayload()
 
-  const user = await authRepository.findUserByEmail(email);
+  const user = await authRepository.findUserByEmail(email)
   if (!user) {
-    const error = new Error('User not found. Please sign up first.');
-    error.status = 404;
-    throw error;
+    const error = new Error('User not found. Please sign up first.')
+    error.status = 404
+    throw error
   }
 
-  const payload = { id: user._id };
-  const accessToken  = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
-  const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
-
-  // Persist the refresh token in DB
-  await authRepository.setRefreshToken(user._id, refreshToken);
-
-  return {
-    user,
-    accessToken,
-    refreshToken,
-  };
-};
-
-
+  return user
+}
 
 const registerUser = async (userData) => {
-  const { username, email, password, dateOfBirth, gender } = userData;
+  const { username, email, password, dateOfBirth, gender } = userData
 
-  const existingEmail = await authRepository.findUserByEmail(email);
-
+  const existingEmail = await authRepository.findUserByEmail(email)
   if (existingEmail) {
     if (!existingEmail.isVerified) {
-      return {
-        status: 400,
-        message: 'Email already exists but not verified',
-        user: {
-          email: existingEmail.email,
-          isVerified: existingEmail.isVerified,
-        },
-      };
+      const err = new Error('Email already exists but not verified')
+      err.status = 400
+      throw err
     }
-    return { status: 400, message: 'Email already exists and is already verified' };
+    const err = new Error('Email already exists and is already verified')
+    err.status = 400
+    throw err
   }
 
-  const existingUsername = await authRepository.findUserByUsername(username);
-  if (existingUsername) return { status: 400, message: 'Username already exists' };
+  const existingUsername = await authRepository.findUserByUsername(username)
+  if (existingUsername) {
+    const err = new Error('Username already exists')
+    err.status = 400
+    throw err
+  }
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
+  const salt = await bcrypt.genSalt(10)
+  const hashedPassword = await bcrypt.hash(password, salt)
 
-  const otp = generateOTP();
-  const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+  const otp = generateOTP()
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000)
 
   const newUser = await authRepository.createUser({
     username,
@@ -126,11 +102,11 @@ const registerUser = async (userData) => {
     otp,
     otpExpires,
     isVerified: false,
-  });
+  })
 
   const otpHtml = await loadTemplate('otpTemplate.html', {
     OTP_CODE: otp,
-  });
+  })
 
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
@@ -138,48 +114,61 @@ const registerUser = async (userData) => {
     subject: 'CodeVerse Email Verification - Your OTP Code',
     text: `Hello ${newUser.username}, your OTP code is ${otp}. It expires in 10 minutes.`,
     html: otpHtml,
-  });
+  })
 
-  const payload = { id: newUser._id };
-  const accessToken  = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
-  const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
-  await authRepository.setRefreshToken(newUser._id, refreshToken);
+  return newUser
+}
 
-  return {
-    status: 201,
-    message: 'User registered. Please check your email for OTP verification.',
-    user: newUser,
-    accessToken,
-    refreshToken,
-  };
-};
 const loginUser = async (userData) => {
-  const { email, password } = userData;
+  const { email, password } = userData
 
-  const user = await authRepository.findUserByEmail(email);
-  if (!user) return { status: 400, message: 'Invalid email or password' };
+  const user = await authRepository.findUserByEmail(email)
+  if (!user) {
+    const err = new Error('Invalid email or password')
+    err.status = 400
+    throw err
+  }
 
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) return { status: 400, message: 'Invalid email or password' };
+  const isMatch = await bcrypt.compare(password, user.password)
+  if (!isMatch) {
+    const err = new Error('Invalid email or password')
+    err.status = 400
+    throw err
+  }
 
   if (!user.isVerified) {
-    return { status: 400, message: 'Email not verified. Please verify your email.' };
+    const err = new Error('Email not verified. Please verify your email.')
+    err.status = 400
+    throw err
   }
-  const payload = { id: user._id };
-  const accessToken  = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
-  const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
 
-  await authRepository.setRefreshToken(user._id, refreshToken);
+  return user
+}
+const refreshAccessToken = async (req) => {
+  const token = req.cookies.refreshToken;
+  if (!token) {
+    const error = new Error('Refresh token missing');
+    error.status = 401;
+    throw error;
+  }
 
-  return {
-    status: 200,
-    message: 'Login successful',
-    user,
-    accessToken,
-    refreshToken,
-  };
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await authRepository.findUserById(payload.id);
+    if (!user) {
+      const error = new Error('User not found');
+      error.status = 401;
+      throw error;
+    }
+
+    const newAccessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    return { accessToken: newAccessToken };
+  } catch (err) {
+    const error = new Error('Invalid or expired refresh token');
+    error.status = 401;
+    throw error;
+  }
 };
-
 const updateProfile = async (userId, updates) => {
  
   const updatedUser = await User.findByIdAndUpdate(
@@ -352,5 +341,6 @@ module.exports = {
   forgotPassword,
   resetPassword,
   googleLogin,
-  googleSignup
+  googleSignup,
+  refreshAccessToken
 };
