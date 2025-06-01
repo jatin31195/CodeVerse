@@ -4,6 +4,7 @@ import MainLayout from './MainLayout';
 import {toast} from 'react-toastify'
 import { Toaster } from 'sonner';
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
 export default function ReportIssuePage() {
  const [description, setDescription] = useState('');
   const [files, setFiles] = useState([]);
@@ -17,30 +18,24 @@ export default function ReportIssuePage() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!description.trim()) return;
+  e.preventDefault();
+  if (!description.trim()) return;
 
-    const formData = new FormData();
-    formData.append('description', description);
-    if (files[0]) formData.append('screenshot', files[0]);
+  const formData = new FormData();
+  formData.append('description', description);
+  if (files[0]) formData.append('screenshot', files[0]);
 
-    try {
-      const res = await fetch(`${BASE_URL}/api/issue/report-issue`, {
-        method: 'POST',
-        credentials:'include',
-        body: formData,
-      });
+  try {
+    const res = await apiRequest(`${BASE_URL}/api/issue/report-issue`, {
+      method: 'POST',
+      body: formData,
+    });
+    setSubmitted(true);
+  } catch (err) {
+    toast.error('Error submitting report: ' + (err.response?.data?.message || err.message || err));
+  }
+};
 
-      if (res.ok) {
-        setSubmitted(true);
-      } else {
-        Toaster.error('Report failed:', await res.text());
-        return ;
-      }
-    } catch (err) {
-      toast.error('Error submitting report:', err);
-    }
-  };
 
   if (submitted) {
     return (

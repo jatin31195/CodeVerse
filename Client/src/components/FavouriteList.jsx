@@ -6,7 +6,7 @@ import MainLayout from "./MainLayout";
 import {toast} from 'react-toastify'
 import { BASE_URL } from "../config";
 const API_BASE_URL = `${BASE_URL}/api/fav`;
-
+import { apiRequest } from "../utils/api";
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0 }
@@ -20,18 +20,14 @@ const FavoriteList = () => {
   const navigate = useNavigate();
 
   const fetchLists = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/lists`, {
-        credentials: 'include',
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setLists(data);
-      }
-    } catch (error) {
-      toast.error("Error fetching lists:", error);
-    }
-  };
+  try {
+    const res = await apiRequest(`${API_BASE_URL}/lists`, { method: 'GET' });
+    setLists(res.data);
+  } catch (error) {
+    toast.error("Error fetching lists.");
+  }
+};
+
 
   useEffect(() => {
     fetchLists();
@@ -45,44 +41,38 @@ const FavoriteList = () => {
       )
   );
 
-  const handleCreateListSubmit = async (e) => {
-    e.preventDefault();
-    if (!newListName.trim()) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: 'include',
-        body: JSON.stringify({ name: newListName.trim() }),
-      });
-      if (res.ok) {
-        setNewListName("");
-        setCreateModalOpen(false);
-        fetchLists();
-        toast.success("List Created Successfully");
-      }
-    } catch (error) {
-      taost.error("Error creating list:", error);
-    }
-  };
+ const handleCreateListSubmit = async (e) => {
+  e.preventDefault();
+  if (!newListName.trim()) return;
+  try {
+    await apiRequest(`${API_BASE_URL}/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newListName.trim() }),
+    });
+    setNewListName("");
+    setCreateModalOpen(false);
+    fetchLists();
+    toast.success("List Created Successfully");
+  } catch (error) {
+    toast.error("Error creating list.");
+  }
+};
 
-  const handleDelete = async (id, e) => {
-    e.stopPropagation();
-    try {
-      const res = await fetch(`${API_BASE_URL}/list/delete/${id}`, {
-        method: "DELETE",
-        credentials: 'include',
-      });
-      if (res.ok) {
-        setLists(lists.filter((list) => list._id !== id));
-        toast.success("List Deleted Successfully");
-      }
-    } catch (error) {
-      toast.error("Error deleting list:", error);
-    }
-  };
+
+ const handleDelete = async (id, e) => {
+  e.stopPropagation();
+  try {
+    await apiRequest(`${API_BASE_URL}/list/delete/${id}`, {
+      method: 'DELETE',
+    });
+    setLists(lists.filter((list) => list._id !== id));
+    toast.success("List Deleted Successfully");
+  } catch (error) {
+    toast.error("Error deleting list.");
+  }
+};
+
 
   return (
     <MainLayout>

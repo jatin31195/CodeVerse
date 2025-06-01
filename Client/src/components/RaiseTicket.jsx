@@ -9,6 +9,7 @@ import { Combobox } from '@headlessui/react';
 import { Check, ChevronDown } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
 const getUserId = (user) => {
   if (!user) return "";
   if (typeof user === "string") return user;
@@ -102,176 +103,177 @@ const RaiseTicket = () => {
     );
   }, [searchTerm, questions]);
   const fetchQuestions = async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/api/questions`, {
-        ...getAuthConfig(),
-        withCredentials: true,
-      });
-      const fetched = Array.isArray(res.data)
-        ? res.data
-        : res.data.questions || [];
-      setQuestions(fetched);
-    } catch (err) {
-      console.error('Error fetching questions:', err);
-    }
-  };
-
-  const fetchMyTickets = async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/api/ticket-Raise/my`, {
-      ...getAuthConfig(),
-      withCredentials:true,}
-    );
-      setMyTickets(res.data.tickets || []);
-    } catch (err) {
-      console.error('Error fetching my tickets:', err);
-    }
-  };
-
-  const fetchOtherTickets = async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/api/ticket-Raise`, {
-      ...getAuthConfig(),
-      withCredentials:true,
+  try {
+    const res = await apiRequest(`${BASE_URL}/api/questions`, {
+      method: 'GET',
+      headers: getAuthConfig().headers,
+      withCredentials: true,
     });
-      const all = res.data.tickets || res.data || [];
-      setOtherTickets(all.filter((t) => getUserId(t.raisedBy) !== currentUserId));
-    } catch (err) {
-      console.error('Error fetching other tickets:', err);
-    }
-  };
+    const fetched = Array.isArray(res.data)
+      ? res.data
+      : res.data.questions || [];
+    setQuestions(fetched);
+  } catch (err) {
+    console.error('Error fetching questions:', err);
+  }
+};
+
+const fetchMyTickets = async () => {
+  try {
+    const res = await apiRequest(`${BASE_URL}/api/ticket-Raise/my`, {
+      method: 'GET',
+      headers: getAuthConfig().headers,
+      withCredentials: true,
+    });
+    setMyTickets(res.data.tickets || []);
+  } catch (err) {
+    console.error('Error fetching my tickets:', err);
+  }
+};
+
+const fetchOtherTickets = async () => {
+  try {
+    const res = await apiRequest(`${BASE_URL}/api/ticket-Raise`, {
+      method: 'GET',
+      headers: getAuthConfig().headers,
+      withCredentials: true,
+    });
+    const all = res.data.tickets || res.data || [];
+    setOtherTickets(all.filter((t) => getUserId(t.raisedBy) !== currentUserId));
+  } catch (err) {
+    console.error('Error fetching other tickets:', err);
+  }
+};
+
 
   const refreshTickets = async () => {
     await fetchMyTickets();
     await fetchOtherTickets();
   };
 
-  const handleRaiseTicket = async (e) => {
-    e.preventDefault();
-    if (!selectedQuestion) {
-      toast.warning('Please select a question.');
-      return;
-    }
-    try {
-      await axios.post(
-        `${BASE_URL}/api/ticket-Raise/raise`,
-        { questionIdentifier: selectedQuestion },{
-        ...getAuthConfig(),
-        withCredentials:true,}
-      );
-      setTicketRaised(true);
-      toast.success('Ticket raised successfully');
-      refreshTickets();
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || 'Error raising ticket');
-    }
-  };
-
-  const handleProvideTextSolution = async (ticketId) => {
-    if (!solutionText) {
-      toast.info('Enter a solution text');
-      return;
-    }
-    try {
-      await axios.post(
-        `${BASE_URL}/api/ticket-Raise/${ticketId}/solution`,
-        { solutionText },{
-        ...getAuthConfig(),
-        withCredentials:true,
+ const handleRaiseTicket = async (e) => {
+  e.preventDefault();
+  if (!selectedQuestion) {
+    toast.warning('Please select a question.');
+    return;
+  }
+  try {
+    await apiRequest(`${BASE_URL}/api/ticket-Raise/raise`, {
+      method: 'POST',
+      headers: getAuthConfig().headers,
+      withCredentials: true,
+      body: { questionIdentifier: selectedQuestion },
     });
-      toast.success('Solution submitted successfully');
-      setSolutionText('');
-      setCurrentTicket(null);
-      refreshTickets();
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || 'Error submitting solution');
-    }
-  };
+    setTicketRaised(true);
+    toast.success('Ticket raised successfully');
+    refreshTickets();
+  } catch (err) {
+    console.error(err);
+    toast.error(err.response?.data?.message || 'Error raising ticket');
+  }
+};
 
-  
-  const handleRequestVideoMeet = async (ticketId) => {
-    try {
-      await axios.post(
-        `${BASE_URL}/api/ticket-Raise/${ticketId}/request-video`,
-        {},{
-        ...getAuthConfig(),
-        withCredentials:true,
+const handleProvideTextSolution = async (ticketId) => {
+  if (!solutionText) {
+    toast.info('Enter a solution text');
+    return;
+  }
+  try {
+    await apiRequest(`${BASE_URL}/api/ticket-Raise/${ticketId}/solution`, {
+      method: 'POST',
+      headers: getAuthConfig().headers,
+      withCredentials: true,
+      body: { solutionText },
     });
-      toast.success('Video meet request sent');
-      refreshTickets();
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || 'Error requesting video meet');
-    }
-  };
+    toast.success('Solution submitted successfully');
+    setSolutionText('');
+    setCurrentTicket(null);
+    refreshTickets();
+  } catch (err) {
+    console.error(err);
+    toast.error(err.response?.data?.message || 'Error submitting solution');
+  }
+};
 
-  const handleAcceptVideoMeet = async (ticketId) => {
-    try {
-      const res = await axios.put(
-        `${BASE_URL}/api/ticket-Raise/${ticketId}/accept-video`,
-        {},{
-        ...getAuthConfig(),
-        withCredentials:true,
+const handleRequestVideoMeet = async (ticketId) => {
+  try {
+    await apiRequest(`${BASE_URL}/api/ticket-Raise/${ticketId}/request-video`, {
+      method: 'POST',
+      headers: getAuthConfig().headers,
+      withCredentials: true,
+      body: {},
     });
-      toast.success('Video meet accepted. Meeting room created.');
-      refreshTickets();
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || 'Error accepting video meet request');
-    }
-  };
+    toast.success('Video meet request sent');
+    refreshTickets();
+  } catch (err) {
+    console.error(err);
+    toast.error(err.response?.data?.message || 'Error requesting video meet');
+  }
+};
 
-  const handleCloseVideoMeet = async (ticketId) => {
-    try {
-      await axios.put(
-        `${BASE_URL}/api/ticket-Raise/${ticketId}/close-video`,
-        {},{
-        ...getAuthConfig(),
-        withCredentials:true,
-        }
-      );
-      toast.success('Video meet closed and ticket updated.');
-      refreshTickets();
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || 'Error closing video meet');
-    }
-  };
+const handleAcceptVideoMeet = async (ticketId) => {
+  try {
+    await apiRequest(`${BASE_URL}/api/ticket-Raise/${ticketId}/accept-video`, {
+      method: 'PUT',
+      headers: getAuthConfig().headers,
+      withCredentials: true,
+      body: {},
+    });
+    toast.success('Video meet accepted. Meeting room created.');
+    refreshTickets();
+  } catch (err) {
+    console.error(err);
+    toast.error(err.response?.data?.message || 'Error accepting video meet request');
+  }
+};
+
+const handleCloseVideoMeet = async (ticketId) => {
+  try {
+    await apiRequest(`${BASE_URL}/api/ticket-Raise/${ticketId}/close-video`, {
+      method: 'PUT',
+      headers: getAuthConfig().headers,
+      withCredentials: true,
+      body: {},
+    });
+    toast.success('Video meet closed and ticket updated.');
+    refreshTickets();
+  } catch (err) {
+    console.error(err);
+    toast.error(err.response?.data?.message || 'Error closing video meet');
+  }
+};
+
 
   
   const handleJoinOrCreateVideoMeet = async (ticket, isMyTicket) => {
-    if (ticket.videoMeetRoom && ticket.videoMeetRoom.trim() !== "") {
-     
-      window.location.href = `/video-meeting/${ticket.videoMeetRoom}`;
-      return;
-    }
-    
-    if (isMyTicket) {
-      try {
-        const res = await axios.put(
-          `${BASE_URL}/api/ticket-Raise/${ticket._id}/accept-video`,
-          {},{
-          ...getAuthConfig(),
-          withCredentials:true,
-          }
-        );
-        const updatedTicket = res.data.ticket || res.data;
-        if (updatedTicket.videoMeetRoom && updatedTicket.videoMeetRoom.trim() !== "") {
-          window.location.href = `/video-meeting/${updatedTicket.videoMeetRoom}`;
-        } else {
-          toast.error("Failed to create meeting room. Please try again later.");
-        }
-      } catch (error) {
-        console.error(error);
-        toast.error("Error creating meeting room.");
+  if (ticket.videoMeetRoom && ticket.videoMeetRoom.trim() !== "") {
+    window.location.href = `/video-meeting/${ticket.videoMeetRoom}`;
+    return;
+  }
+
+  if (isMyTicket) {
+    try {
+      const res = await apiRequest(`${BASE_URL}/api/ticket-Raise/${ticket._id}/accept-video`, {
+        method: 'PUT',
+        headers: getAuthConfig().headers,
+        withCredentials: true,
+        body: {},
+      });
+      const updatedTicket = res.data.ticket || res.data;
+      if (updatedTicket.videoMeetRoom && updatedTicket.videoMeetRoom.trim() !== "") {
+        window.location.href = `/video-meeting/${updatedTicket.videoMeetRoom}`;
+      } else {
+        toast.error("Failed to create meeting room. Please try again later.");
       }
-    } else {
-     
-      toast.warning("Meeting room not available. Please wait for the ticket raiser to accept the video meet request.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Error creating meeting room.");
     }
-  };
+  } else {
+    toast.warning("Meeting room not available. Please wait for the ticket raiser to accept the video meet request.");
+  }
+};
+
 
   
   const handleOpenTextSolution = (ticket) => {

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Calendar, User, Edit2, X } from "lucide-react";
 import {toast} from 'react-toastify'
 import { BASE_URL } from "../config";
+import { apiRequest } from "../utils/api";
 const API_BASE = `${BASE_URL}/api/auth`;
 
 const UserProfileCard = () => {
@@ -17,26 +18,27 @@ const UserProfileCard = () => {
   });
   const [avatarFile, setAvatarFile] = useState(null);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await axios.get(`${API_BASE}/profile`, {
-         withCredentials:true,
-        });
-        const user = res.data.data.user;
-        setEditData({
-          name: user.name || "",
-          dob: user.dateOfBirth?.slice(0, 10) || "",
-          gender: user.gender || "",
-          email: user.email || "",
-          avatarUrl: user.profilePic || ""
-        });
-      } catch (err) {
-        toast.error("Failed to load profile", err);
-      }
-    };
-    fetchProfile();
-  }, []);
+ useEffect(() => {
+  const fetchProfile = async () => {
+    try {
+      const res = await apiRequest(`${API_BASE}/profile`, {
+        method: 'GET',
+      });
+      const user = res.data.data.user;
+      setEditData({
+        name: user.name || "",
+        dob: user.dateOfBirth?.slice(0, 10) || "",
+        gender: user.gender || "",
+        email: user.email || "",
+        avatarUrl: user.profilePic || ""
+      });
+    } catch (err) {
+      toast.error("Failed to load profile", err);
+    }
+  };
+  fetchProfile();
+}, []);
+
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;

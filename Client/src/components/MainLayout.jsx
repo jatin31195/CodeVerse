@@ -8,6 +8,7 @@ import Sidebar from './Sidebar';
 import {toast} from 'react-toastify'
 import '../App.css'
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
 const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -20,33 +21,32 @@ const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const isActive = (path) => location.pathname === path;
 
-  useEffect(() => {
-
-    fetch(`${BASE_URL}/api/auth/profile`, {
-       credentials:"include",
+ useEffect(() => {
+  apiRequest(`${BASE_URL}/api/auth/profile`, { method: 'GET' })
+    .then((res) => {
+      setUser(res.data?.data?.user);
     })
-      .then((res) => res.json())
-      .then((json) => {
-        setUser(json.data.user);
-      })
-      .catch(() => {
-        setUser(null);
-      });
-  }, []);
-
-  const handleLogout = async () => {
-  try {
-    await fetch(`${BASE_URL}/api/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',   
+    .catch(() => {
+      setUser(null);
+      navigate('/login');
     });
-  } catch (err) {
-    console.error('Logout failed', err);
-  } finally {
-    setUser(null);
-    navigate('/login');
-  }
-};
+}, [navigate]);
+
+ 
+ 
+   const handleLogout = async () => {
+   try {
+     await apiRequest(`${BASE_URL}/api/auth/logout`, {
+       method: 'POST',
+     });
+   } catch (err) {
+     console.error('Logout failed', err);
+   } finally {
+     setUser(null);
+     setShowUserMenu(false);
+     navigate('/login');
+   }
+ };
 
   const getInitials = (name) =>
     name

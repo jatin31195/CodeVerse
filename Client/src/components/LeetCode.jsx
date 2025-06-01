@@ -9,6 +9,7 @@ import POTDCalendar from './POTDCalendar';
 import MainLayout from './MainLayout';
 import {toast} from 'react-toastify'
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
 const navLinks = [
   { name: 'LeetCode', path: '/leetcode' },
   { name: 'CodeForces', path: '/codeforces' },
@@ -33,16 +34,13 @@ const getDisplayDate = (date) => {
 
 const getCurrentUserId = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/api/auth/profile`, {
-      credentials: 'include',
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.data?.user?._id || null;
+    const res = await apiRequest(`${BASE_URL}/api/auth/profile`);
+    return res.data?.data?.user?._id || null;
   } catch {
     return null;
   }
 };
+
 
 export default function LeetCode() {
   const navigate = useNavigate();
@@ -62,38 +60,35 @@ export default function LeetCode() {
     })();
   }, []);
  useEffect(() => {
-     (async () => {
-       try {
-         const res = await fetch(`${BASE_URL}/api/auth/profile`, {
-           credentials: 'include',
-         });
-         if (!res.ok) throw new Error('Not authenticated');
-       } catch (err) {
-         navigate('/login');
-       }
-     })();
-   }, [navigate]);
+  (async () => {
+    try {
+      await apiRequest(`${BASE_URL}/api/auth/profile`);
+    } catch (err) {
+      navigate('/login');
+    }
+  })();
+}, [navigate]);
+
 
   const questionId = problem?._id || null;
   
 
   useEffect(() => {
-    if (!questionId) return;
-    (async () => {
-      try {
-        const res = await fetch(`${BASE_URL}/api/chat/${questionId}`, {
-          credentials:'include',
-        });
-        const body = await res.json();
-        if (!res.ok) throw new Error(body.message);
-        setChatMessages((body.messages || []).map(m => ({
-          ...m, userId: String(m.userId)
-        })));
-      } catch (err) {
-        toast.error('Error loading history:', err);
-      }
-    })();
-  }, [questionId]);
+  if (!questionId) return;
+  (async () => {
+    try {
+      const res = await apiRequest(`${BASE_URL}/api/chat/${questionId}`);
+      const body = res.data;
+      setChatMessages((body.messages || []).map(m => ({
+        ...m,
+        userId: String(m.userId),
+      })));
+    } catch (err) {
+      toast.error('Error loading history:', err);
+    }
+  })();
+}, [questionId]);
+
 
   useEffect(() => {
     const onHistory = msgs => setChatMessages(msgs.map(m => ({ ...m, userId: String(m.userId) })));
@@ -117,52 +112,53 @@ export default function LeetCode() {
   }, [chatOpen, questionId, currentUserId, socket]);
 
   const handleSendMessage = useCallback(async e => {
-    e.preventDefault();
-    const text = newMessage.trim();
-    if (!text || !questionId || !currentUserId) return;
-    try {
-      const res = await fetch(
-        `${BASE_URL}/api/chat/${questionId}/message`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json'},
-          credentials:'include',
-          body: JSON.stringify({ text }),
-        }
-      );
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.message);
-      const saved = {
-        _id: body.message._id,
-        questionId,
-        text: body.message.text,
-        userId: String(body.message.userId),
-        timestamp: body.message.timestamp,
-      };
-      socket.emit('sendChatMessage', saved);
-      setNewMessage('');
-    } catch (err) {
-      toast.error('Error sending message:', err);
-    }
-  }, [newMessage, questionId, currentUserId, socket]);
+  e.preventDefault();
+  const text = newMessage.trim();
+  if (!text || !questionId || !currentUserId) return;
+  try {
+    const res = await apiRequest(
+      `${BASE_URL}/api/chat/${questionId}/message`,
+      {
+        method: 'POST',
+        body: { text },
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+    const body = res.data;
+    const saved = {
+      _id: body.message._id,
+      questionId,
+      text: body.message.text,
+      userId: String(body.message.userId),
+      timestamp: body.message.timestamp,
+    };
+    socket.emit('sendChatMessage', saved);
+    setNewMessage('');
+  } catch (err) {
+    toast.error('Error sending message:', err);
+  }
+}, [newMessage, questionId, currentUserId, socket]);
 
-  useEffect(() => {
+
+useEffect(() => {
   setProblemLoading(true);
   setProblemError(null);
   const displayDate = getDisplayDate(selectedDate);
   const ds = format(displayDate, 'yyyy-MM-dd');
 
-  fetch(`${BASE_URL}/api/ques/leetcode/potd/${encodeURIComponent(ds)}`,{
-    credentials:'include',
-  })
-    .then(r => r.json().then(data => {
-      if (!r.ok) throw new Error(data.message || 'Fetch failed');
-      return data.data;
-    }))
-    .then(q => setProblem(q || null))
-    .catch(e => { setProblemError(e.message); setProblem(null); })
+  apiRequest(
+    `${BASE_URL}/api/ques/leetcode/potd/${encodeURIComponent(ds)}`,
+    { method: 'GET' }
+  )
+    .then(res => setProblem(res.data?.data || null))
+    .catch(e => {
+      setProblemError(e.message);
+      setProblem(null);
+    })
     .finally(() => setProblemLoading(false));
 }, [selectedDate]);
+
+
 
 
   return (

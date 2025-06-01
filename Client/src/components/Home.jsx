@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link ,useNavigate} from 'react-router-dom';
 import {
   ArrowRight,
   Star,
@@ -16,6 +16,7 @@ import {
 import Sidebar from './Sidebar';
 import GoalsPanel from './GoalsPanel';
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
 export const PLATFORM_CONFIG = {
   leetcode: {
     label: 'LeetCode',
@@ -92,12 +93,12 @@ const Home = () => {
   const [user, setUser] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [leetProblem, setLeetProblem] = useState(null);
-  
+  const navigate = useNavigate();
+
   const handleLogout = async () => {
   try {
-    await fetch(`${BASE_URL}/api/auth/logout`, {
+    await apiRequest(`${BASE_URL}/api/auth/logout`, {
       method: 'POST',
-      credentials: 'include',   
     });
   } catch (err) {
     console.error('Logout failed', err);
@@ -108,23 +109,19 @@ const Home = () => {
 };
 
 
+
   useEffect(() => {
-  fetch(`${BASE_URL}/api/auth/profile`, {
-   credentials: 'include',
-  })
-    .then((res) => {
-      if (!res.ok) throw new Error('Not authenticated');
-      return res.json();
-    })
-    .then((json) => {
-      setUser(json.data.user);
-      console.log('Fetched user:', json.data.user);
-    })
-    .catch((err) => {
-      console.error('Authentication error:', err);
-      setUser(null);
-    });
-}, []);
+   apiRequest(`${BASE_URL}/api/auth/profile`, { method: 'GET' })
+     .then((res) => {
+       setUser(res.data?.data?.user);
+     })
+     .catch(() => {
+       setUser(null);
+       navigate('/login');
+     });
+ }, [navigate]);
+
+
    const getInitials = (name) =>
     name
       .split(' ')
@@ -134,33 +131,29 @@ const Home = () => {
       .toUpperCase();
   
   useEffect(() => {
-    const now = new Date();
-    const istOffset = 5 * 60 + 30;
-    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-    const ist = new Date(utc + istOffset * 60000);
-    const target = new Date(ist);
-    if (ist.getHours() < 5 || (ist.getHours() === 5 && ist.getMinutes() < 30)) {
-      target.setDate(target.getDate() - 1);
-    }
-    const yyyy = target.getFullYear();
-    const mm = String(target.getMonth() + 1).padStart(2, '0');
-    const dd = String(target.getDate()).padStart(2, '0');
-    const dateKey = `${yyyy}-${mm}-${dd}`;
-    const url = `${BASE_URL}/api/ques/leetcode/potd/${encodeURIComponent(dateKey)}`;
-    fetch(url,{
-      credentials: 'include',
+  const now = new Date();
+  const istOffset = 5 * 60 + 30;
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const ist = new Date(utc + istOffset * 60000);
+  const target = new Date(ist);
+  if (ist.getHours() < 5 || (ist.getHours() === 5 && ist.getMinutes() < 30)) {
+    target.setDate(target.getDate() - 1);
+  }
+  const yyyy = target.getFullYear();
+  const mm = String(target.getMonth() + 1).padStart(2, '0');
+  const dd = String(target.getDate()).padStart(2, '0');
+  const dateKey = `${yyyy}-${mm}-${dd}`;
+  const url = `${BASE_URL}/api/ques/leetcode/potd/${encodeURIComponent(dateKey)}`;
+
+  apiRequest(url)
+    .then(res => {
+      if (res.data.status === 'success' && res.data.data) {
+        setLeetProblem(res.data.data);
+      }
     })
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then(json => {
-        if (json.status === 'success' && json.data) {
-          setLeetProblem(json.data);
-        }
-      })
-      .catch(console.error);
-  }, []);
+    .catch(console.error);
+}, []);
+
 
   const problems = {
     leetcode: {

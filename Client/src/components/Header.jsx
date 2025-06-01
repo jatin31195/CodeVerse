@@ -8,6 +8,7 @@ import Sidebar from './Sidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
 const Header = ({ onNewTicket }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
@@ -21,36 +22,33 @@ const Header = ({ onNewTicket }) => {
       .map((n) => n[0])
       .join('')
       .toUpperCase();
-
-  useEffect(() => {
-    fetch(`${BASE_URL}/api/auth/profile`, {
-      credentials: 'include',
+useEffect(() => {
+  apiRequest(`${BASE_URL}/api/auth/profile`, { method: 'GET' })
+    .then((res) => {
+      setUser(res.data?.data?.user);
     })
-      .then((res) => {
-        if (!res.ok) throw new Error('Not authenticated');
-        return res.json();
-      })
-      .then((json) => setUser(json.data.user))
-      .catch(() => {
-        setUser(null);
-        navigate('/login');
-      });
-  }, [navigate]);
+    .catch(() => {
+      setUser(null);
+      navigate('/login');
+    });
+}, [navigate]);
+
+
 
   const handleLogout = async () => {
-    try {
-      await fetch(`${BASE_URL}/api/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-    } catch (err) {
-      console.error('Logout failed', err);
-    } finally {
-      setUser(null);
-      setShowUserMenu(false);
-      navigate('/login');
-    }
-  };
+  try {
+    await apiRequest(`${BASE_URL}/api/auth/logout`, {
+      method: 'POST',
+    });
+  } catch (err) {
+    console.error('Logout failed', err);
+  } finally {
+    setUser(null);
+    setShowUserMenu(false);
+    navigate('/login');
+  }
+};
+
 
   return (
     <>

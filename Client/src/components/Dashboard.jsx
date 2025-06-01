@@ -12,6 +12,7 @@ import ContestRankingTable from './ContestRankingTable';
 import { toast } from 'sonner';
 import MainLayout from './MainLayout';
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('all');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -49,52 +50,49 @@ export default function Dashboard() {
   const [combinedDsaCount, setCombinedDsaCount] = useState(0);
   const [combinedCpCount, setCombinedCpCount] = useState(0);
   useEffect(() => {
-    fetch(`${BASE_URL}/api/auth/profile`, {
-      credentials: 'include',
+  apiRequest(`${BASE_URL}/api/auth/profile`, { method: 'GET' })
+    .then(json => {
+      if (json.data.status === 'success') { 
+        const u = json.data.data.user; 
+        setUserData({
+          name: u.name,
+          email: u.email,
+          dob: new Date(u.dateOfBirth).toLocaleDateString(),
+          gender: u.gender,
+          avatarUrl: u.profilePic,
+        });
+        setPlatforms({
+          leetcode: u.leetcodeUsername || null,
+          codeforces: u.codeforcesUsername || null,
+          gfg: u.gfgUsername || null,
+        });
+      } else {
+        toast.error('Failed to load user profile.');
+      }
     })
-      .then(r => r.json())
-      .then(json => {
-        if (json.status === 'success') {
-          const u = json.data.user;
-          setUserData({
-            name: u.name,
-            email: u.email,
-            dob: new Date(u.dateOfBirth).toLocaleDateString(),
-            gender: u.gender,
-            avatarUrl: u.profilePic,
-          });
-          setPlatforms({
-            leetcode: u.leetcodeUsername || null,
-            codeforces: u.codeforcesUsername || null,
-            gfg: u.gfgUsername || null,
-          });
-        } else {
-          toast.error('Failed to load user profile.');
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        toast.error('Error fetching user profile.');
-      });
-  }, []);
+    .catch(err => {
+      console.error('Error fetching user profile:', err);
+      toast.error('Error fetching user profile.');
+    });
+}, []);
 
-  useEffect(() => {
+
+ useEffect(() => {
   if (!platforms.leetcode) return;
 
-  fetch(`${BASE_URL}/api/leetcode-user/${platforms.leetcode}`, {
-    credentials: 'include',
-  })
-    .then(res => res.json())
+  apiRequest(`${BASE_URL}/api/leetcode-user/${platforms.leetcode}`, { method: 'GET', credentials: 'include' })
     .then(json => {
-      if (json.status !== 'success') return;
-      const data = json.data || json;
+      if (json.data.status !== 'success') return;
+
+      const data = json.data;
+
       setLeetcodeStats({
-        totalQuestions: data.totalSolved,
-        activeDays: data.totalActiveDays,
-        totalContests: data.contest.totalContests,
-        streak: data.streak,
-        ranking: data.ranking,
-        reputation: data.reputation,
+        totalQuestions: data.totalSolved || 0,
+        activeDays: data.totalActiveDays || 0,
+        totalContests: (data.contest && data.contest.totalContests) || 0,
+        streak: data.streak || 0,
+        ranking: data.ranking || 0,
+        reputation: data.reputation || 0,
       });
 
       const difficultyCounts = {
@@ -103,13 +101,12 @@ export default function Dashboard() {
         Hard: Number(data.hardSolved || 0),
       };
       setLeetcodeDifficultyCounts(difficultyCounts);
-      const contests = Array.isArray(data.contest.history)
+
+      const contests = Array.isArray(data.contest?.history)
         ? data.contest.history.map((contest, idx) => ({
             id: `leetcode-contest-${idx}`,
             name: contest.title,
-            date: new Date(contest.startTime * 1000)
-              .toISOString()
-              .split('T')[0],
+            date: new Date(contest.startTime * 1000).toISOString().split('T')[0],
             rating: contest.rating,
             rank: contest.ranking,
             participants: 10000,
@@ -117,15 +114,13 @@ export default function Dashboard() {
           }))
         : [];
       setLeetcodeContest(contests);
-      const heatmap =
-        data.heatmap && typeof data.heatmap === 'object'
-          ? Object.entries(data.heatmap).map(([ts, count]) => ({
-              date: new Date(Number(ts) * 1000)
-                .toISOString()
-                .split('T')[0],
-              count: Number(count),
-            }))
-          : [];
+
+      const heatmap = data.heatmap && typeof data.heatmap === 'object'
+        ? Object.entries(data.heatmap).map(([ts, count]) => ({
+            date: new Date(Number(ts) * 1000).toISOString().split('T')[0],
+            count: Number(count),
+          }))
+        : [];
       setLeetcodeHeatmap(heatmap);
     })
     .catch(err => {
@@ -135,117 +130,112 @@ export default function Dashboard() {
 }, [platforms.leetcode]);
 
 
-  useEffect(() => {
-    if (!platforms.codeforces) return;
-
-    fetch(`${BASE_URL}/api/codeforces-user/${platforms.codeforces}`, {
-      credentials: 'include',
-    })
-      .then(res => res.json())
-      .then(json => {
-        if (json.status !== 'success') return;
-        const data = json.data;
-
-        const easyCount = Number(data.difficultyWiseSolved.easy || 0);
-        const mediumCount = Number(data.difficultyWiseSolved.medium || 0);
-        const hardCount = Number(data.difficultyWiseSolved.hard || 0);
-        const totalSolved = easyCount + mediumCount + hardCount;
-        setCfStats({
-          totalQuestions: totalSolved,
-          activeDays: data.totalActiveDays,
-          totalContests: data.contestGraph.length,
-        });
-
-        setCfDifficultyCounts({
-          Easy: easyCount,
-          Medium: mediumCount,
-          Hard: hardCount,
-        });
-
-        const contests = Array.isArray(data.contestGraph)
-          ? data.contestGraph.map(contest => ({
-              id: `codeforces-${contest.contestId}`,
-              name: contest.contestName,
-              date: new Date(contest.date).toISOString().split('T')[0],
-              rating: contest.newRating,
-              rank: contest.rank,
-              participants: 10000,
-              platform: 'codeforces',
-            }))
-          : [];
-        setCfContest(contests);
-
-        const heatmap =
-          data.heatmapData && typeof data.heatmapData === 'object'
-            ? Object.entries(data.heatmapData).map(([ts, count]) => ({
-                date: new Date(Number(ts) * 1000).toISOString().split('T')[0],
-                count: Number(count),
-              }))
-            : [];
-        setCfHeatmap(heatmap);
-      })
-      .catch(err => {
-        console.error(err);
-        toast.error('Error fetching Codeforces data.');
-      });
-  }, [platforms.codeforces]);
 
   useEffect(() => {
-    if (!platforms.gfg) return;
+  if (!platforms.codeforces) return;
 
-    fetch(`${BASE_URL}/api/gfg-user/${platforms.gfg}`, {
-      credentials: 'include',
-    })
-      .then(res => res.json())
-      .then(json => {
-        if (json.status !== 'success') return;
-        const data = json.data;
+  apiRequest(`${BASE_URL}/api/codeforces-user/${platforms.codeforces}`, { method: 'GET', credentials: 'include' })
+    .then(json => {
+      if (json.data.status !== 'success') return;
+      const data = json.data.data;
 
-        const allCount = Number(
-          data.submissions.difficultyBreakdown.find(d => d.difficulty === 'All')?.count || 0
-        );
+      const easyCount = Number(data.difficultyWiseSolved?.easy || 0);
+      const mediumCount = Number(data.difficultyWiseSolved?.medium || 0);
+      const hardCount = Number(data.difficultyWiseSolved?.hard || 0);
+      const totalSolved = easyCount + mediumCount + hardCount;
 
-        setGfgStats({
-          totalQuestions: allCount,
-          activeDays: data.totalActiveDays,
-          totalContests: data.contest.totalContests,
-        });
-
-        const breakdownCounts = {
-          School: 0,
-          Basic: 0,
-          Easy: 0,
-          Medium: 0,
-          Hard: 0,
-        };
-        if (Array.isArray(data.submissions.difficultyBreakdown)) {
-          data.submissions.difficultyBreakdown.forEach(item => {
-            const key = item.difficulty; 
-            if (key !== 'All' && breakdownCounts.hasOwnProperty(key)) {
-              breakdownCounts[key] = Number(item.count || 0);
-            }
-          });
-        }
-        setGfgDifficultyCounts(breakdownCounts);
-
-        setGfgContest([]);
-
-        const heatmap =
-          data.heatmaps &&
-          data.heatmaps.problems &&
-          typeof data.heatmaps.problems.heatmapData === 'object'
-            ? Object.entries(data.heatmaps.problems.heatmapData).map(([ts, count]) => ({
-                date: new Date(Number(ts) * 1000).toISOString().split('T')[0],
-                count: Number(count),
-              }))
-            : [];
-        setGfgHeatmap(heatmap);
-      })
-      .catch(err => {
-        console.error(err);
-        toast.error('Error fetching GFG data.');
+      setCfStats({
+        totalQuestions: totalSolved,
+        activeDays: data.totalActiveDays || 0,
+        totalContests: Array.isArray(data.contestGraph) ? data.contestGraph.length : 0,
       });
-  }, [platforms.gfg]);
+
+      setCfDifficultyCounts({
+        Easy: easyCount,
+        Medium: mediumCount,
+        Hard: hardCount,
+      });
+
+      const contests = Array.isArray(data.contestGraph)
+        ? data.contestGraph.map(contest => ({
+            id: `codeforces-${contest.contestId}`,
+            name: contest.contestName,
+            date: new Date(contest.date).toISOString().split('T')[0],
+            rating: contest.newRating,
+            rank: contest.rank,
+            participants: 10000,
+            platform: 'codeforces',
+          }))
+        : [];
+      setCfContest(contests);
+
+      const heatmap = data.heatmapData && typeof data.heatmapData === 'object'
+        ? Object.entries(data.heatmapData).map(([ts, count]) => ({
+            date: new Date(Number(ts) * 1000).toISOString().split('T')[0],
+            count: Number(count),
+          }))
+        : [];
+      setCfHeatmap(heatmap);
+    })
+    .catch(err => {
+      console.error(err);
+      toast.error('Error fetching Codeforces data.');
+    });
+}, [platforms.codeforces]);
+
+
+useEffect(() => {
+  if (!platforms.gfg) return;
+
+  apiRequest(`${BASE_URL}/api/gfg-user/${platforms.gfg}`, { method: 'GET', credentials: 'include' })
+    .then(json => {
+      if (json.data.status !== 'success') return;
+      const data = json.data.data;
+
+      const allCount = Number(
+        data.submissions?.difficultyBreakdown?.find(d => d.difficulty === 'All')?.count || 0
+      );
+
+      setGfgStats({
+        totalQuestions: allCount,
+        activeDays: data.totalActiveDays || 0,
+        totalContests: data.contest?.totalContests || 0,
+      });
+
+      const breakdownCounts = {
+        School: 0,
+        Basic: 0,
+        Easy: 0,
+        Medium: 0,
+        Hard: 0,
+      };
+
+      if (Array.isArray(data.submissions?.difficultyBreakdown)) {
+        data.submissions.difficultyBreakdown.forEach(item => {
+          const key = item.difficulty;
+          if (key !== 'All' && breakdownCounts.hasOwnProperty(key)) {
+            breakdownCounts[key] = Number(item.count || 0);
+          }
+        });
+      }
+      setGfgDifficultyCounts(breakdownCounts);
+
+      setGfgContest([]);
+
+      const heatmap = data.heatmaps?.problems?.heatmapData && typeof data.heatmaps.problems.heatmapData === 'object'
+        ? Object.entries(data.heatmaps.problems.heatmapData).map(([ts, count]) => ({
+            date: new Date(Number(ts) * 1000).toISOString().split('T')[0],
+            count: Number(count),
+          }))
+        : [];
+      setGfgHeatmap(heatmap);
+    })
+    .catch(err => {
+      console.error(err);
+      toast.error('Error fetching GFG data.');
+    });
+}, [platforms.gfg]);
+
 
   useEffect(() => {
     const leetDsaApprox = leetcodeStats.totalQuestions;

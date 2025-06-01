@@ -3,32 +3,32 @@ import { motion } from 'framer-motion';
 import { MailIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');  
+  const [error, setError] = useState(''); 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const response = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ email }),
-      });
+  try {
+    const response = await apiRequest(`${BASE_URL}/api/auth/forgot-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
 
-      const data = await response.json();
+    const data = response.data;
 
-      if (response.ok) {
-        toast.success(data.message || 'Check your email for the reset link.');
-      } else {
-        toast.error(data.message || 'Something went wrong.');
-      }
-    } catch (err) {
-      toast.error('Server error. Please try again later.');
-    }
-  };
+    toast.success(data.message || 'Check your email for the reset link.');
+  } catch (err) {
+    const message = err.response?.data?.message || 'Server error. Please try again later.';
+    toast.error(message);
+  }
+};
+
 
   return (
     <motion.div

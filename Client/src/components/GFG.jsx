@@ -14,6 +14,7 @@ import POTDCalendar from './POTDCalendar';
 import MainLayout from './MainLayout';
 import {toast} from 'react-toastify'
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
 const navLinks = [
   { name: 'LeetCode', path: '/leetcode' },
   { name: 'CodeForces', path: '/codeforces' },
@@ -31,16 +32,13 @@ const slideIn = {
 
 const getCurrentUserId = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/api/auth/profile`, {
-      credentials: 'include',
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.data?.user?._id || null;
+    const res = await apiRequest(`${BASE_URL}/api/auth/profile`);
+    return res.data?.data?.user?._id || null;
   } catch {
     return null;
   }
 };
+
 
 export default function GFG() {
   const navigate = useNavigate();
@@ -52,17 +50,15 @@ export default function GFG() {
   }, []);
   
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch(`${BASE_URL}/api/auth/profile`, {
-          credentials: 'include',
-        });
-        if (!res.ok) throw new Error('Not authenticated');
-      } catch (err) {
-        navigate('/login');
-      }
-    })();
-  }, [navigate]);
+  (async () => {
+    try {
+      await apiRequest(`${BASE_URL}/api/auth/profile`);
+    } catch (err) {
+      navigate('/login');
+    }
+  })();
+}, [navigate]);
+
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [problemData, setProblemData] = useState(null);
@@ -83,60 +79,58 @@ export default function GFG() {
   }, []);
   // === Fetch GFG POTD ===
   useEffect(() => {
-    setLoading(true);
-    (async () => {
-      try {
-        const ds = format(selectedDate, 'yyyy-MM-dd');
-        const res = await fetch(`${BASE_URL}/api/ques/gfg/potd/${ds}`,{
-          credentials:'include',
-        });
-        const json = await res.json();
+  setLoading(true);
+  (async () => {
+    try {
+      const ds = format(selectedDate, 'yyyy-MM-dd');
+      const res = await apiRequest(`${BASE_URL}/api/ques/gfg/potd/${ds}`, { method: 'GET' });
+      const json = res.data;
 
-        if (json.status !== 'success' || !json.data) {
-          setProblemData(null);
-        } else {
-          const data = json.data;
-          setProblemData({
-            _id: String(data.problem_id),
-            title: data.title || '',
-            link: data.link || '',
-            date: data.date,
-            difficulty: data.difficulty || '',
-            tags: data.tags || [],
-            easyExplanation: data.easyExplanation || '',
-            realLifeExample: data.realLifeExample || ''
-          });
-        }
-      } catch (err) {
-        toast.error('Error fetching POTD:', err);
+      if (json.status !== 'success' || !json.data) {
         setProblemData(null);
-      } finally {
-        setLoading(false);
+      } else {
+        const data = json.data;
+        setProblemData({
+          _id: String(data.problem_id),
+          title: data.title || '',
+          link: data.link || '',
+          date: data.date,
+          difficulty: data.difficulty || '',
+          tags: data.tags || [],
+          easyExplanation: data.easyExplanation || '',
+          realLifeExample: data.realLifeExample || '',
+        });
       }
-    })();
-  }, [selectedDate]);
+    } catch (err) {
+      toast.error('Error fetching POTD');
+      setProblemData(null);
+    } finally {
+      setLoading(false);
+    }
+  })();
+}, [selectedDate]);
+
 
  
-  useEffect(() => {
-    if (!questionId) return;
-    (async () => {
-      try {
-        const res = await fetch(`${BASE_URL}/api/chat/${questionId}`, {
-          credentials:'include',
-        });
-        const body = await res.json();
-        if (!res.ok) throw new Error(body.message);
-        setChatMessages(
-          body.messages.map((m) => ({
-            ...m,
-            userId: String(m.userId)
-          }))
-        );
-      } catch (err) {
-        toast.error('Error loading chat history:', err);
-      }
-    })();
-  }, [questionId]);
+ useEffect(() => {
+  if (!questionId) return;
+  (async () => {
+    try {
+      const res = await apiRequest(`${BASE_URL}/api/chat/${questionId}`);
+      const body = res.data;
+      if (!res.status || res.status !== 200) throw new Error(body.message);
+      setChatMessages(
+        body.messages.map((m) => ({
+          ...m,
+          userId: String(m.userId),
+        }))
+      );
+    } catch (err) {
+      toast.error('Error loading chat history');
+    }
+  })();
+}, [questionId]);
+
 
 
   useEffect(() => {
@@ -164,41 +158,38 @@ export default function GFG() {
   }, [chatOpen, questionId, currentUserId, socket]);
 
   const handleSendMessage = useCallback(
-    async (e) => {
-      e.preventDefault();
-      const text = newMessage.trim();
-      if (!text || !questionId || !currentUserId) return;
+  async (e) => {
+    e.preventDefault();
+    const text = newMessage.trim();
+    if (!text || !questionId || !currentUserId) return;
 
-      try {
-        const res = await fetch(
-          `${BASE_URL}/api/chat/${questionId}/message`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials:'include',
-            body: JSON.stringify({ text })
-          }
-        );
-        const body = await res.json();
-        if (!res.ok) throw new Error(body.message);
+    try {
+      const res = await apiRequest(`${BASE_URL}/api/chat/${questionId}/message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }),
+      });
 
-        const saved = {
-          _id: body.message._id,
-          questionId,
-          text: body.message.text,
-          userId: String(body.message.userId),
-          timestamp: body.message.timestamp
-        };
-        socket.emit('sendChatMessage', saved);
-        setNewMessage('');
-      } catch (err) {
-        toast.error('Error sending message:', err);
-      }
-    },
-    [newMessage, questionId, currentUserId, socket]
-  );
+      const body = res.data;
+      const saved = {
+        _id: body.message._id,
+        questionId,
+        text: body.message.text,
+        userId: String(body.message.userId),
+        timestamp: body.message.timestamp,
+      };
+
+      socket.emit('sendChatMessage', saved);
+      setNewMessage('');
+    } catch (err) {
+      toast.error('Error sending message');
+    }
+  },
+  [newMessage, questionId, currentUserId, socket]
+);
+
 
   return (
     <MainLayout navLinks={navLinks}>

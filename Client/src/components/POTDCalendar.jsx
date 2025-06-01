@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { BASE_URL } from '../config';
 const API_BASE_URL = `${BASE_URL}/api/fav`;
 const TASK_API_URL = `${BASE_URL}/api/tasks`;
-
+import { apiRequest } from '../utils/api';
 const POTDCalendar = ({ selectedDate, onSelectDate, platform, showAddIcon = true }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [modalOpen, setModalOpen] = useState(false);
@@ -40,14 +40,20 @@ const POTDCalendar = ({ selectedDate, onSelectDate, platform, showAddIcon = true
     fetchFavoriteLists();
   };
 
-  const fetchFavoriteLists = async () => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/lists`, { withCredentials: true });
-      Array.isArray(res.data) ? setFavoriteLists(res.data) : setFavoriteLists([]);
-    } catch {
-      toast.error('Could not fetch lists');
+ const fetchFavoriteLists = async () => {
+  try {
+    const res = await apiRequest(`${API_BASE_URL}/lists`, {
+      method: 'GET',
+    });
+    if (Array.isArray(res.data)) {
+      setFavoriteLists(res.data);
+    } else {
+      setFavoriteLists([]);
     }
-  };
+  } catch {
+    toast.error('Could not fetch lists');
+  }
+};
 
   const addToTask = async () => {
     if (!selectedDateForModal) return toast.error('No date selected');
@@ -71,29 +77,30 @@ const POTDCalendar = ({ selectedDate, onSelectDate, platform, showAddIcon = true
   };
 
   const addToFavorites = async (listId) => {
-    if (!selectedDateForModal) return toast.error('No date selected');
-    try {
-      const potdRes = await axios.get(
-        `${BASE_URL}/api/ques/${platform}/potd/${format(selectedDateForModal, 'yyyy-MM-dd')}`,
-        { withCredentials: true }
-      );
-      const potd = potdRes.data?.data;
-      if (!potd?._id) return toast.error('No question on that date');
+  if (!selectedDateForModal) return toast.error('No date selected');
+  try {
+    const potdRes = await apiRequest(
+      `${BASE_URL}/api/ques/${platform}/potd/${format(selectedDateForModal, 'yyyy-MM-dd')}`,
+      {
+        method: 'GET',
+      }
+    );
+    const potd = potdRes.data?.data;
+    if (!potd?._id) return toast.error('No question on that date');
 
-      await axios.post(
-        `${API_BASE_URL}/add-question`,
-        { listId, questionId: potd._id },
-        {
-          headers: { 'Content-Type': 'application/json' },
-          withCredentials: true,
-        }
-      );
-      toast.success('Added to favorite list!');
-      setModalOpen(false);
-    } catch {
-      toast.error('Error adding to list');
-    }
-  };
+    // Add question to favorite list
+    await apiRequest(`${API_BASE_URL}/add-question`, {
+      method: 'POST',
+      body: { listId, questionId: potd._id },
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    toast.success('Added to favorite list!');
+    setModalOpen(false);
+  } catch {
+    toast.error('Error adding to list');
+  }
+};
 
   
   const renderDayLaptop = (day) => {
