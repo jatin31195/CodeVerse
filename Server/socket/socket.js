@@ -7,7 +7,7 @@ const users = new Map();
 const initializeSocket = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: ["http://localhost:5173","https://code-verse-aonf.onrender.com"],
       methods: ["GET", "POST"],
       credentials: true,
       transports: ["websocket"],
