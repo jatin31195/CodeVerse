@@ -137,33 +137,27 @@ const handleVerificationComplete = async (code) => {
 
 
 const handleGoogleSignUp = async (credentialResponse) => {
-  const navigate = useNavigate();
+
   setIsLoading(true);
 
   try {
     const { credential } = credentialResponse;
     if (!credential) throw new Error('No ID token returned');
-
-    const response = await apiRequest(
-      `${BASE_URL}/api/auth/google-signup`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: { idToken: credential },
-      }
-    );
+    const response = await apiRequest(`${BASE_URL}/api/auth/google-signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: { idToken: credential },
+    });
     const data = response.data;
-    toast.success(data.message || 'Signup successful!');
-    navigate('/home');
-
-  } catch (error) {
-    if (error.response && error.response.data) {
-      const data = error.response.data;
-      toast.error(data.message || 'Google signup failed');
+    if (response.status >= 200 && response.status < 300) {
+      toast.success(data.message || 'Signup successful!');
+      navigate('/home');
     } else {
-      console.error('Google sign-up error:', error);
-      toast.error('Something went wrong during Google sign-up');
+      toast.error(data.message || 'Google signup failed');
     }
+  } catch (err) {
+    console.error('Google sign-up error:', err);
+    toast.error('Something went wrong during Google sign-up');
   } finally {
     setIsLoading(false);
   }
