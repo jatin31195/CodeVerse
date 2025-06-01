@@ -6,8 +6,9 @@ import {
   Phone, PhoneOff, MonitorUp, MonitorX, Mic, MicOff, Video, VideoOff
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { BASE_URL } from '../config';
 
-const socket = io('http://localhost:8080', {
+const socket = io(`${BASE_URL}`, {
   transports: ['websocket'],
   withCredentials: true,
 });
@@ -40,7 +41,7 @@ const VideoMeeting = () => {
     (async () => {
       try {
         const res = await fetch(
-          'http://localhost:8080/api/auth/profile',
+          `${BASE_URL}/api/auth/profile`,
           { credentials: 'include' }
         );
         if (!res.ok) throw new Error('Not authenticated');

@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import {toast} from 'react-toastify'
 import MainLayout from './MainLayout';
 import POTDCalendar from './POTDCalendar';
+import { BASE_URL } from '../config';
 
 const navLinks = [
   { name: 'POTD Calendar', path: '/custom' },
@@ -32,9 +33,8 @@ export default function CustomPOTD() {
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [loadingLists, setLoadingLists] = useState(true);
   const [loadingProblems, setLoadingProblems] = useState(false);
-
   const api = axios.create({
-    baseURL: 'http://localhost:8080/api/custom/user-potd',
+    baseURL: `${BASE_URL}/api/custom/user-potd`,
     withCredentials: true,
   });
 

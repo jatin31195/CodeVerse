@@ -11,7 +11,8 @@ import {
 import Sidebar from '../components/Sidebar';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {toast} from 'react-toastify'
-const API_BASE = 'http://localhost:8080/api';
+import { BASE_URL } from '../config';
+const API_BASE = `${BASE_URL}/api`;
 
 
 const ToggleSwitch = ({ enabled, onChange }) => {
@@ -279,7 +280,7 @@ const TasksPage = () => {
   const toggleSidebar = () => setSidebarOpen(prev => !prev);
    const handleLogout = async () => {
   try {
-    await fetch('http://localhost:8080/api/auth/logout', {
+    await fetch(`${BASE_URL}/api/auth/logout`, {
       method: 'POST',
       credentials: 'include',   
     });

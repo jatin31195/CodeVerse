@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { KeyRound } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
+import { BASE_URL } from '../config';
 const PasswordReset = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -22,7 +22,7 @@ const PasswordReset = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/reset-password', {
+      const response = await fetch(`${BASE_URL}/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials:'include',

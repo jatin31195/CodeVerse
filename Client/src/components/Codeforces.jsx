@@ -8,6 +8,7 @@ import SolutionCard from './SolutionCard';
 import POTDCalendar from './POTDCalendar';
 import MainLayout from './MainLayout';
 import {toast} from 'react-toastify'
+import { BASE_URL } from '../config';
 const navLinks = [
   { name: 'LeetCode', path: '/leetcode' },
   { name: 'CodeForces', path: '/codeforces' },
@@ -19,7 +20,7 @@ const slideIn = { hidden: { x: 300 }, show: { x: 0 } };
 
 const getCurrentUserId = async () => {
   try {
-    const res = await fetch('http://localhost:8080/api/auth/profile', {
+    const res = await fetch(`${BASE_URL}/api/auth/profile`, {
       credentials: 'include',
     });
     if (!res.ok) return null;
@@ -43,7 +44,7 @@ export default function Codeforces() {
   useEffect(() => {
   (async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/auth/profile', {
+      const res = await fetch(`${BASE_URL}/api/auth/profile`, {
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Not authenticated');
@@ -75,7 +76,7 @@ export default function Codeforces() {
       setQuestionLoading(true);
       setQuestionError(null);
       try {
-        const res = await fetch(`http://localhost:8080/api/ques/codeforces/potd/${dateKey}`,{
+        const res = await fetch(`${BASE_URL}/api/ques/codeforces/potd/${dateKey}`,{
           credentials: 'include',
         });
         const data = await res.json();
@@ -95,7 +96,7 @@ export default function Codeforces() {
     if (!questionId) return;
     (async () => {
       try {
-        const res = await fetch(`http://localhost:8080/api/chat/${questionId}`, {
+        const res = await fetch(`${BASE_URL}/api/chat/${questionId}`, {
          credentials: 'include',
         });
         const body = await res.json();
@@ -135,7 +136,7 @@ export default function Codeforces() {
     if (!text || !questionId || !currentUserId) return;
     try {
       const res = await fetch(
-        `http://localhost:8080/api/chat/${questionId}/message`,
+        `${BASE_URL}/api/chat/${questionId}/message`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

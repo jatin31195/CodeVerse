@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { GoogleLogin } from '@react-oauth/google';
+import { BASE_URL } from '../config';
 const LoginPage = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -30,7 +31,7 @@ const LoginPage = () => {
     setIsLoading(true);
   
     try {
-      const response = await fetch("http://localhost:8080/api/auth/login", {
+      const response = await fetch(`${BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -42,7 +43,7 @@ const LoginPage = () => {
         toast.success("Login successful!");
         navigate('/home');
       } else {
-        const data = await response.json();
+        // const data = await response.json();
         toast.error(data.message || "Authentication failed");
       }
     } catch (error) {
@@ -58,7 +59,7 @@ const LoginPage = () => {
   setIsLoading(true);
   try {
     const { credential } = credentialResponse;
-    let res = await fetch('http://localhost:8080/api/auth/google-login', {
+    let res = await fetch(`${BASE_URL}/api/auth/google-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken: credentialResponse.credential }),
@@ -66,7 +67,7 @@ const LoginPage = () => {
     });
     let data = await res.json();
     if (!res.ok && res.status === 404) {
-      res = await fetch('http://localhost:8080/api/auth/google-signup', {
+      res = await fetch(`${BASE_URL}/api/auth/google-signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken: credentialResponse.credential }),

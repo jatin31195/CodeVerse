@@ -13,7 +13,7 @@ import {
   LifeBuoy,
 } from 'lucide-react';
 import { format } from 'date-fns';
-
+import { BASE_URL } from '../config';
 const SolutionCard = ({ problem, explanation }) => {
   const [currentTab, setCurrentTab] = useState('All');
   const [expandedSolutionIds, setExpandedSolutionIds] = useState(new Set());
@@ -31,7 +31,7 @@ const SolutionCard = ({ problem, explanation }) => {
   useEffect(() => {
     if (!problem?._id) return;
     axios
-      .get(`http://localhost:8080/api/solutions/${problem._id}`, authConfig)
+      .get(`${BASE_URL}/api/solutions/${problem._id}`, authConfig)
       .then(res => setSolutions(res.data))
       .catch(console.error);
   }, [problem]);
@@ -51,7 +51,7 @@ const SolutionCard = ({ problem, explanation }) => {
 
   const voteSolution = (solutionId, vote) => {
     axios
-      .post('http://localhost:8080/api/solutions/vote', { solutionId, vote }, authConfig)
+      .post(`${BASE_URL}/api/solutions/vote`, { solutionId, vote }, authConfig)
       .then(res => {
         setSolutions(sols =>
           sols.map(s =>
@@ -87,7 +87,7 @@ const SolutionCard = ({ problem, explanation }) => {
     setLoading(true);
     axios
       .post(
-        'http://localhost:8080/api/solutions/add',
+        `${BASE_URL}/api/solutions/add`,
         {
           questionId: problem._id,
           type: 'optimal',
@@ -96,7 +96,7 @@ const SolutionCard = ({ problem, explanation }) => {
         },
         authConfig
       )
-      .then(() => axios.get(`http://localhost:8080/api/solutions/${problem._id}`, authConfig))
+      .then(() => axios.get(`${BASE_URL}/api/solutions/${problem._id}`, authConfig))
       .then(res => {
         setSolutions(res.data);
         setUserSolution('');

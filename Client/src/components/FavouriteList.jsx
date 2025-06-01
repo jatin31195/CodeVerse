@@ -4,7 +4,8 @@ import { PlusCircle, Code, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import MainLayout from "./MainLayout";
 import {toast} from 'react-toastify'
-const API_BASE_URL = "http://localhost:8080/api/fav";
+import { BASE_URL } from "../config";
+const API_BASE_URL = `${BASE_URL}/api/fav`;
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },

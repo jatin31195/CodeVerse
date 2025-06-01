@@ -13,6 +13,7 @@ import SolutionCard from './SolutionCard';
 import POTDCalendar from './POTDCalendar';
 import MainLayout from './MainLayout';
 import {toast} from 'react-toastify'
+import { BASE_URL } from '../config';
 const navLinks = [
   { name: 'LeetCode', path: '/leetcode' },
   { name: 'CodeForces', path: '/codeforces' },
@@ -30,7 +31,7 @@ const slideIn = {
 
 const getCurrentUserId = async () => {
   try {
-    const res = await fetch('http://localhost:8080/api/auth/profile', {
+    const res = await fetch(`${BASE_URL}/api/auth/profile`, {
       credentials: 'include',
     });
     if (!res.ok) return null;
@@ -53,7 +54,7 @@ export default function GFG() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('http://localhost:8080/api/auth/profile', {
+        const res = await fetch(`${BASE_URL}/api/auth/profile`, {
           credentials: 'include',
         });
         if (!res.ok) throw new Error('Not authenticated');
@@ -86,7 +87,7 @@ export default function GFG() {
     (async () => {
       try {
         const ds = format(selectedDate, 'yyyy-MM-dd');
-        const res = await fetch(`http://localhost:8080/api/ques/gfg/potd/${ds}`,{
+        const res = await fetch(`${BASE_URL}/api/ques/gfg/potd/${ds}`,{
           credentials:'include',
         });
         const json = await res.json();
@@ -120,7 +121,7 @@ export default function GFG() {
     if (!questionId) return;
     (async () => {
       try {
-        const res = await fetch(`http://localhost:8080/api/chat/${questionId}`, {
+        const res = await fetch(`${BASE_URL}/api/chat/${questionId}`, {
           credentials:'include',
         });
         const body = await res.json();
@@ -170,7 +171,7 @@ export default function GFG() {
 
       try {
         const res = await fetch(
-          `http://localhost:8080/api/chat/${questionId}/message`,
+          `${BASE_URL}/api/chat/${questionId}/message`,
           {
             method: 'POST',
             headers: {

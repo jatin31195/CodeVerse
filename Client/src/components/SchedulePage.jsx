@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import {motion,AnimatePresence} from 'framer-motion'
 import MainLayout from "./MainLayout";
-
+import { BASE_URL } from "../config";
 function convertTo24Hour(timeStr) {
   const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
   if (!match) return timeStr;
@@ -185,7 +185,7 @@ const TimeTableEntry = ({ entry, onEdit }) => {
     };
   
     try {
-      const response = await fetch("http://localhost:8080/api/tasks/", {
+      const response = await fetch(`${BASE_URL}/api/tasks/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -432,7 +432,7 @@ const SchedulePage = () => {
   const fetchTimetable = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("http://localhost:8080/api/tt/schedule", {
+      const response = await fetch(`${BASE_URL}/api/tt/schedule`, {
         headers: {
           "Content-Type": "application/json",
         },
@@ -479,7 +479,7 @@ const SchedulePage = () => {
     }
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:8080/api/tt/schedule", {
+      const response = await fetch(`${BASE_URL}/api/tt/schedule`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -519,7 +519,7 @@ const SchedulePage = () => {
 
   const handleReset = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/tt/schedule", {
+      const response = await fetch(`${BASE_URL}/api/tt/schedule`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

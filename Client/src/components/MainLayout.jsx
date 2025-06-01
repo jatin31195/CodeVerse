@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './Sidebar';
 import {toast} from 'react-toastify'
 import '../App.css'
+import { BASE_URL } from '../config';
 const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -21,7 +22,7 @@ const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
 
   useEffect(() => {
 
-    fetch('http://localhost:8080/api/auth/profile', {
+    fetch(`${BASE_URL}/api/auth/profile`, {
        credentials:"include",
     })
       .then((res) => res.json())
@@ -35,7 +36,7 @@ const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
 
   const handleLogout = async () => {
   try {
-    await fetch('http://localhost:8080/api/auth/logout', {
+    await fetch(`${BASE_URL}/api/auth/logout`, {
       method: 'POST',
       credentials: 'include',   
     });

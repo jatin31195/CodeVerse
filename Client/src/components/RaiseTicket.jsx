@@ -8,6 +8,7 @@ import TicketCard from '../components/TicketCard';
 import { Combobox } from '@headlessui/react';
 import { Check, ChevronDown } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { BASE_URL } from '../config';
 const getUserId = (user) => {
   if (!user) return "";
   if (typeof user === "string") return user;
@@ -16,7 +17,7 @@ const getUserId = (user) => {
   return "";
 };
 
-const socket = io('http://localhost:8080', {
+const socket = io(`${BASE_URL}`, {
   transports: ["websocket", "polling"],
   withCredentials: true,
 });
@@ -102,7 +103,7 @@ const RaiseTicket = () => {
   }, [searchTerm, questions]);
   const fetchQuestions = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/questions', {
+      const res = await axios.get(`${BASE_URL}/api/questions`, {
         ...getAuthConfig(),
         withCredentials: true,
       });
@@ -117,7 +118,7 @@ const RaiseTicket = () => {
 
   const fetchMyTickets = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/ticket-Raise/my', {
+      const res = await axios.get(`${BASE_URL}/api/ticket-Raise/my`, {
       ...getAuthConfig(),
       withCredentials:true,}
     );
@@ -129,7 +130,7 @@ const RaiseTicket = () => {
 
   const fetchOtherTickets = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/ticket-Raise', {
+      const res = await axios.get(`${BASE_URL}/api/ticket-Raise`, {
       ...getAuthConfig(),
       withCredentials:true,
     });
@@ -153,7 +154,7 @@ const RaiseTicket = () => {
     }
     try {
       await axios.post(
-        'http://localhost:8080/api/ticket-Raise/raise',
+        `${BASE_URL}/api/ticket-Raise/raise`,
         { questionIdentifier: selectedQuestion },{
         ...getAuthConfig(),
         withCredentials:true,}
@@ -174,7 +175,7 @@ const RaiseTicket = () => {
     }
     try {
       await axios.post(
-        `http://localhost:8080/api/ticket-Raise/${ticketId}/solution`,
+        `${BASE_URL}/api/ticket-Raise/${ticketId}/solution`,
         { solutionText },{
         ...getAuthConfig(),
         withCredentials:true,
@@ -193,7 +194,7 @@ const RaiseTicket = () => {
   const handleRequestVideoMeet = async (ticketId) => {
     try {
       await axios.post(
-        `http://localhost:8080/api/ticket-Raise/${ticketId}/request-video`,
+        `${BASE_URL}/api/ticket-Raise/${ticketId}/request-video`,
         {},{
         ...getAuthConfig(),
         withCredentials:true,
@@ -209,7 +210,7 @@ const RaiseTicket = () => {
   const handleAcceptVideoMeet = async (ticketId) => {
     try {
       const res = await axios.put(
-        `http://localhost:8080/api/ticket-Raise/${ticketId}/accept-video`,
+        `${BASE_URL}/api/ticket-Raise/${ticketId}/accept-video`,
         {},{
         ...getAuthConfig(),
         withCredentials:true,
@@ -225,7 +226,7 @@ const RaiseTicket = () => {
   const handleCloseVideoMeet = async (ticketId) => {
     try {
       await axios.put(
-        `http://localhost:8080/api/ticket-Raise/${ticketId}/close-video`,
+        `${BASE_URL}/api/ticket-Raise/${ticketId}/close-video`,
         {},{
         ...getAuthConfig(),
         withCredentials:true,
@@ -250,7 +251,7 @@ const RaiseTicket = () => {
     if (isMyTicket) {
       try {
         const res = await axios.put(
-          `http://localhost:8080/api/ticket-Raise/${ticket._id}/accept-video`,
+          `${BASE_URL}/api/ticket-Raise/${ticket._id}/accept-video`,
           {},{
           ...getAuthConfig(),
           withCredentials:true,

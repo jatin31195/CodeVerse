@@ -3,7 +3,8 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Calendar, User, Edit2, X } from "lucide-react";
 import {toast} from 'react-toastify'
-const API_BASE = "http://localhost:8080/api/auth";
+import { BASE_URL } from "../config";
+const API_BASE = `${BASE_URL}/api/auth`;
 
 const UserProfileCard = () => {
   const [isEditing, setIsEditing] = useState(false);

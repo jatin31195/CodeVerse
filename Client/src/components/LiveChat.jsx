@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
-
+import { BASE_URL } from "../config";
 const LiveChat = () => {
   const [username, setUsername] = useState("");
   const [joined, setJoined] = useState(false);
@@ -12,7 +12,7 @@ const LiveChat = () => {
 
   useEffect(() => {
     // Connect to the Socket.IO server
-    socketRef.current = io("ws://localhost:8080",{
+    socketRef.current = io(`${BASE_URL}`,{
       transports: ["websocket", "polling"],
   withCredentials: true 
     });

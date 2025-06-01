@@ -4,9 +4,9 @@ import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { AnimatePresence, motion } from 'framer-motion';
-
-const API_BASE_URL = 'http://localhost:8080/api/fav';
-const TASK_API_URL = 'http://localhost:8080/api/tasks';
+import { BASE_URL } from '../config';
+const API_BASE_URL = `${BASE_URL}/api/fav`;
+const TASK_API_URL = `${BASE_URL}/api/tasks`;
 
 const POTDCalendar = ({ selectedDate, onSelectDate, platform, showAddIcon = true }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -74,7 +74,7 @@ const POTDCalendar = ({ selectedDate, onSelectDate, platform, showAddIcon = true
     if (!selectedDateForModal) return toast.error('No date selected');
     try {
       const potdRes = await axios.get(
-        `http://localhost:8080/api/ques/${platform}/potd/${format(selectedDateForModal, 'yyyy-MM-dd')}`,
+        `${BASE_URL}/api/ques/${platform}/potd/${format(selectedDateForModal, 'yyyy-MM-dd')}`,
         { withCredentials: true }
       );
       const potd = potdRes.data?.data;

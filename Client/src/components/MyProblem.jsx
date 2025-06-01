@@ -14,7 +14,7 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import MainLayout from './MainLayout';
 import {toast} from 'react-toastify'
-
+import { BASE_URL } from '../config';
 const navLinks = [
   { name: 'POTD Calendar', path: '/custom' },
   { name: 'My Problems', path: '/my-problems' },
@@ -36,7 +36,7 @@ export default function MyProblem() {
  
 
   const api = axios.create({
-    baseURL: 'http://localhost:8080/api/custom/user-potd',
+    baseURL: `${BASE_URL}/api/custom/user-potd`,
     withCredentials:true,
   });
 
