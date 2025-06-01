@@ -1,7 +1,7 @@
 const authService = require('../services/authService');
 const authRepository=require('../repositories/authRepository');
 const User=require('../models/User');
-
+const jwt = require('jsonwebtoken')
 const cookieOptions = {
   httpOnly: true,
   secure: true,      
@@ -10,96 +10,77 @@ const cookieOptions = {
 
 const googleSignupHandler = async (req, res) => {
   try {
-    const { idToken } = req.body;
-    const { user, accessToken, refreshToken } = await authService.googleSignup(idToken);
+    const { idToken } = req.body
+    const user = await authService.googleSignup(idToken)
+    const payload = { id: user._id }
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' })
+    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' })
+    await authRepository.setRefreshToken(user._id, refreshToken)
     res
-      .cookie('accessToken', accessToken, {
-        ...cookieOptions,
-        maxAge: 24 * 60 * 60 * 1000,    
-      })
-      .cookie('refreshToken', refreshToken, {
-        ...cookieOptions,
-        maxAge: 30 * 24 * 60 * 60 * 1000, 
-      })
+      .cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 24 * 60 * 60 * 1000 })
+      .cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 })
       .status(201)
-      .json({ message: 'Google signup successful', user });
+      .json({ message: 'Google signup successful', user })
   } catch (err) {
-    console.error('Google signup error:', err);
-    res.status(err.status || 500).json({ message: err.message || 'Signup failed' });
+    console.error('Google signup error:', err)
+    res.status(err.status || 500).json({ message: err.message || 'Signup failed' })
   }
 }
 
 const googleLoginHandler = async (req, res) => {
   try {
-    const { idToken } = req.body;
-    const { user, accessToken, refreshToken } = await authService.googleLogin(idToken);
-
+    const { idToken } = req.body
+    const user = await authService.googleLogin(idToken)
+    const payload = { id: user._id }
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' })
+    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' })
+    await authRepository.setRefreshToken(user._id, refreshToken)
     res
-      .cookie('accessToken', accessToken, {
-        ...cookieOptions,
-        maxAge: 24 * 60 * 60 * 1000,
-      })
-      .cookie('refreshToken', refreshToken, {
-        ...cookieOptions,
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-      })
+      .cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 24 * 60 * 60 * 1000 })
+      .cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 })
       .status(200)
-      .json({ message: 'Google login successful', user });
+      .json({ message: 'Google login successful', user })
   } catch (err) {
-    console.error('Google login error:', err);
-    res.status(err.status || 500).json({ message: err.message || 'Login failed' });
+    console.error('Google login error:', err)
+    res.status(err.status || 500).json({ message: err.message || 'Login failed' })
   }
 }
 
 const register = async (req, res) => {
   try {
-    const { status, message, user } = await authService.registerUser(req.body);
-    const payload = { id: user._id };
-    const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
-    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
-    await authRepository.setRefreshToken(user._id, refreshToken);
-
+    const user = await authService.registerUser(req.body)
+    const payload = { id: user._id }
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' })
+    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' })
+    await authRepository.setRefreshToken(user._id, refreshToken)
     res
-      .cookie('accessToken', accessToken, {
-        ...cookieOptions,
-        maxAge: 24 * 60 * 60 * 1000,
-      })
-      .cookie('refreshToken', refreshToken, {
-        ...cookieOptions,
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-      })
-      .status(status)
-      .json({ message, user });
+      .cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 24 * 60 * 60 * 1000 })
+      .cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 })
+      .status(201)
+      .json({ message: 'User registered. Please check your email for OTP verification.', user })
   } catch (error) {
-    console.error('Register error:', error);
-    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    console.error('Register error:', error)
+    res.status(error.status || 500).json({ message: error.message || 'Internal Server Error' })
   }
-};
+}
 
 const login = async (req, res) => {
   try {
-    const { status, message, user } = await authService.loginUser(req.body);
-    const payload = { id: user._id };
-    const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
-    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
-    await authRepository.setRefreshToken(user._id, refreshToken);
-
+    const user = await authService.loginUser(req.body)
+    const payload = { id: user._id }
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' })
+    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' })
+    await authRepository.setRefreshToken(user._id, refreshToken)
     res
-      .cookie('accessToken', accessToken, {
-        ...cookieOptions,
-        maxAge: 24 * 60 * 60 * 1000,
-      })
-      .cookie('refreshToken', refreshToken, {
-        ...cookieOptions,
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-      })
-      .status(status)
-      .json({ message, user });
+      .cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 24 * 60 * 60 * 1000 })
+      .cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 })
+      .status(200)
+      .json({ message: 'Login successful', user })
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    console.error('Login error:', error)
+    res.status(error.status || 500).json({ message: error.message || 'Internal Server Error' })
   }
-};
+}
 
 const logout = async (req, res) => {
   try {
@@ -111,6 +92,23 @@ const logout = async (req, res) => {
   } catch (err) {
     console.error('Logout error:', err);
     res.status(500).json({ message: 'Could not log out' });
+  }
+};
+const refreshAccessToken = async (req, res) => {
+  try {
+    const { accessToken } = await authService.refreshAccessToken(req);
+    res
+      .cookie('accessToken', accessToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'None',
+        maxAge: 24 * 60 * 60 * 1000, 
+      })
+      .status(200)
+      .json({ message: 'Access token refreshed' });
+  } catch (err) {
+    console.error('Refresh token error:', err);
+    res.status(401).json({ message: 'Invalid or expired refresh token' });
   }
 };
 const verifyOTP = async (req, res) => {
@@ -253,5 +251,6 @@ module.exports = {
   resetPassword,
   googleLoginHandler,
   googleSignupHandler,
-  logout
+  logout,
+  refreshAccessToken,
 };

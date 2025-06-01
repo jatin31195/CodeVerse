@@ -24,6 +24,7 @@ router.post('/reset-password', authController.resetPassword);
 router.post('/google-signup', authController.googleSignupHandler);
 router.post('/google-login',  authController.googleLoginHandler);
 router.post('/logout', authMiddleware, authController.logout);
+router.post('/refresh-token', authController.refreshAccessToken);
 
 
 module.exports = router;
