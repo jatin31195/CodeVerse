@@ -5,6 +5,8 @@ import { KeyRound } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
+
 const PasswordReset = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -22,24 +24,18 @@ const PasswordReset = () => {
     }
 
     try {
-      const response = await fetch(`${BASE_URL}/api/auth/reset-password`, {
+      const res = await apiRequest(`${BASE_URL}/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials:'include',
         body: JSON.stringify({ token, newPassword, confirmPassword }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success(data.message || 'Password has been reset successfully!');
-        setNewPassword('');
-        setConfirmPassword('');
-      } else {
-        toast.error(data.message || 'Reset failed. Please try again.');
-      }
+      toast.success(res.data.message || 'Password has been reset successfully!');
+      setNewPassword('');
+      setConfirmPassword('');
     } catch (err) {
-      toast.error('Something went wrong. Please try again later.');
+      const errMsg = err.response?.data?.message || 'Something went wrong. Please try again later.';
+      toast.error(errMsg);
     }
   };
 

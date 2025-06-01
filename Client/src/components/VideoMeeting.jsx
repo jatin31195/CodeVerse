@@ -38,24 +38,20 @@ const VideoMeeting = () => {
 
 
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch(
-          `${BASE_URL}/api/auth/profile`,
-          { credentials: 'include' }
-        );
-        if (!res.ok) throw new Error('Not authenticated');
-        const json = await res.json();
-        const id = json.data?.user?._id;
-        if (!id) throw new Error('No user._id in payload');
-        console.log('▶️ setCurrentUserId:', id);
-        setCurrentUserId(id);
-      } catch (err) {
-        console.error('Profile fetch error:', err);
-        navigate('/login');
-      }
-    })();
-  }, [navigate]);
+  (async () => {
+    try {
+      const res = await apiRequest(`${BASE_URL}/api/auth/profile`, { method: 'GET' });
+      const id = res.data?.data?.user?._id;
+      if (!id) throw new Error('No user._id in payload');
+      console.log('▶️ setCurrentUserId:', id);
+      setCurrentUserId(id);
+    } catch (err) {
+      console.error('Profile fetch error:', err);
+      navigate('/login');
+    }
+  })();
+}, [navigate]);
+
 
   
   const useFakeMedia = new URLSearchParams(window.location.search).get('fake');

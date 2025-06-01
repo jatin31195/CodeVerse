@@ -41,7 +41,7 @@ const SignUpPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
   if (!validate()) return;
   setIsLoading(true);
@@ -55,86 +55,83 @@ const SignUpPage = () => {
   };
 
   try {
-    const response = await fetch(`${BASE_URL}/api/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      credentials: "include",
+    const response = await apiRequest(`${BASE_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: payload,
     });
 
-    const data = await response.json();
+    const data = response.data;
 
-    if (response.ok) {
-     
-      localStorage.setItem("userEmail", data.user.email);
+    if (response.status >= 200 && response.status < 300) {
+      localStorage.setItem('userEmail', data.user.email);
       setShowVerification(true);
     } else {
-      
       if (
-        data.message === "Email already exists but not verified" &&
+        data.message === 'Email already exists but not verified' &&
         data.user &&
         !data.user.isVerified
       ) {
-        localStorage.setItem("userEmail", data.user.email);
+        localStorage.setItem('userEmail', data.user.email);
         setShowVerification(true);
       } else {
-        toast.error(data.message || "Registration failed");
-        return ;
+        toast.error(data.message || 'Registration failed');
+        return;
       }
     }
   } catch (error) {
-    console.error("Registration error:", error);
-    toast.error("Something went wrong");
+    console.error('Registration error:', error);
+    toast.error('Something went wrong');
   } finally {
     setIsLoading(false);
   }
 };
 
 
+const handleVerificationComplete = async (code) => {
+  setVerificationLoading(true);
+  try {
+    const response = await apiRequest(`${BASE_URL}/api/auth/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: { email: formData.email, otp: code },
+    });
 
-  const handleVerificationComplete = async (code) => {
-    setVerificationLoading(true);
-    try {
-      const response = await fetch(`${BASE_URL}/api/auth/verify-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, otp: code }),
-        credentials: "include",
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setVerificationSuccess(true);
-        setTimeout(() => {
-          setShowVerification(false);
-           toast.success("Account Created successfully!");
-          navigate('/login');
-        }, 1500);
-      } else {
-        toast.error(data.message || "Invalid verification code");
-        setVerificationLoading(false);
-        return;
-      }
-    } catch (error) {
-      console.error("Verification error:", error);
-      toast.warning("Something went wrong during verification");
+    const data = response.data;
+
+    if (response.status >= 200 && response.status < 300) {
+      setVerificationSuccess(true);
+      setTimeout(() => {
+        setShowVerification(false);
+        toast.success('Account Created successfully!');
+        navigate('/login');
+      }, 1500);
+    } else {
+      toast.error(data.message || 'Invalid verification code');
       setVerificationLoading(false);
+      return;
     }
-  };
+  } catch (error) {
+    console.error('Verification error:', error);
+    toast.warning('Something went wrong during verification');
+    setVerificationLoading(false);
+  }
+};
 
-  const handleGoogleSignUp = async (credentialResponse) => {
+const handleGoogleSignUp = async (credentialResponse) => {
   setIsLoading(true);
   try {
     const { credential } = credentialResponse;
-    if (!credential) throw new Error("No ID token returned");
-    const res = await fetch(`${BASE_URL}/api/auth/google-signup`, {
+    if (!credential) throw new Error('No ID token returned');
+    const response = await apiRequest(`${BASE_URL}/api/auth/google-signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken: credential }),
+      data: { idToken: credential },
     });
 
-    const data = await res.json();
+    const data = response.data;
 
-    if (res.ok) {
+    if (response.status >= 200 && response.status < 300) {
       toast.success(data.message || 'Signup successful!');
       navigate('/home');
     } else {
@@ -147,6 +144,7 @@ const SignUpPage = () => {
     setIsLoading(false);
   }
 };
+
 
 
   return (

@@ -6,26 +6,25 @@ import {
   Clock, BookOpen, PlusCircle, PanelLeftClose,Bug
 } from "lucide-react";
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
 export function Sidebar({ toggleSidebar }) {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-  fetch(`${BASE_URL}/api/auth/profile`, {
-    credentials: 'include',  
-  })
-    .then(res => {
-      if (!res.ok) throw new Error('Not authenticated');
-      return res.json();
-    })
-    .then(json => {
-      setUser(json.data.user);
-    })
-    .catch(() => {
+ useEffect(() => {
+  (async () => {
+    try {
+      const res = await apiRequest(`${BASE_URL}/api/auth/profile`, {
+        method: 'GET',
+      });
+      setUser(res.data.data.user);
+    } catch {
       setUser(null);
-    });
+    }
+  })();
 }, []);
+
 
 const handleLogout = async () => {
   try {

@@ -9,7 +9,7 @@ import {toast} from 'react-toastify'
 import MainLayout from './MainLayout';
 import POTDCalendar from './POTDCalendar';
 import { BASE_URL } from '../config';
-
+import { apiRequest } from '../utils/api';
 const navLinks = [
   { name: 'POTD Calendar', path: '/custom' },
   { name: 'My Problems', path: '/my-problems' },
@@ -33,54 +33,50 @@ export default function CustomPOTD() {
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [loadingLists, setLoadingLists] = useState(true);
   const [loadingProblems, setLoadingProblems] = useState(false);
-  const api = axios.create({
-    baseURL: `${BASE_URL}/api/custom/user-potd`,
-    withCredentials: true,
-  });
-
-
   useEffect(() => {
-    const fetchLists = async () => {
-      setLoadingLists(true);
-      try {
-        const own = await api.get('/lists');
-        const pub = await api.get('/lists/public');
-        const combined = [...own.data.lists, ...pub.data.lists];
-
-        setAllLists(combined);
-        setFilteredLists(combined);
-
-        if (combined.length) {
-          selectList(combined[0]._id);
-        }
-      } catch (err) {
-        toast.error('Failed to fetch lists:', err);
-      } finally {
-        setLoadingLists(false);
-      }
-    };
-    fetchLists();
-  }, []);
-
- 
-  const selectList = async (listId) => {
-    setCurrentList(listId);
-    setLoadingProblems(true);
-
+  const fetchLists = async () => {
+    setLoadingLists(true);
     try {
-      const res = await api.get(`/list/${listId}/questions`);
-      const map = res.data.questions.reduce((acc, q) => {
-        acc[format(new Date(q.date), 'yyyy-MM-dd')] = q;
-        return acc;
-      }, {});
-      setProblemsMap(map);
+      const own = await apiRequest(`${BASE_URL}/api/custom/user-potd/lists`, { method: 'GET' });
+      const pub = await apiRequest(`${BASE_URL}/api/custom/user-potd/lists/public`, { method: 'GET' });
+
+      const combined = [...own.data.lists, ...pub.data.lists];
+
+      setAllLists(combined);
+      setFilteredLists(combined);
+
+      if (combined.length) {
+        selectList(combined[0]._id);
+      }
     } catch (err) {
-      toast.error('Failed to fetch list questions:', err);
-      setProblemsMap({});
+      toast.error('Failed to fetch lists: ' + (err.message || err));
     } finally {
-      setLoadingProblems(false);
+      setLoadingLists(false);
     }
   };
+  fetchLists();
+}, []);
+
+
+const selectList = async (listId) => {
+  setCurrentList(listId);
+  setLoadingProblems(true);
+
+  try {
+    const res = await apiRequest(`${BASE_URL}/api/custom/user-potd/list/${listId}/questions`, { method: 'GET' });
+    const map = res.data.questions.reduce((acc, q) => {
+      acc[format(new Date(q.date), 'yyyy-MM-dd')] = q;
+      return acc;
+    }, {});
+    setProblemsMap(map);
+  } catch (err) {
+    toast.error('Failed to fetch list questions: ' + (err.message || err));
+    setProblemsMap({});
+  } finally {
+    setLoadingProblems(false);
+  }
+};
+
 
   
   useEffect(() => {

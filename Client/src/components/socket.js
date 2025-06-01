@@ -1,7 +1,7 @@
 
 import { io } from 'socket.io-client';
 import { BASE_URL } from '../config';
-const socket = io(`${BASE_URL}`, {
+const socket = io(`ws://localhost:8080`, {
   transports: ['websocket'],
   withCredentials: true,
 });

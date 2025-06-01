@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { GoogleLogin } from '@react-oauth/google';
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
 const LoginPage = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -25,61 +26,56 @@ const LoginPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-    setIsLoading(true);
-  
-    try {
-      const response = await fetch(`${BASE_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-        credentials: 'include',
-      });
-      const data = await response.json();
-      if (response.ok) {
-        
-        toast.success("Login successful!");
-        navigate('/home');
-      } else {
-        // const data = await response.json();
-        toast.error(data.message || "Authentication failed");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Something went wrong");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!validate()) return;
+  setIsLoading(true);
 
-  const handleGoogleSignIn = async (credentialResponse) => {
+  try {
+    const res = await apiRequest(`${BASE_URL}/api/auth/login`, {
+      method: 'POST',
+      body: formData,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (res.status >= 200 && res.status < 300) {
+      toast.success('Login successful!');
+      navigate('/home');
+    } else {
+      toast.error(res.data.message || 'Authentication failed');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    toast.error('Something went wrong');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const handleGoogleSignIn = async (credentialResponse) => {
   setIsLoading(true);
   try {
     const { credential } = credentialResponse;
-    let res = await fetch(`${BASE_URL}/api/auth/google-login`, {
+
+    let res = await apiRequest(`${BASE_URL}/api/auth/google-login`, {
       method: 'POST',
+      body: { idToken: credential },
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken: credentialResponse.credential }),
-      credentials: 'include',
     });
-    let data = await res.json();
-    if (!res.ok && res.status === 404) {
-      res = await fetch(`${BASE_URL}/api/auth/google-signup`, {
+
+    if (res.status === 404) {
+      res = await apiRequest(`${BASE_URL}/api/auth/google-signup`, {
         method: 'POST',
+        body: { idToken: credential },
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken: credentialResponse.credential }),
-        credentials: 'include',
       });
-      data = await res.json();
     }
-    if (res.ok) {
-      toast.success(data.message);
+
+    if (res.status >= 200 && res.status < 300) {
+      toast.success(res.data.message);
       navigate('/home');
     } else {
-      toast.error(data.message || 'Google authentication failed');
+      toast.error(res.data.message || 'Google authentication failed');
     }
   } catch (err) {
     console.error('Google sign-in error:', err);

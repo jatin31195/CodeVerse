@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import MainLayout from './MainLayout';
 import {toast} from 'react-toastify';
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
 const navLinks = [
   { name: 'POTD Calendar', path: '/custom' },
   { name: 'My Problems', path: '/my-problems' },
@@ -34,19 +35,22 @@ export default function AddProblem() {
 
  
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await api.get('/lists');
-        setLists(res.data.lists || []);
-        if (res.data.lists.length) {
-          setSelectedList(res.data.lists[0]._id);
-        }
-      } catch (err) {
-        console.error(err);
-        toast.warning('Could not load your problem lists.');
+  (async () => {
+    try {
+      const res = await apiRequest(`${BASE_URL}/api/custom/user-potd/lists`, {
+        method: 'GET',
+      });
+      setLists(res.data.lists || []);
+      if (res.data.lists.length) {
+        setSelectedList(res.data.lists[0]._id);
       }
-    })();
-  }, []);
+    } catch (err) {
+      console.error(err);
+      toast.warning('Could not load your problem lists.');
+    }
+  })();
+}, []);
+
 
  
   useEffect(() => {
@@ -155,28 +159,30 @@ export default function AddProblem() {
   }, [link]);
 
   const handleAddProblem = async () => {
-    if (!selectedList || !link || !date) {
-      toast.warning(
-        'Please choose a list, paste the URL, and pick a date.'
-      );
-      return;
-    }
-    try {
-      await api.post('/list/add-question', {
+  if (!selectedList || !link || !date) {
+    toast.warning('Please choose a list, paste the URL, and pick a date.');
+    return;
+  }
+  try {
+    await apiRequest(`${BASE_URL}/api/custom/user-potd/list/add-question`, {
+      method: 'POST',
+      data: {
         listId: selectedList,
         platform,
         title,
         link,
         date,
-      });
-      toast.success('Problem added successfully!');
-      setLink('');
-      setDate('');
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to add problem. Problem already Exist or Internal Error');
-    }
-  };
+      },
+    });
+    toast.success('Problem added successfully!');
+    setLink('');
+    setDate('');
+  } catch (err) {
+    console.error(err);
+    toast.error('Failed to add problem. Problem already exist or Internal Error');
+  }
+};
+
 
   return (
     <MainLayout navLinks={navLinks}>

@@ -2,54 +2,64 @@ import React, { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
 export default function DailyGoalsCard() {
   const [goals, setGoals] = useState([]);
   const [newGoal, setNewGoal] = useState('');
 
-  const loadGoals = async () => {
-    const res = await fetch(`${BASE_URL}/api/tasks/`, {
-      credentials: 'include',
-    });
-    const data = await res.json();
+const loadGoals = async () => {
+  try {
+    const res = await apiRequest(`${BASE_URL}/api/tasks/`, { method: 'GET' });
+    const data = res.data;
+
     if (Array.isArray(data)) {
       const sorted = data
         .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date))
         .slice(0, 3);
       setGoals(sorted);
     }
-  };
+  } catch (err) {
+    toast.error('Error loading goals');
+  }
+};
 
-  useEffect(() => {
-    loadGoals();
-  }, []);
 
- 
-  const addGoal = async () => {
-    if (!newGoal.trim()) return;
-    await fetch(`${BASE_URL}/api/tasks/`, {
+useEffect(() => {
+  loadGoals();
+}, []);
+
+const addGoal = async () => {
+  if (!newGoal.trim()) return;
+  try {
+    await apiRequest(`${BASE_URL}/api/tasks/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
       body: JSON.stringify({
         task: newGoal,
-        date: new Date().toISOString().slice(0,10),
-        endDateTime: new Date(Date.now() + 24*3600*1000).toISOString()
-      })
+        date: new Date().toISOString().slice(0, 10),
+        endDateTime: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+      }),
     });
     setNewGoal('');
     loadGoals();
-  };
+  } catch (err) {
+    toast.error('Error adding goal');
+  }
+};
 
-  // Toggle completion (DELETE)
-  const toggleGoal = async (id) => {
-    await fetch(`${BASE_URL}/api/tasks/${id}`, {
+const toggleGoal = async (id) => {
+  try {
+    await apiRequest(`${BASE_URL}/api/tasks/${id}`, {
       method: 'DELETE',
-      credentials: 'include',
     });
     loadGoals();
-  };
+  } catch (err) {
+    toast.error('Error toggling goal');
+  }
+};
+
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 mb-12">

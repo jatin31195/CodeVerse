@@ -429,42 +429,45 @@ const SchedulePage = () => {
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
   
-  const fetchTimetable = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch(`${BASE_URL}/api/tt/schedule`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials:'include',
-      });
-      if (response.ok) {
-        const jsonData = await response.json();
-        if (jsonData.timetable) {
-          let timetableArray = jsonData.timetable;
-         
-          if (typeof timetableArray === "string") {
-            const regex = /```json\s*([\s\S]*?)\s*```/;
-            const match = timetableArray.match(regex);
-            if (!match || !match[1]) {
-              throw new Error("Could not extract timetable JSON from response");
-            }
-            timetableArray = JSON.parse(match[1]);
+ const fetchTimetable = async () => {
+  try {
+    setIsLoading(true);
+    const res = await apiRequest(`${BASE_URL}/api/tt/schedule`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      // No need for credentials here, axiosClient already has withCredentials:true
+    });
+
+    if (res.status === 200) {
+      const jsonData = res.data;
+      if (jsonData.timetable) {
+        let timetableArray = jsonData.timetable;
+
+        if (typeof timetableArray === 'string') {
+          const regex = /```json\s*([\s\S]*?)\s*```/;
+          const match = timetableArray.match(regex);
+          if (!match || !match[1]) {
+            throw new Error('Could not extract timetable JSON from response');
           }
-          const transformedData = transformTimetableData(timetableArray);
-          setTimetableData(transformedData);
-          setIsSubmitted(true);
-        } else {
-          setTimetableData([]);
-          setIsSubmitted(false);
+          timetableArray = JSON.parse(match[1]);
         }
+
+        const transformedData = transformTimetableData(timetableArray);
+        setTimetableData(transformedData);
+        setIsSubmitted(true);
+      } else {
+        setTimetableData([]);
+        setIsSubmitted(false);
       }
-    } catch (error) {
-      console.error("Error fetching timetable:", error);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching timetable:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchTimetable();
@@ -472,71 +475,77 @@ const SchedulePage = () => {
 
   const handlePromptChange = (e) => setPrompt(e.target.value);
 
-  const handleSubmit = async () => {
-    if (!prompt.trim()) {
-      toast.error("Please enter a description for your timetable");
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const response = await fetch(`${BASE_URL}/api/tt/schedule`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials:'include',
-        body: JSON.stringify({ dailySchedule: prompt }),
-      });
-      if (!response.ok) throw new Error("Network response was not ok");
-      const jsonData = await response.json();
-      let timetableArray;
-      
-      if (typeof jsonData.timetable === "string") {
-        const regex = /```json\s*([\s\S]*?)\s*```/;
-        const match = jsonData.timetable.match(regex);
-        if (!match || !match[1]) {
-          throw new Error("Could not extract timetable JSON from response");
-        }
-        timetableArray = JSON.parse(match[1]);
-      } else if (Array.isArray(jsonData.timetable)) {
-        timetableArray = jsonData.timetable;
-      } else {
-        throw new Error("Unexpected timetable format");
-      }
-      const transformedData = transformTimetableData(timetableArray);
-      setTimetableData(transformedData);
-      setIsSubmitted(true);
-      toast.success("Your timetable has been generated!");
-      
-      fetchTimetable();
-    } catch (error) {
-      toast.error("Failed to generate timetable");
-      console.error("Error in handleSubmit:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const handleReset = async () => {
-    try {
-      const response = await fetch(`${BASE_URL}/api/tt/schedule`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials:'include',
-      });
-      if (!response.ok) throw new Error("Failed to delete timetable");
-      toast.success("Timetable removed");
-      setPrompt("");
-      setTimetableData([]);
-      setIsSubmitted(false);
-      fetchTimetable();
-    } catch (error) {
-      toast.error("Failed to remove timetable");
-      console.error("Error in handleReset:", error);
+
+const handleSubmit = async () => {
+  if (!prompt.trim()) {
+    toast.error('Please enter a description for your timetable');
+    return;
+  }
+  setIsLoading(true);
+  try {
+    const res = await apiRequest(`${BASE_URL}/api/tt/schedule`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ dailySchedule: prompt }),
+    });
+
+    if (res.status !== 200) throw new Error('Network response was not ok');
+
+    const jsonData = res.data;
+    let timetableArray;
+
+    if (typeof jsonData.timetable === 'string') {
+      const regex = /```json\s*([\s\S]*?)\s*```/;
+      const match = jsonData.timetable.match(regex);
+      if (!match || !match[1]) {
+        throw new Error('Could not extract timetable JSON from response');
+      }
+      timetableArray = JSON.parse(match[1]);
+    } else if (Array.isArray(jsonData.timetable)) {
+      timetableArray = jsonData.timetable;
+    } else {
+      throw new Error('Unexpected timetable format');
     }
-  };
+
+    const transformedData = transformTimetableData(timetableArray);
+    setTimetableData(transformedData);
+    setIsSubmitted(true);
+    toast.success('Your timetable has been generated!');
+
+    fetchTimetable();
+  } catch (error) {
+    toast.error('Failed to generate timetable');
+    console.error('Error in handleSubmit:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const handleReset = async () => {
+  try {
+    const res = await apiRequest(`${BASE_URL}/api/tt/schedule`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (res.status !== 200) throw new Error('Failed to delete timetable');
+
+    toast.success('Timetable removed');
+    setPrompt('');
+    setTimetableData([]);
+    setIsSubmitted(false);
+    fetchTimetable();
+  } catch (error) {
+    toast.error('Failed to remove timetable');
+    console.error('Error in handleReset:', error);
+  }
+};
+
 
   const handleEditEntry = (entry) => {
     setCurrentEditEntry(entry);

@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import MainLayout from './MainLayout';
 import {toast} from 'react-toastify'
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
 const navLinks = [
   { name: 'POTD Calendar', path: '/custom' },
   { name: 'My Problems', path: '/my-problems' },
@@ -41,21 +42,25 @@ export default function MyProblem() {
   });
 
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await api.get('/lists');
-        if (res.data.success) {
-          setProblemLists(res.data.lists);
-          if (!currentListId && res.data.lists.length) {
-            setCurrentListId(res.data.lists[0]._id);
-            localStorage.setItem('currentList', res.data.lists[0]._id);
-          }
+  (async () => {
+    try {
+      const res = await apiRequest(`${BASE_URL}/api/custom/user-potd/lists`, {
+        method: 'GET',
+      });
+      if (res.data.success) {
+        setProblemLists(res.data.lists);
+        if (!currentListId && res.data.lists.length) {
+          setCurrentListId(res.data.lists[0]._id);
+          localStorage.setItem('currentList', res.data.lists[0]._id);
         }
-      } catch (err) {
-        toast.error('Error loading lists:', err);
+      } else {
+        toast.error(res.data.message || 'Failed to load lists');
       }
-    })();
-  }, []);
+    } catch (err) {
+      toast.error('Error loading lists: ' + (err.message || err));
+    }
+  })();
+}, []);
 
   const handleSelectList = (listId) => {
     setCurrentListId(listId);
@@ -64,27 +69,36 @@ export default function MyProblem() {
   };
 
   const handleCreateList = async (e) => {
-    e.preventDefault();
-    const name = newListName.trim();
-    if (name.length < 3){ toast.error('Name must be at least 3 characters');return; }
-    try {
-      const res = await api.post('/list', { name, isPublic });
-      if (res.data.success) {
-        const created = res.data.list;
-        setProblemLists((prev) => [...prev, created]);
-        setNewListName('');
-        setIsDialogOpen(false);
-        setCurrentListId(created._id);
-        localStorage.setItem('currentList', created._id);
-        toast.success('Problem list created successfully!');
-      } else {
-        toast.error(res.data.message || 'Error creating list');
-      }
-    } catch (err) {
-      console.error('Create list failed:', err);
-      toast.error('Could not create list');
+  e.preventDefault();
+  const name = newListName.trim();
+  if (name.length < 3) {
+    toast.error('Name must be at least 3 characters');
+    return;
+  }
+
+  try {
+    const res = await apiRequest(`${BASE_URL}/api/custom/user-potd/list`, {
+      method: 'POST',
+      body: { name, isPublic },
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (res.data.success) {
+      const created = res.data.list;
+      setProblemLists((prev) => [...prev, created]);
+      setNewListName('');
+      setIsDialogOpen(false);
+      setCurrentListId(created._id);
+      localStorage.setItem('currentList', created._id);
+      toast.success('Problem list created successfully!');
+    } else {
+      toast.error(res.data.message || 'Error creating list');
     }
-  };
+  } catch (err) {
+    console.error('Create list failed:', err);
+    toast.error('Could not create list');
+  }
+};
 
   return (
     <MainLayout navLinks={navLinks}>
@@ -217,31 +231,35 @@ function ListCard({ list, isCurrent, onSelect, api }) {
   const [count, setCount] = useState(0);
   const [publicState, setPublicState] = useState(list.isPublic);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await api.get(`/list/${list._id}/questions`);
-        setCount(Array.isArray(res.data.questions) ? res.data.questions.length : 0);
-      } catch {
-        setCount(0);
-      }
-    })();
-  }, [list._id, api]);
-
-  const toggleVisibility = async () => {
+ useEffect(() => {
+  (async () => {
     try {
-      const res = await api.patch(`/list/${list._id}/visibility`, {
-        isPublic: !publicState
+      const res = await apiRequest(`${BASE_URL}/api/custom/user-potd/list/${list._id}/questions`, {
+        method: 'GET',
       });
-      if (res.data.success) {
-        setPublicState(res.data.list.isPublic);
-        toast.success(`List is now ${res.data.list.isPublic ? 'Public' : 'Private'}`);
-      }
-    } catch (err) {
-      console.error('Visibility update failed:', err);
-      toast.error('Could not update visibility');
+      setCount(Array.isArray(res.data.questions) ? res.data.questions.length : 0);
+    } catch {
+      setCount(0);
     }
-  };
+  })();
+}, [list._id]);
+
+const toggleVisibility = async () => {
+  try {
+    const res = await apiRequest(`${BASE_URL}/api/custom/user-potd/list/${list._id}/visibility`, {
+      method: 'PATCH',
+      body: { isPublic: !publicState },
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (res.data.success) {
+      setPublicState(res.data.list.isPublic);
+      toast.success(`List is now ${res.data.list.isPublic ? 'Public' : 'Private'}`);
+    }
+  } catch (err) {
+    console.error('Visibility update failed:', err);
+    toast.error('Could not update visibility');
+  }
+};
 
   return (
     <motion.div

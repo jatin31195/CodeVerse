@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
 const SolutionCard = ({ problem, explanation }) => {
   const [currentTab, setCurrentTab] = useState('All');
   const [expandedSolutionIds, setExpandedSolutionIds] = useState(new Set());
@@ -28,13 +29,15 @@ const SolutionCard = ({ problem, explanation }) => {
   const navigate = useNavigate();
   const authConfig = { withCredentials:true };
 
-  useEffect(() => {
-    if (!problem?._id) return;
-    axios
-      .get(`${BASE_URL}/api/solutions/${problem._id}`, authConfig)
-      .then(res => setSolutions(res.data))
-      .catch(console.error);
-  }, [problem]);
+ useEffect(() => {
+  if (!problem?._id) return;
+  apiRequest(`${BASE_URL}/api/solutions/${problem._id}`, {
+    method: 'GET',
+    ...authConfig,
+  })
+    .then(res => setSolutions(res.data))
+    .catch(console.error);
+}, [problem]);
 
   const getPlatformColor = () => {
     switch ((problem?.platform || '').toLowerCase()) {
@@ -50,24 +53,28 @@ const SolutionCard = ({ problem, explanation }) => {
   };
 
   const voteSolution = (solutionId, vote) => {
-    axios
-      .post(`${BASE_URL}/api/solutions/vote`, { solutionId, vote }, authConfig)
-      .then(res => {
-        setSolutions(sols =>
-          sols.map(s =>
-            s._id === solutionId
-              ? {
-                  ...s,
-                  votes: res.data.totalVotes,
-                  upvotedBy: Array(res.data.upvotes).fill(true),
-                  downvotedBy: Array(res.data.downvotes).fill(true),
-                }
-              : s
-          )
-        );
-      })
-      .catch(console.error);
-  };
+  apiRequest(`${BASE_URL}/api/solutions/vote`, {
+    method: 'POST',
+    data: { solutionId, vote },
+    ...authConfig,
+  })
+    .then(res => {
+      setSolutions(sols =>
+        sols.map(s =>
+          s._id === solutionId
+            ? {
+                ...s,
+                votes: res.data.totalVotes,
+                upvotedBy: Array(res.data.upvotes).fill(true),
+                downvotedBy: Array(res.data.downvotes).fill(true),
+              }
+            : s
+        )
+      );
+    })
+    .catch(console.error);
+};
+
 
   const toggleSolutionExpansion = id => {
     setExpandedSolutionIds(prev => {
@@ -82,29 +89,34 @@ const SolutionCard = ({ problem, explanation }) => {
     return lines.slice(0, 3).join('\n') + (lines.length > 3 ? '\n...' : '');
   };
 
-  const handleSubmitSolution = () => {
-    if (!userSolution.trim()) return setError('Please enter a solution.');
-    setLoading(true);
-    axios
-      .post(
-        `${BASE_URL}/api/solutions/add`,
-        {
-          questionId: problem._id,
-          type: 'optimal',
-          language: currentTab,
-          content: userSolution,
-        },
-        authConfig
-      )
-      .then(() => axios.get(`${BASE_URL}/api/solutions/${problem._id}`, authConfig))
-      .then(res => {
-        setSolutions(res.data);
-        setUserSolution('');
-        setError('');
+const handleSubmitSolution = () => {
+  if (!userSolution.trim()) return setError('Please enter a solution.');
+  setLoading(true);
+
+  apiRequest(`${BASE_URL}/api/solutions/add`, {
+    method: 'POST',
+    data: {
+      questionId: problem._id,
+      type: 'optimal',
+      language: currentTab,
+      content: userSolution,
+    },
+    ...authConfig,
+  })
+    .then(() =>
+      apiRequest(`${BASE_URL}/api/solutions/${problem._id}`, {
+        method: 'GET',
+        ...authConfig,
       })
-      .catch(() => setError('Failed to submit.'))
-      .finally(() => setLoading(false));
-  };
+    )
+    .then(res => {
+      setSolutions(res.data);
+      setUserSolution('');
+      setError('');
+    })
+    .catch(() => setError('Failed to submit.'))
+    .finally(() => setLoading(false));
+};
 const raiseTicket = () => {
   navigate('/community', {
   state: {

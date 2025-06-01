@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {toast} from 'react-toastify'
 import { BASE_URL } from "../config";
 const API_BASE = `${BASE_URL}/api/fav`;
-
+import { apiRequest } from "../utils/api";
 
 const getAuthHeaders = () => {
   return {
@@ -26,67 +26,62 @@ const getAuthHeaders = () => {
 
 const fetchListById = async (id) => {
   try {
-    const response = await fetch(`${API_BASE}/list/${id}`, {
-      method: "GET",
+    const res = await apiRequest(`/list/${id}`, {
+      method: 'GET',
       headers: getAuthHeaders(),
-      credentials:"include",
     });
-    if (!response.ok) throw new Error("Failed to fetch list");
-    return await response.json();
+    return res.data;
   } catch (error) {
-    toast.error(error);
+    toast.error(error.message || 'Failed to fetch list');
     return null;
   }
 };
 
+
 export const addQuestionToListAPI = async (listId, questionId) => {
   try {
-    const response = await fetch(`${API_BASE}/add-question`, {
-      method: "POST",
+    const res = await apiRequest('/add-question', {
+      method: 'POST',
       headers: getAuthHeaders(),
-       credentials:"include",
-      body: JSON.stringify({ listId, questionId }),
+      body: { listId, questionId },
     });
-    if (!response.ok) throw new Error("Failed to add question");
-    return await response.json();
+    return res.data;
   } catch (error) {
-    toast.error(error);
+    toast.error(error.message || 'Failed to add question');
     throw error;
   }
 };
+
 
 
 const removeQuestionFromListAPI = async (listId, questionId) => {
   try {
-    const response = await fetch(`${API_BASE}/remove-question`, {
-      method: "POST",
+    const res = await apiRequest('/remove-question', {
+      method: 'POST',
       headers: getAuthHeaders(),
-       credentials:"include",
-      body: JSON.stringify({ listId, questionId })
+      body: { listId, questionId },
     });
-    if (!response.ok) throw new Error("Failed to remove question");
-    return await response.json();
+    return res.data;
   } catch (error) {
-    toast.error(error);
+    toast.error(error.message || 'Failed to remove question');
     throw error;
   }
 };
 
+
 const searchQuestionsAPI = async (query) => {
   try {
-    const url = `${API_BASE}/search?query=${encodeURIComponent(query)}`;
-    const response = await fetch(url, {
-      method: "GET",
+    const res = await apiRequest(`/search?query=${encodeURIComponent(query)}`, {
+      method: 'GET',
       headers: getAuthHeaders(),
-       credentials:"include",
     });
-    if (!response.ok) throw new Error("Failed to search questions");
-    return await response.json();
+    return res.data;
   } catch (error) {
-    toast.error(error);
+    toast.error(error.message || 'Failed to search questions');
     return [];
   }
 };
+
 
 
 const SearchBar = ({ onSearch, placeholder, listId, onQuestionAdded, className }) => {

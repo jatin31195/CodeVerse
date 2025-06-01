@@ -9,6 +9,7 @@ import POTDCalendar from './POTDCalendar';
 import MainLayout from './MainLayout';
 import {toast} from 'react-toastify'
 import { BASE_URL } from '../config';
+import { apiRequest } from '../utils/api';
 const navLinks = [
   { name: 'LeetCode', path: '/leetcode' },
   { name: 'CodeForces', path: '/codeforces' },
@@ -20,16 +21,15 @@ const slideIn = { hidden: { x: 300 }, show: { x: 0 } };
 
 const getCurrentUserId = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/api/auth/profile`, {
-      credentials: 'include',
+    const res = await apiRequest(`${BASE_URL}/api/auth/profile`, {
+      method: 'GET',
     });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.data?.user?._id || null;
+    return res.data?.data?.user?._id || null;
   } catch {
     return null;
   }
 };
+
 
 
 export default function Codeforces() {
@@ -41,18 +41,18 @@ export default function Codeforces() {
   })();
 }, []);
 
-  useEffect(() => {
+ useEffect(() => {
   (async () => {
     try {
-      const res = await fetch(`${BASE_URL}/api/auth/profile`, {
-        credentials: 'include',
+      await apiRequest(`${BASE_URL}/api/auth/profile`, {
+        method: 'GET',
       });
-      if (!res.ok) throw new Error('Not authenticated');
     } catch (err) {
       navigate('/login');
     }
   })();
 }, [navigate]);
+
 
 
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -72,41 +72,41 @@ export default function Codeforces() {
 
  
   useEffect(() => {
-    (async () => {
-      setQuestionLoading(true);
-      setQuestionError(null);
-      try {
-        const res = await fetch(`${BASE_URL}/api/ques/codeforces/potd/${dateKey}`,{
-          credentials: 'include',
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Error fetching question');
-        setQuestion(data.data ?? null);
-      } catch (err) {
-        setQuestion(null);
-        setQuestionError(err.message);
-      } finally {
-        setQuestionLoading(false);
-      }
-    })();
-  }, [dateKey]);
+  (async () => {
+    setQuestionLoading(true);
+    setQuestionError(null);
+    try {
+      const res = await apiRequest(`${BASE_URL}/api/ques/codeforces/potd/${dateKey}`, {
+        method: 'GET',
+      });
+      setQuestion(res.data.data ?? null);
+    } catch (err) {
+      setQuestion(null);
+      setQuestionError(err.message);
+    } finally {
+      setQuestionLoading(false);
+    }
+  })();
+}, [dateKey]);
+
 
   
   useEffect(() => {
-    if (!questionId) return;
-    (async () => {
-      try {
-        const res = await fetch(`${BASE_URL}/api/chat/${questionId}`, {
-         credentials: 'include',
-        });
-        const body = await res.json();
-        if (!res.ok) throw new Error(body.message);
-        setChatMessages(body.messages.map(m => ({ ...m, userId: String(m.userId) })));
-      } catch (err) {
-        toast.error('Error loading chat history:', err);
-      }
-    })();
-  }, [questionId]);
+  if (!questionId) return;
+  (async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/chat/${questionId}`, {
+        credentials: 'include',
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.message);
+      setChatMessages(body.messages.map(m => ({ ...m, userId: String(m.userId) })));
+    } catch (err) {
+      toast.error('Error loading chat history:', err);
+    }
+  })();
+}, [questionId]);
+
 
   
   useEffect(() => {
@@ -131,34 +131,28 @@ export default function Codeforces() {
   }, [chatOpen, questionId, currentUserId, socket]);
 
   const handleSendMessage = useCallback(async e => {
-    e.preventDefault();
-    const text = newMessage.trim();
-    if (!text || !questionId || !currentUserId) return;
-    try {
-      const res = await fetch(
-        `${BASE_URL}/api/chat/${questionId}/message`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ text }),
-        }
-      );
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.message);
-      const saved = {
-        _id: body.message._id,
-        questionId,
-        text: body.message.text,
-        userId: String(body.message.userId),
-        timestamp: body.message.timestamp,
-      };
-      socket.emit('sendChatMessage', saved);
-      setNewMessage('');
-    } catch (err) {
-      toast.error('Error sending message:', err);
-    }
-  }, [newMessage, questionId, currentUserId, socket]);
+  e.preventDefault();
+  const text = newMessage.trim();
+  if (!text || !questionId || !currentUserId) return;
+  try {
+    const res = await apiRequest(`${BASE_URL}/api/chat/${questionId}/message`, {
+      method: 'POST',
+      data: { text },
+    });
+    const saved = {
+      _id: res.data.message._id,
+      questionId,
+      text: res.data.message.text,
+      userId: String(res.data.message.userId),
+      timestamp: res.data.message.timestamp,
+    };
+    socket.emit('sendChatMessage', saved);
+    setNewMessage('');
+  } catch (err) {
+    toast.error('Error sending message:', err);
+  }
+}, [newMessage, questionId, currentUserId, socket]);
+
 
   return (
     <MainLayout navLinks={navLinks}>

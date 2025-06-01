@@ -7,13 +7,15 @@ import {
   Calendar,
   SquareCheck,
   PanelRight,
+  LayoutPanelLeft,
+  LogOut,
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {toast} from 'react-toastify'
 import { BASE_URL } from '../config';
 const API_BASE = `${BASE_URL}/api`;
-
+import { apiRequest } from '../utils/api';
 
 const ToggleSwitch = ({ enabled, onChange }) => {
   return (
@@ -49,35 +51,36 @@ const TaskCard = ({ task, onTaskUpdated, onEdit }) => {
 
   
   const completeTask = async () => {
-    await fetch(`${API_BASE}/tasks/${task._id}`, {
+  try {
+    await apiRequest(`${API_BASE}/tasks/${task._id}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials:'include',
+      withCredentials: true,
     });
     onTaskUpdated();
-    toast.success("Task completed")
-  };
+    toast.success("Task completed");
+  } catch (error) {
+    console.error("Failed to complete task:", error);
+    toast.error("Failed to complete task");
+  }
+};
+
 
   
-  const toggleReminder = async (newVal) => {
-    setReminderEnabled(newVal); 
-    const res = await fetch(`${API_BASE}/tasks/${task._id}/reminder`, {
+const toggleReminder = async (newVal) => {
+  setReminderEnabled(newVal);
+  try {
+    const res = await apiRequest(`${API_BASE}/tasks/${task._id}/reminder`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials:'include',
-      body: JSON.stringify({ enabled: newVal }),
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      data: { enabled: newVal },
     });
-    if (!res.ok) {
-      setReminderEnabled(prev => !prev);
-      toast.error('Failed toggling reminder');
-    } else {
-      onTaskUpdated();
-    }
-  };
+    onTaskUpdated();
+  } catch (error) {
+    setReminderEnabled(prev => !prev);
+    toast.error('Failed toggling reminder');
+  }
+};
 
   const dateString = new Date(task.date).toLocaleDateString([], {
     month: 'short',
@@ -171,35 +174,33 @@ const NewTaskForm = ({ task, onSuccess }) => {
     }
   }, [task]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const endISO = new Date(`${date}T${time}`).toISOString();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  const endISO = new Date(`${date}T${time}`).toISOString();
 
-    const method = task ? 'PUT' : 'POST';
-    const url = task
-      ? `${API_BASE}/tasks/${task._id}`
-      : `${API_BASE}/tasks/`;
+  const method = task ? 'PUT' : 'POST';
+  const url = task
+    ? `${API_BASE}/tasks/${task._id}`
+    : `${API_BASE}/tasks/`;
 
-    const res = await fetch(url, {
+  try {
+    const res = await apiRequest(url, {
       method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials:'include',
-      body: JSON.stringify({
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      data: {
         task: taskTitle,
         endDateTime: endISO,
-      }),
+      },
     });
-
-    if (!res.ok) {
-      toast.error('Failed to save task', await res.json());
-      return;
-    }
 
     onSuccess();
     toast.success("Task Added Successfully");
-  };
+  } catch (error) {
+    const message = error.response?.data || "Failed to save task";
+    toast.error(message);
+  }
+};
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -278,11 +279,10 @@ const TasksPage = () => {
     const [user, setUser] = useState(null);
     const [showUserMenu, setShowUserMenu] = useState(false);
   const toggleSidebar = () => setSidebarOpen(prev => !prev);
-   const handleLogout = async () => {
+ const handleLogout = async () => {
   try {
-    await fetch(`${BASE_URL}/api/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',   
+    await apiRequest.post(`${BASE_URL}/api/auth/logout`, null, {
+      withCredentials: true,
     });
   } catch (err) {
     console.error('Logout failed', err);
@@ -292,6 +292,16 @@ const TasksPage = () => {
   }
 };
 
+useEffect(() => {
+  apiRequest(`${BASE_URL}/api/auth/profile`, { method: 'GET' })
+    .then((res) => {
+      setUser(res.data?.data?.user);
+    })
+    .catch(() => {
+      setUser(null);
+      navigate('/login');
+    });
+}, []);
   const getInitials = (name) =>
     name
       .split(' ')
@@ -299,10 +309,11 @@ const TasksPage = () => {
       .join('')
       .toUpperCase();
   const loadTasks = async () => {
-    const res = await fetch(`${API_BASE}/tasks/`, {
-      credentials:'include',
+  try {
+    const res = await apiRequest(`${API_BASE}/tasks/`, {
+      method: 'GET',
     });
-    const data = await res.json();
+    const data = res.data;
     if (!Array.isArray(data)) return;
 
     data.sort(
@@ -318,7 +329,10 @@ const TasksPage = () => {
       return diff <= 24 * 60 * 60 * 1000 && diff > 0 && !t.completed;
     }).length;
     setDueSoonCount(soonCount);
-  };
+  } catch (err) {
+    console.error('Error loading tasks:', err);
+  }
+};
 
   useEffect(() => {
     loadTasks();
@@ -391,10 +405,10 @@ const TasksPage = () => {
 
       {/* User avatar */}
       {user && (
-        <div className="relative">
+        <div className="relative ">
           <button
             onClick={() => setShowUserMenu((prev) => !prev)}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-blue-500 hover:border-green-400 transition overflow-hidden flex items-center justify-center bg-gray-100"
+            className="cursor-pointer w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-blue-500 hover:border-green-400 transition overflow-hidden flex items-center justify-center bg-gray-100"
             aria-label="User menu"
           >
             {user.profilePic ? (
