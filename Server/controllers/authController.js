@@ -5,7 +5,7 @@ const User=require('../models/User');
 const cookieOptions = {
   httpOnly: true,
   secure: true,      
-  sameSite: 'lax',
+  sameSite: 'None',
 };
 
 const googleSignupHandler=async(req, res)=> {
