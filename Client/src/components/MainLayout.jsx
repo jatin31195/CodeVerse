@@ -36,7 +36,6 @@ const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
  
    const handleLogout = async () => {
    try {
-    document.cookie = 'token=; Max-Age=0; path=/;';
      await apiRequest(`${BASE_URL}/api/auth/logout`, {
        method: 'POST',
      });

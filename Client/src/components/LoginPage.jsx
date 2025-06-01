@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { useGoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
 import { BASE_URL } from '../config';
 import { apiRequest } from '../utils/api';
 const LoginPage = () => {
@@ -59,6 +59,7 @@ const handleSubmit = async (e) => {
     if (!credential) throw new Error('No ID token returned');
 
     let res;
+    // Try logging in first
     try {
       res = await apiRequest(`${BASE_URL}/api/auth/google-login`, {
         method: 'POST',
@@ -66,6 +67,7 @@ const handleSubmit = async (e) => {
         body: { idToken: credential },
       });
     } catch (err) {
+      // If login returns 404, attempt signup
       if (err.response?.status === 404) {
         res = await apiRequest(`${BASE_URL}/api/auth/google-signup`, {
           method: 'POST',
@@ -88,11 +90,7 @@ const handleSubmit = async (e) => {
   }
 };
 
-  const login = useGoogleLogin({
-    onSuccess: handleGoogleSignIn,
-    onError: () => toast.error("Google sign-in failed"),
-    prompt: 'select_account',
-  });
+
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -163,13 +161,14 @@ const handleSubmit = async (e) => {
     whileTap={{ scale: 0.98 }}
     className="w-full bg-white rounded-lg shadow border"
   >
-   <button
-      onClick={() => login()}
-      className="w-full rounded-full border px-4 py-2 text-sm"
-    >
-      Continue with Google
-    </button>
-
+    <GoogleLogin
+      onSuccess={handleGoogleSignIn}
+      onError={() => toast.error("Google sign-in failed")}
+      theme="outline"
+      shape="pill"
+      width="100%"
+      text="continue_with"
+    />
   </motion.div>
 </div>
 
