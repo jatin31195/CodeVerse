@@ -4,7 +4,7 @@ const User=require('../models/User');
 
 const cookieOptions = {
   httpOnly: true,
-  secure: false,      
+  secure: true,      
   sameSite: 'lax',
 };
 
