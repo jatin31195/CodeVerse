@@ -19,8 +19,8 @@ const generalLimiter = rateLimit({
 
 app.use(generalLimiter);
 app.use(cors({
-    origin: "http://localhost:5173", 
-    methods: "GET, POST, PUT, DELETE, PATCH",
+    origin: ["http://localhost:5173", "https://codeverse-ilao.onrender.com"],
+    methods: ["GET, POST, PUT, DELETE, PATCH","OPTION"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
 }));
