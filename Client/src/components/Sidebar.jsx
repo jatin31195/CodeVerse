@@ -5,14 +5,14 @@ import {
   Home, Calendar, Star, Users, MessageSquare, Settings, LayoutDashboard,
   Clock, BookOpen, PlusCircle, PanelLeftClose,Bug
 } from "lucide-react";
-
+import { BASE_URL } from '../config';
 export function Sidebar({ toggleSidebar }) {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-  fetch('http://localhost:8080/api/auth/profile', {
+  fetch(`${BASE_URL}/api/auth/profile`, {
     credentials: 'include',  
   })
     .then(res => {
@@ -29,7 +29,7 @@ export function Sidebar({ toggleSidebar }) {
 
 const handleLogout = async () => {
   try {
-    await fetch('http://localhost:8080/api/auth/logout', {
+    await fetch(`${BASE_URL}/api/auth/logout`, {
       method: 'POST',
       credentials: 'include', 
     });

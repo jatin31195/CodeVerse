@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {toast} from 'react-toastify'
-
-const API_BASE = "http://localhost:8080/api/fav";
+import { BASE_URL } from "../config";
+const API_BASE = `${BASE_URL}/api/fav`;
 
 
 const getAuthHeaders = () => {

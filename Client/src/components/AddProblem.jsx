@@ -3,7 +3,8 @@ import axios from 'axios';
 import { Save, AlertTriangle, CalendarDays } from 'lucide-react';
 import { motion } from 'framer-motion';
 import MainLayout from './MainLayout';
-import {toast} from 'react-toastify'
+import {toast} from 'react-toastify';
+import { BASE_URL } from '../config';
 const navLinks = [
   { name: 'POTD Calendar', path: '/custom' },
   { name: 'My Problems', path: '/my-problems' },
@@ -27,7 +28,7 @@ export default function AddProblem() {
   const [platform, setPlatform] = useState('');
   const [title, setTitle] = useState('');
   const api = axios.create({
-    baseURL: 'http://localhost:8080/api/custom/user-potd',
+    baseURL: `${BASE_URL}/api/custom/user-potd`,
     withCredentials:true
   });
 

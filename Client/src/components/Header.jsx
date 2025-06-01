@@ -7,7 +7,7 @@ import {
 import Sidebar from './Sidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-
+import { BASE_URL } from '../config';
 const Header = ({ onNewTicket }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
@@ -23,7 +23,7 @@ const Header = ({ onNewTicket }) => {
       .toUpperCase();
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/auth/profile', {
+    fetch(`${BASE_URL}/api/auth/profile`, {
       credentials: 'include',
     })
       .then((res) => {
@@ -39,7 +39,7 @@ const Header = ({ onNewTicket }) => {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:8080/api/auth/logout', {
+      await fetch(`${BASE_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });

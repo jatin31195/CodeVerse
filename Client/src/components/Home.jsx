@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import GoalsPanel from './GoalsPanel';
-
+import { BASE_URL } from '../config';
 export const PLATFORM_CONFIG = {
   leetcode: {
     label: 'LeetCode',
@@ -95,7 +95,7 @@ const Home = () => {
   
   const handleLogout = async () => {
   try {
-    await fetch('http://localhost:8080/api/auth/logout', {
+    await fetch(`${BASE_URL}/api/auth/logout`, {
       method: 'POST',
       credentials: 'include',   
     });
@@ -109,7 +109,7 @@ const Home = () => {
 
 
   useEffect(() => {
-  fetch('http://localhost:8080/api/auth/profile', {
+  fetch(`${BASE_URL}/api/auth/profile`, {
    credentials: 'include',
   })
     .then((res) => {
@@ -118,7 +118,7 @@ const Home = () => {
     })
     .then((json) => {
       setUser(json.data.user);
-      // console.log('Fetched user:', json.data.user);
+      console.log('Fetched user:', json.data.user);
     })
     .catch((err) => {
       console.error('Authentication error:', err);
@@ -146,7 +146,7 @@ const Home = () => {
     const mm = String(target.getMonth() + 1).padStart(2, '0');
     const dd = String(target.getDate()).padStart(2, '0');
     const dateKey = `${yyyy}-${mm}-${dd}`;
-    const url = `http://localhost:8080/api/ques/leetcode/potd/${encodeURIComponent(dateKey)}`;
+    const url = `${BASE_URL}/api/ques/leetcode/potd/${encodeURIComponent(dateKey)}`;
     fetch(url,{
       credentials: 'include',
     })

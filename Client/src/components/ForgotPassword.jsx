@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MailIcon } from 'lucide-react';
 import { toast } from 'sonner';
-
+import { BASE_URL } from '../config';
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/forgot-password', {
+      const response = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

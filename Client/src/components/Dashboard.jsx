@@ -11,7 +11,7 @@ import ActivityHeatmap from './ActivityHeatmap';
 import ContestRankingTable from './ContestRankingTable';
 import { toast } from 'sonner';
 import MainLayout from './MainLayout';
-
+import { BASE_URL } from '../config';
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('all');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -49,7 +49,7 @@ export default function Dashboard() {
   const [combinedDsaCount, setCombinedDsaCount] = useState(0);
   const [combinedCpCount, setCombinedCpCount] = useState(0);
   useEffect(() => {
-    fetch('http://localhost:8080/api/auth/profile', {
+    fetch(`${BASE_URL}/api/auth/profile`, {
       credentials: 'include',
     })
       .then(r => r.json())
@@ -81,7 +81,7 @@ export default function Dashboard() {
   useEffect(() => {
   if (!platforms.leetcode) return;
 
-  fetch(`http://localhost:8080/api/leetcode-user/${platforms.leetcode}`, {
+  fetch(`${BASE_URL}/api/leetcode-user/${platforms.leetcode}`, {
     credentials: 'include',
   })
     .then(res => res.json())
@@ -138,7 +138,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!platforms.codeforces) return;
 
-    fetch(`http://localhost:8080/api/codeforces-user/${platforms.codeforces}`, {
+    fetch(`${BASE_URL}/api/codeforces-user/${platforms.codeforces}`, {
       credentials: 'include',
     })
       .then(res => res.json())
@@ -193,7 +193,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!platforms.gfg) return;
 
-    fetch(`http://localhost:8080/api/gfg-user/${platforms.gfg}`, {
+    fetch(`${BASE_URL}/api/gfg-user/${platforms.gfg}`, {
       credentials: 'include',
     })
       .then(res => res.json())
@@ -370,7 +370,7 @@ export default function Dashboard() {
   const savePlatform = async (platform, username) => {
     try {
       const payload = { platform, username };
-      const response = await fetch('http://localhost:8080/api/auth/update-platform', {
+      const response = await fetch(`${BASE_URL}/api/auth/update-platform`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

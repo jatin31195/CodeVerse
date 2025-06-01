@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
+import { BASE_URL } from '../config';
 export default function DailyGoalsCard() {
   const [goals, setGoals] = useState([]);
   const [newGoal, setNewGoal] = useState('');
 
   const loadGoals = async () => {
-    const res = await fetch('http://localhost:8080/api/tasks/', {
+    const res = await fetch(`${BASE_URL}/api/tasks/`, {
       credentials: 'include',
     });
     const data = await res.json();
@@ -26,7 +26,7 @@ export default function DailyGoalsCard() {
  
   const addGoal = async () => {
     if (!newGoal.trim()) return;
-    await fetch('http://localhost:8080/api/tasks/', {
+    await fetch(`${BASE_URL}/api/tasks/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -44,7 +44,7 @@ export default function DailyGoalsCard() {
 
   // Toggle completion (DELETE)
   const toggleGoal = async (id) => {
-    await fetch(`http://localhost:8080/api/tasks/${id}`, {
+    await fetch(`${BASE_URL}/api/tasks/${id}`, {
       method: 'DELETE',
       credentials: 'include',
     });

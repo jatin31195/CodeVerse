@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Check,X  } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { GoogleLogin } from '@react-oauth/google';
+import { BASE_URL } from '../config';
 const SignUpPage = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -54,7 +55,7 @@ const SignUpPage = () => {
   };
 
   try {
-    const response = await fetch("http://localhost:8080/api/auth/register", {
+    const response = await fetch(`${BASE_URL}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -94,7 +95,7 @@ const SignUpPage = () => {
   const handleVerificationComplete = async (code) => {
     setVerificationLoading(true);
     try {
-      const response = await fetch("http://localhost:8080/api/auth/verify-otp", {
+      const response = await fetch(`${BASE_URL}/api/auth/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: formData.email, otp: code }),
@@ -125,7 +126,7 @@ const SignUpPage = () => {
   try {
     const { credential } = credentialResponse;
     if (!credential) throw new Error("No ID token returned");
-    const res = await fetch('http://localhost:8080/api/auth/google-signup', {
+    const res = await fetch(`${BASE_URL}/api/auth/google-signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken: credential }),

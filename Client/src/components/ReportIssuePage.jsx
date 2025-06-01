@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import MainLayout from './MainLayout';
 import {toast} from 'react-toastify'
 import { Toaster } from 'sonner';
+import { BASE_URL } from '../config';
 export default function ReportIssuePage() {
  const [description, setDescription] = useState('');
   const [files, setFiles] = useState([]);
@@ -24,7 +25,7 @@ export default function ReportIssuePage() {
     if (files[0]) formData.append('screenshot', files[0]);
 
     try {
-      const res = await fetch('http://localhost:8080/api/issue/report-issue', {
+      const res = await fetch(`${BASE_URL}/api/issue/report-issue`, {
         method: 'POST',
         credentials:'include',
         body: formData,

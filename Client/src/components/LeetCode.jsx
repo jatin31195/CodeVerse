@@ -8,6 +8,7 @@ import SolutionCard from './SolutionCard';
 import POTDCalendar from './POTDCalendar';
 import MainLayout from './MainLayout';
 import {toast} from 'react-toastify'
+import { BASE_URL } from '../config';
 const navLinks = [
   { name: 'LeetCode', path: '/leetcode' },
   { name: 'CodeForces', path: '/codeforces' },
@@ -32,7 +33,7 @@ const getDisplayDate = (date) => {
 
 const getCurrentUserId = async () => {
   try {
-    const res = await fetch('http://localhost:8080/api/auth/profile', {
+    const res = await fetch(`${BASE_URL}/api/auth/profile`, {
       credentials: 'include',
     });
     if (!res.ok) return null;
@@ -63,7 +64,7 @@ export default function LeetCode() {
  useEffect(() => {
      (async () => {
        try {
-         const res = await fetch('http://localhost:8080/api/auth/profile', {
+         const res = await fetch(`${BASE_URL}/api/auth/profile`, {
            credentials: 'include',
          });
          if (!res.ok) throw new Error('Not authenticated');
@@ -80,7 +81,7 @@ export default function LeetCode() {
     if (!questionId) return;
     (async () => {
       try {
-        const res = await fetch(`http://localhost:8080/api/chat/${questionId}`, {
+        const res = await fetch(`${BASE_URL}/api/chat/${questionId}`, {
           credentials:'include',
         });
         const body = await res.json();
@@ -121,7 +122,7 @@ export default function LeetCode() {
     if (!text || !questionId || !currentUserId) return;
     try {
       const res = await fetch(
-        `http://localhost:8080/api/chat/${questionId}/message`,
+        `${BASE_URL}/api/chat/${questionId}/message`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json'},
@@ -151,7 +152,7 @@ export default function LeetCode() {
   const displayDate = getDisplayDate(selectedDate);
   const ds = format(displayDate, 'yyyy-MM-dd');
 
-  fetch(`http://localhost:8080/api/ques/leetcode/potd/${encodeURIComponent(ds)}`,{
+  fetch(`${BASE_URL}/api/ques/leetcode/potd/${encodeURIComponent(ds)}`,{
     credentials:'include',
   })
     .then(r => r.json().then(data => {
