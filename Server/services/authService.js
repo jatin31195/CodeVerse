@@ -23,17 +23,17 @@ const googleSignup = async (idToken) => {
   const ticket = await client.verifyIdToken({
     idToken,
     audience: process.env.GOOGLE_CLIENT_ID,
-  })
-  const { email, name, picture } = ticket.getPayload()
+  });
+  const { email, name, picture } = ticket.getPayload();
 
-  const existing = await authRepository.findUserByEmail(email)
+  const existing = await authRepository.findUserByEmail(email);
   if (existing) {
-    const error = new Error('User already registered. Please login instead.')
-    error.status = 400
-    throw error
+    const error = new Error('User already registered. Please login instead.');
+    error.status = 400;
+    throw error;
   }
 
-  const username = email.split('@')[0]
+  const username = email.split('@')[0];
   const newUser = await authRepository.createUser({
     email,
     name,
@@ -43,10 +43,25 @@ const googleSignup = async (idToken) => {
     dateOfBirth: new Date(),
     gender: 'male',
     isVerified: true,
-  })
+  });
 
-  return newUser
-}
+  // Send the same welcome email as in verifyEmail
+  const welcomeHtml = await loadTemplate('welcomeTemplate.html', {
+    USERNAME: newUser.username,
+    LOGO_URL: '/Client/public/org_codeverse.png'
+  });
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: newUser.email,
+    subject: 'Welcome to CodeVerse!',
+    text: `Hello ${newUser.username}, your account has been created via Google. Welcome aboard!`,
+    html: welcomeHtml,
+  });
+
+  return newUser;
+};
+
 
 const googleLogin = async (idToken) => {
   const ticket = await client.verifyIdToken({
@@ -214,7 +229,7 @@ const verifyEmail = async (email, otp) => {
   
   const welcomeHtml = await loadTemplate('welcomeTemplate.html', {
     USERNAME: user.username,
-    LOGO_URL: '/Client/public/org_codeverse.png' 
+    LOGO_URL: 'https://i.imghippo.com/files/piC6590Q.png' 
   });
 
   

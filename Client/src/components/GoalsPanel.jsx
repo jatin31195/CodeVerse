@@ -3,6 +3,7 @@ import { Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BASE_URL } from '../config';
 import { apiRequest } from '../utils/api';
+import {toast} from 'react-toastify'
 export default function DailyGoalsCard() {
   const [goals, setGoals] = useState([]);
   const [newGoal, setNewGoal] = useState('');

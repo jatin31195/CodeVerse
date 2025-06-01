@@ -20,17 +20,25 @@ const fadeIn = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 const slideIn = { hidden: { x: 300 }, show: { x: 0 } };
 
 const getInitialDate = () => new Date();
-const getDisplayDate = (date) => {
-  const viewDate = new Date(date);
-  const hours = viewDate.getHours();
-  const minutes = viewDate.getMinutes();
+const getDisplayDate = (selectedDate) => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const cutoff = new Date(today);
+  cutoff.setHours(5, 30, 0, 0);
 
-  if (hours < 5 || (hours === 5 && minutes < 30)) {
-    viewDate.setDate(viewDate.getDate() - 1);
+  const selMidnight = new Date(
+    selectedDate.getFullYear(),
+    selectedDate.getMonth(),
+    selectedDate.getDate()
+  );
+
+  if (selMidnight.getTime() === today.getTime() && now < cutoff) {
+    selMidnight.setDate(selMidnight.getDate() - 1);
   }
 
-  return viewDate;
+  return selMidnight;
 };
+
 
 const getCurrentUserId = async () => {
   try {

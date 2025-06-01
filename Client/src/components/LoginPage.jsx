@@ -52,31 +52,36 @@ const handleSubmit = async (e) => {
   }
 };
 
-const handleGoogleSignIn = async (credentialResponse) => {
+ const handleGoogleSignIn = async (credentialResponse) => {
   setIsLoading(true);
   try {
     const { credential } = credentialResponse;
+    if (!credential) throw new Error('No ID token returned');
 
-    let res = await apiRequest(`${BASE_URL}/api/auth/google-login`, {
-      method: 'POST',
-      body: { idToken: credential },
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-    if (res.status === 404) {
-      res = await apiRequest(`${BASE_URL}/api/auth/google-signup`, {
+    let res;
+    // Try logging in first
+    try {
+      res = await apiRequest(`${BASE_URL}/api/auth/google-login`, {
         method: 'POST',
-        body: { idToken: credential },
         headers: { 'Content-Type': 'application/json' },
+        body: { idToken: credential },
       });
+    } catch (err) {
+      // If login returns 404, attempt signup
+      if (err.response?.status === 404) {
+        res = await apiRequest(`${BASE_URL}/api/auth/google-signup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: { idToken: credential },
+        });
+      } else {
+        throw err;
+      }
     }
 
-    if (res.status >= 200 && res.status < 300) {
-      toast.success(res.data.message);
-      navigate('/home');
-    } else {
-      toast.error(res.data.message || 'Google authentication failed');
-    }
+    // If we reach here, status was 2xx on login or signup
+    toast.success(res.data.message);
+    navigate('/home');
   } catch (err) {
     console.error('Google sign-in error:', err);
     toast.error('Something went wrong during Google sign-in');
@@ -84,6 +89,8 @@ const handleGoogleSignIn = async (credentialResponse) => {
     setIsLoading(false);
   }
 };
+
+
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
