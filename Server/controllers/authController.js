@@ -3,9 +3,11 @@ const authRepository=require('../repositories/authRepository');
 const User=require('../models/User');
 const jwt = require('jsonwebtoken')
 const cookieOptions = {
-  httpOnly: true,
-  secure: true,      
-  sameSite: 'None',
+sameSite: 'none',     
+domain: 'codeverse-ilao.onrender.com',
+path: '/',
+secure: true,
+httpOnly: true
 };
 
 const googleSignupHandler = async (req, res) => {
