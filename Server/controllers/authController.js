@@ -91,6 +91,8 @@ const logout = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: 'None',
+      domain: '.codeverse-ilao.onrender.com',
+      path: '/'
     };
 
     res
@@ -103,6 +105,7 @@ const logout = async (req, res) => {
     res.status(500).json({ message: 'Could not log out' });
   }
 };
+
 
 const refreshAccessToken = async (req, res) => {
   try {
