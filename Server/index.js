@@ -18,12 +18,15 @@ const generalLimiter = rateLimit({
 });
 
 app.use(generalLimiter);
-app.use(cors({
+const corsOptions = {
   origin: ["http://localhost:5173", "https://code-verse-aonf.onrender.com"],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
-}));
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json()); 
 app.use("/api", apiRoutes);
