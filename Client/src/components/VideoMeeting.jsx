@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { BASE_URL } from '../config';
-
+import { apiRequest } from '../utils/api';
 const socket = io(`${BASE_URL}`, {
   transports: ['websocket'],
   withCredentials: true,
@@ -42,6 +42,7 @@ const VideoMeeting = () => {
     try {
       const res = await apiRequest(`${BASE_URL}/api/auth/profile`, { method: 'GET' });
       const id = res.data?.data?.user?._id;
+      console.log(id);
       if (!id) throw new Error('No user._id in payload');
       console.log('▶️ setCurrentUserId:', id);
       setCurrentUserId(id);
