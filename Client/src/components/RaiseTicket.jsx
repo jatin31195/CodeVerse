@@ -245,9 +245,9 @@ const handleCloseVideoMeet = async (ticketId) => {
 
 
   
-  const handleJoinOrCreateVideoMeet = async (ticket, isMyTicket) => {
+const handleJoinOrCreateVideoMeet = async (ticket, isMyTicket) => {
   if (ticket.videoMeetRoom && ticket.videoMeetRoom.trim() !== "") {
-    window.location.href = `/video-meeting/${ticket.videoMeetRoom}`;
+    navigate(`/video-meeting/${ticket.videoMeetRoom}`);
     return;
   }
 
@@ -261,7 +261,7 @@ const handleCloseVideoMeet = async (ticketId) => {
       });
       const updatedTicket = res.data.ticket || res.data;
       if (updatedTicket.videoMeetRoom && updatedTicket.videoMeetRoom.trim() !== "") {
-        window.location.href = `/video-meeting/${updatedTicket.videoMeetRoom}`;
+        navigate(`/video-meeting/${updatedTicket.videoMeetRoom}`);
       } else {
         toast.error("Failed to create meeting room. Please try again later.");
       }
