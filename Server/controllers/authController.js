@@ -84,9 +84,15 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
+    const clearCookieOptions = {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'None',
+    };
+
     res
-      .clearCookie('accessToken', { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production' })
-      .clearCookie('refreshToken', { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production' })
+      .clearCookie('accessToken', clearCookieOptions)
+      .clearCookie('refreshToken', clearCookieOptions)
       .status(200)
       .json({ message: 'Logged out successfully' });
   } catch (err) {
@@ -94,6 +100,7 @@ const logout = async (req, res) => {
     res.status(500).json({ message: 'Could not log out' });
   }
 };
+
 const refreshAccessToken = async (req, res) => {
   try {
     const { accessToken } = await authService.refreshAccessToken(req);
