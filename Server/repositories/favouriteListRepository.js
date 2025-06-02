@@ -6,26 +6,34 @@ const createFavoriteList = async (userId, name) => {
 };
 
 const getUserFavoriteLists = async (userId) => {
-  return await FavoriteList.find({ userId }).populate('questions');
+  return await FavoriteList.find({ userId });
 };
+
 const deleteFavoriteList = async (listId, userId) => {
   return await FavoriteList.findOneAndDelete({
     _id: listId,
-    userId: new mongoose.Types.ObjectId(userId)
+    userId: new mongoose.Types.ObjectId(userId),
   });
 };
-const addQuestionToList = async (listId, questionId) => {
+
+const addQuestionToList = async (listId, questionData, userId) => {
+  const list = await FavoriteList.findOne({ _id: listId, userId });
+  if (!list) throw new Error('List not found or access denied');
+
   return await FavoriteList.findByIdAndUpdate(
     listId,
-    { $addToSet: { questions: questionId } },
+    { $addToSet: { questions: questionData } },
     { new: true }
   );
 };
 
-const removeQuestionFromList = async (listId, questionId) => {
+const removeQuestionFromList = async (listId, questionData, userId) => {
+  const list = await FavoriteList.findOne({ _id: listId, userId });
+  if (!list) throw new Error('List not found or access denied');
+
   return await FavoriteList.findByIdAndUpdate(
     listId,
-    { $pull: { questions: questionId } },
+    { $pull: { questions: questionData } },
     { new: true }
   );
 };
