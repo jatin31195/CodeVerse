@@ -19,7 +19,7 @@ const generalLimiter = rateLimit({
 
 app.use(generalLimiter);
 const corsOptions = {
-  origin: ["http://localhost:5173", "https://code-verse-aonf.onrender.com"],
+  origin: ["http://localhost:5173","https://code-verse-aonf.onrender.com","https://codeverse.solutions","https://www.codeverse.solutions"],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
