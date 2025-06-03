@@ -91,7 +91,7 @@ const logout = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: 'None',
-      domain: '.codeverse-ilao.onrender.com',
+      domain: '.codeverse.solutions',
       path: '/'
     };
 
