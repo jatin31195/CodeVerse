@@ -1,7 +1,7 @@
 
 import { io } from 'socket.io-client';
 import { BASE_URL } from '../config';
-const socket = io(`https://codeverse-ilao.onrender.com`, {
+const socket = io(`https://www.codeverse.solutions`, {
   transports: ['websocket'],
   withCredentials: true,
 });
