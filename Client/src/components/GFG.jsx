@@ -2,19 +2,20 @@ import React, {
   useState,
   useEffect,
   useContext,
-  useCallback
+  useRef
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, ArrowRight } from 'lucide-react';
+import { MessageCircle, ArrowRight, X } from 'lucide-react';
 import { SocketContext } from './SocketContext';
 import SolutionCard from './SolutionCard';
 import POTDCalendar from './POTDCalendar';
 import MainLayout from './MainLayout';
-import {toast} from 'react-toastify'
+import { toast } from 'react-toastify';
 import { BASE_URL } from '../config';
 import { apiRequest } from '../utils/api';
+
 const navLinks = [
   { name: 'LeetCode', path: '/leetcode' },
   { name: 'CodeForces', path: '/codeforces' },
@@ -39,164 +40,184 @@ const getCurrentUserId = async () => {
   }
 };
 
-
 export default function GFG() {
   const navigate = useNavigate();
-  useEffect(() => {
-    (async () => {
-      const id = await getCurrentUserId();
-      setCurrentUserId(id);
-    })();
-  }, []);
-  
-  useEffect(() => {
-  (async () => {
-    try {
-      await apiRequest(`${BASE_URL}/api/auth/profile`);
-    } catch (err) {
-      navigate('/login');
-    }
-  })();
-}, [navigate]);
-
+  const socket = useContext(SocketContext);
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [problemData, setProblemData] = useState(null);
   const [loading, setLoading] = useState(true);
+
   const [currentUserId, setCurrentUserId] = useState(null);
-  const socket = useContext(SocketContext);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [sendTrigger, setSendTrigger] = useState(false);
+
+  const messagesEndRef = useRef(null);
 
   const questionId = problemData?._id || null;
-  
+
+  // Get current user ID once on mount
   useEffect(() => {
     (async () => {
       const id = await getCurrentUserId();
       setCurrentUserId(id);
     })();
   }, []);
-  // === Fetch GFG POTD ===
-  useEffect(() => {
-  setLoading(true);
-  (async () => {
-    try {
-      const ds = format(selectedDate, 'yyyy-MM-dd');
-      const res = await apiRequest(`${BASE_URL}/api/ques/gfg/potd/${ds}`, { method: 'GET' });
-      const json = res.data;
 
-      if (json.status !== 'success' || !json.data) {
-        setProblemData(null);
-      } else {
-        const data = json.data;
-        setProblemData({
-          _id: String(data.problem_id),
-          title: data.title || '',
-          link: data.link || '',
-          date: data.date,
-          difficulty: data.difficulty || '',
-          tags: data.tags || [],
-          easyExplanation: data.easyExplanation || '',
-          realLifeExample: data.realLifeExample || '',
-        });
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    (async () => {
+      try {
+        await apiRequest(`${BASE_URL}/api/auth/profile`);
+      } catch {
+        navigate('/login');
       }
-    } catch (err) {
-      toast.error('Error fetching POTD');
-      setProblemData(null);
-    } finally {
-      setLoading(false);
-    }
-  })();
-}, [selectedDate]);
+    })();
+  }, [navigate]);
 
-
- 
- useEffect(() => {
-  if (!questionId) return;
-  (async () => {
-    try {
-      const res = await apiRequest(`${BASE_URL}/api/chat/${questionId}`);
-      const body = res.data;
-      if (!res.status || res.status !== 200) throw new Error(body.message);
-      setChatMessages(
-        body.messages.map((m) => ({
-          ...m,
-          userId: String(m.userId),
-        }))
-      );
-    } catch (err) {
-      toast.error('Error loading chat history');
-    }
-  })();
-}, [questionId]);
-
-
-
+  // Fetch GFG POTD when selectedDate changes
   useEffect(() => {
-    const onHistory = (msgs) =>
-      setChatMessages(msgs.map((m) => ({ ...m, userId: String(m.userId) })));
-    socket.on('chatHistory', onHistory);
-    return () => socket.off('chatHistory', onHistory);
-  }, [socket]);
+    setLoading(true);
+    (async () => {
+      try {
+        const ds = format(selectedDate, 'yyyy-MM-dd');
+        const res = await apiRequest(`${BASE_URL}/api/ques/gfg/potd/${ds}`, {
+          method: 'GET',
+        });
+        const json = res.data;
 
+        if (json.status !== 'success' || !json.data) {
+          setProblemData(null);
+        } else {
+          const data = json.data;
+          setProblemData({
+            _id: String(data.problem_id),
+            title: data.title || '',
+            link: data.link || '',
+            date: data.date,
+            difficulty: data.difficulty || '',
+            tags: data.tags || [],
+            easyExplanation: data.easyExplanation || '',
+            realLifeExample: data.realLifeExample || '',
+          });
+        }
+      } catch (err) {
+        toast.error('Error fetching POTD');
+        setProblemData(null);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [selectedDate]);
+
+  // Load chat messages when chat is opened or questionId changes
   useEffect(() => {
-    const onMessage = (msg) => {
+    if (chatOpen && questionId) {
+      apiRequest(`${BASE_URL}/api/chat/${questionId}`, { method: 'GET' })
+        .then((res) => {
+          const msgs = res.data.messages.map((m) => ({
+            ...m,
+            userId: String(m.userId),
+          }));
+          setChatMessages(msgs);
+        })
+        .catch(() => {
+          toast.error('Error loading chat history');
+        });
+    }
+  }, [chatOpen, questionId]);
+
+  // Handle incoming socket chat messages
+  useEffect(() => {
+    const onChatMessage = (msg) => {
       msg.userId = String(msg.userId);
       setChatMessages((prev) =>
         prev.some((m) => m._id === msg._id) ? prev : [...prev, msg]
       );
     };
-    socket.on('chatMessage', onMessage);
-    return () => socket.off('chatMessage', onMessage);
+    socket.on('chatMessage', onChatMessage);
+    return () => socket.off('chatMessage', onChatMessage);
   }, [socket]);
 
+  // Scroll to bottom whenever chatMessages update
   useEffect(() => {
-    if (chatOpen && questionId && currentUserId) {
-      socket.emit('joinChat', { questionId, userId: currentUserId });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [chatOpen, questionId, currentUserId, socket]);
+  }, [chatMessages]);
 
-  const handleSendMessage = useCallback(
-  async (e) => {
-    e.preventDefault();
-    const text = newMessage.trim();
-    if (!text || !questionId || !currentUserId) return;
+  // Send message when sendTrigger is toggled
+  useEffect(() => {
+    const sendMessage = async () => {
+      if (
+        !sendTrigger ||
+        !newMessage.trim() ||
+        !questionId ||
+        !currentUserId
+      )
+        return;
 
-    try {
-      const res = await apiRequest(`${BASE_URL}/api/chat/${questionId}/message`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text }),
-      });
-
-      const body = res.data;
-      const saved = {
-        _id: body.message._id,
-        questionId,
-        text: body.message.text,
-        userId: String(body.message.userId),
-        timestamp: body.message.timestamp,
-      };
-
-      socket.emit('sendChatMessage', saved);
+      const text = newMessage.trim();
       setNewMessage('');
-    } catch (err) {
-      toast.error('Error sending message');
-    }
-  },
-  [newMessage, questionId, currentUserId, socket]
-);
+      const optimisticMessage = {
+        _id: `${Date.now()}`,
+        questionId,
+        text,
+        userId: String(currentUserId),
+        timestamp: new Date().toISOString(),
+      };
+      setChatMessages((prev) => [...prev, optimisticMessage]);
 
+      try {
+        const res = await apiRequest(
+          `${BASE_URL}/api/chat/${questionId}/message`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text }),
+          }
+        );
+        const savedMsg = {
+          _id: res.data.message._id,
+          questionId,
+          text: res.data.message.text,
+          userId: String(res.data.message.userId),
+          timestamp: res.data.message.timestamp,
+        };
+        setChatMessages((prev) =>
+          prev.map((msg) =>
+            msg._id === optimisticMessage._id ? savedMsg : msg
+          )
+        );
+        socket.emit('sendChatMessage', savedMsg);
+      } catch {
+        toast.error('Error sending message');
+      } finally {
+        setSendTrigger(false);
+      }
+    };
+
+    sendMessage();
+  }, [sendTrigger, newMessage, questionId, currentUserId, socket]);
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    setSendTrigger(true);
+  };
 
   return (
     <MainLayout navLinks={navLinks}>
-      <div className="fixed top-25 left-6 bg-white/80 backdrop-blur-md shadow-md rounded-full px-4 py-2 text-sm text-gray-800 flex items-center gap-2 border border-gray-300 hover:shadow-lg transition-all duration-400 z-40 animate-pulse">
-  <span className="text-blue-600 font-semibold">💡 Tip:</span>
-  Click + to add question to Task or Favourites
+       <div className="fixed top-25 left-6 bg-white/80 backdrop-blur-md shadow-md rounded-full px-4 py-2 text-sm text-gray-800 flex flex-col gap-1 border border-gray-300 hover:shadow-lg transition-all duration-400 z-40 animate-pulse">
+  <div>
+    <span className="text-blue-600 font-semibold">Tip1:</span> Click + to add question to Task or Favourites
+  </div>
+  <div>
+  <span className="text-blue-600 font-semibold">Tip2:</span> Use the Chat button to ask doubts or discuss the POTD with your friends
 </div>
+</div>
+
       <motion.div
         className="container mx-auto py-8 px-4 max-w-screen-xl"
         initial="hidden"
@@ -204,7 +225,6 @@ export default function GFG() {
         variants={fadeIn}
         transition={{ duration: 0.6 }}
       >
-        
         <motion.h1
           className="text-center text-3xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 mb-6"
           variants={fadeIn}
@@ -220,7 +240,11 @@ export default function GFG() {
           />
         </motion.div>
 
-        <motion.section className="mt-8" variants={fadeIn} transition={{ delay: 0.4 }}>
+        <motion.section
+          className="mt-8"
+          variants={fadeIn}
+          transition={{ delay: 0.4 }}
+        >
           {loading ? (
             <motion.p variants={fadeIn} transition={{ delay: 0.5 }}>
               Loading problem…
@@ -234,7 +258,7 @@ export default function GFG() {
                 problem={problemData}
                 explanation={{
                   easyExplanation: problemData.easyExplanation,
-                  realLifeExample: problemData.realLifeExample
+                  realLifeExample: problemData.realLifeExample,
                 }}
               />
             </>
@@ -255,7 +279,7 @@ export default function GFG() {
           className="fixed bottom-6 right-6 rounded-full w-14 h-14 flex items-center justify-center shadow-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white"
           whileHover={{ scale: 1.1 }}
         >
-          <MessageCircle size={24} className='cursor-pointer'/>
+          <MessageCircle size={24} className="cursor-pointer" />
         </motion.button>
 
         {/* Chat Panel */}
@@ -269,18 +293,24 @@ export default function GFG() {
               variants={slideIn}
               transition={{ type: 'tween', duration: 0.3 }}
             >
-              <div className="p-4 border-b flex justify-between items-center">
-                <h2 className="font-bold text-lg">
-                  Chat – {problemData?.title || 'No Problem'} (
-                  {format(selectedDate, 'MMM d, yyyy')})
-                </h2>
-                <button
-                  onClick={() => setChatOpen(false)}
-                  className="text-gray-600 hover:text-gray-800 transition"
-                >
-                  Close
-                </button>
-              </div>
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 flex justify-between items-center rounded-b-lg">
+              <h2
+              className="text-white font-semibold text-lg truncate"
+              title={problemData?.title || 'Discussion'}
+            >
+              {problemData?.title
+                ? `Discussion: ${problemData.title}`
+                : 'Discussion'}
+            </h2>
+              <button
+                onClick={() => setChatOpen(false)}
+                className="text-white cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+
               <motion.div
                 className="flex-1 p-4 overflow-y-auto space-y-4"
                 initial="hidden"
@@ -298,10 +328,12 @@ export default function GFG() {
                     return (
                       <div
                         key={msg._id || i}
-                        className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                        className={`flex ${
+                          isMe ? 'justify-end pr-2' : 'justify-start pl-2'
+                        }`}
                       >
                         <motion.div
-                          className={`rounded-lg p-3 text-sm max-w-[75%] ${
+                          className={`rounded-lg p-2 text-xs max-w-[80%] ${
                             isMe
                               ? 'bg-purple-600 text-white text-right'
                               : 'bg-gray-100 text-gray-900 text-left'
@@ -311,19 +343,24 @@ export default function GFG() {
                           <p className="font-semibold mb-1">
                             {isMe ? 'You' : 'Anonymous'}
                           </p>
-                          <p>{msg.text}</p>
+                          <p className="whitespace-pre-wrap break-words">
+                            {msg.text}
+                          </p>
                           <span
-                            className={`block text-xs mt-1 ${
-                              isMe ? 'text-gray-200' : 'text-gray-500'
+                            className={`text-gray-600 mt-1 block ${
+                              isMe ? 'text-right text-gray-200' : ''
                             }`}
                           >
-                            {format(new Date(msg.timestamp), 'h:mm a')}
+                            {!isNaN(new Date(msg.timestamp))
+                              ? format(new Date(msg.timestamp), 'h:mm a')
+                              : '—'}
                           </span>
                         </motion.div>
                       </div>
                     );
                   })
                 )}
+                <div ref={messagesEndRef} />
               </motion.div>
 
               <motion.form
@@ -337,15 +374,21 @@ export default function GFG() {
                 <textarea
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(e);
+                    }
+                  }}
                   placeholder="Type your message..."
-                  className="flex-1 border rounded p-2 text-sm resize-none"
+                  className="flex-1 border rounded p-2 text-xs resize-none focus:outline-none"
                   rows="2"
                 />
                 <motion.button
                   type="submit"
                   disabled={!newMessage.trim()}
                   whileHover={newMessage.trim() ? { scale: 1.05 } : {}}
-                  className={`bg-purple-600 text-white rounded px-4 py-2 flex items-center gap-1 ${
+                  className={`bg-purple-600 text-white rounded px-3 py-2 text-sm flex items-center gap-1 ${
                     !newMessage.trim() ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
