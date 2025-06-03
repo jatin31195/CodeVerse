@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { MessageCircle, ArrowRight } from 'lucide-react';
+import { MessageCircle, ArrowRight, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SocketContext } from './SocketContext';
 import SolutionCard from './SolutionCard';
 import POTDCalendar from './POTDCalendar';
 import MainLayout from './MainLayout';
-import {toast} from 'react-toastify'
+import { toast } from 'react-toastify';
 import { BASE_URL } from '../config';
 import { apiRequest } from '../utils/api';
+
 const navLinks = [
   { name: 'LeetCode', path: '/leetcode' },
   { name: 'CodeForces', path: '/codeforces' },
@@ -39,7 +40,6 @@ const getDisplayDate = (selectedDate) => {
   return selMidnight;
 };
 
-
 const getCurrentUserId = async () => {
   try {
     const res = await apiRequest(`${BASE_URL}/api/auth/profile`);
@@ -49,132 +49,145 @@ const getCurrentUserId = async () => {
   }
 };
 
-
 export default function LeetCode() {
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(getInitialDate());
   const [problem, setProblem] = useState(null);
   const [problemLoading, setProblemLoading] = useState(false);
   const [problemError, setProblemError] = useState(null);
+
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [currentUserId, setCurrentUserId] = useState(null);
   const socket = useContext(SocketContext);
+  const [sendTrigger, setSendTrigger] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  const questionId = problem?._id || null;
+
   useEffect(() => {
     (async () => {
       const id = await getCurrentUserId();
       setCurrentUserId(id);
     })();
   }, []);
- useEffect(() => {
-  (async () => {
-    try {
-      await apiRequest(`${BASE_URL}/api/auth/profile`);
-    } catch (err) {
-      navigate('/login');
-    }
-  })();
-}, [navigate]);
-
-
-  const questionId = problem?._id || null;
-  
 
   useEffect(() => {
-  if (!questionId) return;
-  (async () => {
-    try {
-      const res = await apiRequest(`${BASE_URL}/api/chat/${questionId}`);
-      const body = res.data;
-      setChatMessages((body.messages || []).map(m => ({
-        ...m,
-        userId: String(m.userId),
-      })));
-    } catch (err) {
-      toast.error('Error loading history:', err);
-    }
-  })();
-}, [questionId]);
-
-
-  useEffect(() => {
-    const onHistory = msgs => setChatMessages(msgs.map(m => ({ ...m, userId: String(m.userId) })));
-    socket.on('chatHistory', onHistory);
-    return () => socket.off('chatHistory', onHistory);
-  }, [socket]);
-
-  useEffect(() => {
-    const handler = msg => {
-      msg.userId = String(msg.userId);
-      setChatMessages(prev => prev.some(m => m._id === msg._id) ? prev : [...prev, msg]);
-    };
-    socket.on('chatMessage', handler);
-    return () => socket.off('chatMessage', handler);
-  }, [socket]);
-
-  useEffect(() => {
-    if (chatOpen && questionId && currentUserId) {
-      socket.emit('joinChat', { questionId, userId: currentUserId });
-    }
-  }, [chatOpen, questionId, currentUserId, socket]);
-
-  const handleSendMessage = useCallback(async e => {
-  e.preventDefault();
-  const text = newMessage.trim();
-  if (!text || !questionId || !currentUserId) return;
-  try {
-    const res = await apiRequest(
-      `${BASE_URL}/api/chat/${questionId}/message`,
-      {
-        method: 'POST',
-        body: { text },
-        headers: { 'Content-Type': 'application/json' },
+    (async () => {
+      try {
+        await apiRequest(`${BASE_URL}/api/auth/profile`);
+      } catch {
+        navigate('/login');
       }
-    );
-    const body = res.data;
-    const saved = {
-      _id: body.message._id,
-      questionId,
-      text: body.message.text,
-      userId: String(body.message.userId),
-      timestamp: body.message.timestamp,
+    })();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (chatOpen && questionId) {
+      apiRequest(`${BASE_URL}/api/chat/${questionId}`, { method: 'GET' })
+        .then((res) => {
+          const msgs = res.data.messages.map((m) => ({
+            ...m,
+            userId: String(m.userId),
+          }));
+          setChatMessages(msgs);
+        })
+        .catch(console.error);
+    }
+  }, [chatOpen, questionId]);
+
+  useEffect(() => {
+    const onChatMessage = (msg) => {
+      msg.userId = String(msg.userId);
+      setChatMessages((prev) =>
+        prev.some((m) => m._id === msg._id) ? prev : [...prev, msg]
+      );
     };
-    socket.emit('sendChatMessage', saved);
-    setNewMessage('');
-  } catch (err) {
-    toast.error('Error sending message:', err);
-  }
-}, [newMessage, questionId, currentUserId, socket]);
+    socket.on('chatMessage', onChatMessage);
+    return () => socket.off('chatMessage', onChatMessage);
+  }, [socket]);
 
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    setSendTrigger(true);
+  };
 
-useEffect(() => {
-  setProblemLoading(true);
-  setProblemError(null);
-  const displayDate = getDisplayDate(selectedDate);
-  const ds = format(displayDate, 'yyyy-MM-dd');
+  useEffect(() => {
+    const sendMessage = async () => {
+      if (!sendTrigger || !newMessage.trim() || !questionId || !currentUserId) return;
+      const text = newMessage.trim();
+      setNewMessage('');
+      const optimisticMessage = {
+        _id: `${Date.now()}`,
+        questionId,
+        text,
+        userId: String(currentUserId),
+        timestamp: new Date().toISOString(),
+      };
+      setChatMessages((prev) => [...prev, optimisticMessage]);
+      try {
+        const res = await apiRequest(`${BASE_URL}/api/chat/${questionId}/message`, {
+          method: 'POST',
+          body: { text },
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const saved = {
+          _id: res.data.message._id,
+          questionId,
+          text: res.data.message.text,
+          userId: String(res.data.message.userId),
+          timestamp: res.data.message.timestamp,
+        };
+        setChatMessages((prev) =>
+          prev.map((msg) =>
+            msg._id === optimisticMessage._id ? saved : msg
+          )
+        );
+        socket.emit('sendChatMessage', saved);
+      } catch {
+        toast.error('Error sending message');
+      } finally {
+        setSendTrigger(false);
+      }
+    };
+    sendMessage();
+  }, [sendTrigger, newMessage, questionId, currentUserId, socket]);
 
-  apiRequest(
-    `${BASE_URL}/api/ques/leetcode/potd/${encodeURIComponent(ds)}`,
-    { method: 'GET' }
-  )
-    .then(res => setProblem(res.data?.data || null))
-    .catch(e => {
-      setProblemError(e.message);
-      setProblem(null);
+  useEffect(() => {
+    setProblemLoading(true);
+    setProblemError(null);
+    const displayDate = getDisplayDate(selectedDate);
+    const ds = format(displayDate, 'yyyy-MM-dd');
+    apiRequest(`${BASE_URL}/api/ques/leetcode/potd/${encodeURIComponent(ds)}`, {
+      method: 'GET',
     })
-    .finally(() => setProblemLoading(false));
-}, [selectedDate]);
+      .then((res) => setProblem(res.data?.data || null))
+      .catch((e) => {
+        setProblemError(e.message);
+        setProblem(null);
+      })
+      .finally(() => setProblemLoading(false));
+  }, [selectedDate]);
 
-
-
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages]);
 
   return (
     <MainLayout navLinks={navLinks}>
-      <div className="fixed top-25 left-6 bg-white/80 backdrop-blur-md shadow-md rounded-full px-4 py-2 text-sm text-gray-800 flex items-center gap-2 border border-gray-300 hover:shadow-lg transition-all duration-400 z-40 animate-pulse">
-  <span className="text-blue-600 font-semibold">💡 Tip:</span>
-  Click + to add question to Task or Favourites
+      <div className="fixed top-25 left-6 bg-white/80 backdrop-blur-md shadow-md rounded-full px-4 py-2 text-sm text-gray-800 flex flex-col gap-1 border border-gray-300 hover:shadow-lg transition-all duration-400 z-40 animate-pulse">
+  <div>
+    <span className="text-blue-600 font-semibold">Tip1:</span> Click + to add question to Task or Favourites
+  </div>
+  <div>
+  <span className="text-blue-600 font-semibold">Tip2:</span> Use the Chat button to ask doubts or discuss the POTD with your friends
 </div>
+</div>
+
+
       <motion.div
         className="container mx-auto py-8 px-4 max-w-screen-xl"
         initial="hidden"
@@ -183,13 +196,13 @@ useEffect(() => {
         transition={{ duration: 0.6 }}
       >
         <motion.h1
-          className="text-center text-3xl sm:text-3xl md:text-3xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 mb-6"
+          className="text-center text-3xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 mb-6"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
           LeetCode POTD
         </motion.h1>
-        
+
         <motion.div variants={fadeIn} transition={{ delay: 0.3 }}>
           <POTDCalendar
             selectedDate={selectedDate}
@@ -238,7 +251,7 @@ useEffect(() => {
           className="fixed bottom-6 right-6 rounded-full w-14 h-14 flex items-center justify-center shadow-lg bg-gradient-to-r from-red-500 to-yellow-500 text-white"
           whileHover={{ scale: 1.1 }}
         >
-          <MessageCircle size={24} className='cursor-pointer'/>
+          <MessageCircle size={24} />
         </motion.button>
 
         <AnimatePresence>
@@ -251,16 +264,15 @@ useEffect(() => {
               variants={slideIn}
               transition={{ type: 'tween', duration: 0.3 }}
             >
-              <div className="p-4 border-b flex justify-between items-center">
-                <h2 className="font-bold text-lg">
-                  Chat – {problem?.title || 'No Question'} (
-                  {format(selectedDate, 'MMM d, yyyy')})
-                </h2>
-                <button
-                  onClick={() => setChatOpen(false)}
-                  className="text-gray-600 hover:text-gray-800 transition"
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 flex justify-between items-center rounded-b-lg">
+                <h2
+                  className="text-white font-semibold text-lg truncate"
+                  title={problem?.title || 'Discussion'}
                 >
-                  Close
+                  {problem?.title ? `Discussion: ${problem.title}` : 'Discussion'}
+                </h2>
+                <button onClick={() => setChatOpen(false)} className="cursor-pointer text-white">
+                  <X size={20} />
                 </button>
               </div>
 
@@ -273,7 +285,7 @@ useEffect(() => {
               >
                 {chatMessages.length === 0 ? (
                   <p className="text-center text-gray-500">
-                    No messages yet. Start a conversation!
+                    No messages yet. Start the conversation.
                   </p>
                 ) : (
                   chatMessages.map((msg, i) => {
@@ -291,12 +303,12 @@ useEffect(() => {
                           }`}
                           whileHover={{ scale: 1.02 }}
                         >
-                          <p className="font-semibold mb-1">
-                            {isMe ? 'You' : 'Anonymous'}
-                          </p>
-                          <p>{msg.text}</p>
+                          <p className="font-semibold mb-1">{isMe ? 'You' : 'Anonymous'}</p>
+                          <p className="whitespace-pre-wrap break-words">{msg.text}</p>
                           <span
-                            className={`text-gray-600 mt-1 block ${isMe ? 'text-right' : 'text-left'}`}
+                            className={`text-gray-600 mt-1 block ${
+                              isMe ? 'text-right' : 'text-left'
+                            }`}
                           >
                             {!isNaN(new Date(msg.timestamp))
                               ? format(new Date(msg.timestamp), 'h:mm a')
@@ -307,6 +319,7 @@ useEffect(() => {
                     );
                   })
                 )}
+                <div ref={messagesEndRef} />
               </motion.div>
 
               <motion.form
@@ -319,9 +332,15 @@ useEffect(() => {
               >
                 <textarea
                   value={newMessage}
-                  onChange={e => setNewMessage(e.target.value)}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(e);
+                    }
+                  }}
                   placeholder="Type your message..."
-                  className="flex-1 border rounded p-2 text-xs resize-none"
+                  className="flex-1 border rounded p-2 text-xs resize-none focus:outline-none"
                   rows="2"
                 />
                 <motion.button
@@ -338,9 +357,6 @@ useEffect(() => {
             </motion.div>
           )}
         </AnimatePresence>
-        {/* Floating helper badge in bottom right */}
-
-
       </motion.div>
     </MainLayout>
   );
