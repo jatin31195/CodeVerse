@@ -6,7 +6,7 @@ const cookieOptions = {
   httpOnly: true,
   secure: true,
   sameSite: 'None',
-  domain: '.codeverse-ilao.onrender.com',
+  domain: '.codeverse.solutions',
   path: '/',
 };
 
