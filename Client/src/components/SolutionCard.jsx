@@ -15,6 +15,7 @@ import {
 import { format } from 'date-fns';
 import { BASE_URL } from '../config';
 import { apiRequest } from '../utils/api';
+
 const SolutionCard = ({ problem, explanation }) => {
   const [currentTab, setCurrentTab] = useState('All');
   const [expandedSolutionIds, setExpandedSolutionIds] = useState(new Set());
@@ -27,17 +28,17 @@ const SolutionCard = ({ problem, explanation }) => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const authConfig = { withCredentials:true };
+  const authConfig = { withCredentials: true };
 
- useEffect(() => {
-  if (!problem?._id) return;
-  apiRequest(`${BASE_URL}/api/solutions/${problem._id}`, {
-    method: 'GET',
-    ...authConfig,
-  })
-    .then(res => setSolutions(res.data))
-    .catch(console.error);
-}, [problem]);
+  useEffect(() => {
+    if (!problem?._id) return;
+    apiRequest(`${BASE_URL}/api/solutions/${problem._id}`, {
+      method: 'GET',
+      ...authConfig,
+    })
+      .then(res => setSolutions(res.data))
+      .catch(console.error);
+  }, [problem._id]);
 
   const getPlatformColor = () => {
     switch ((problem?.platform || '').toLowerCase()) {
@@ -53,33 +54,33 @@ const SolutionCard = ({ problem, explanation }) => {
   };
 
   const voteSolution = (solutionId, vote) => {
-  apiRequest(`${BASE_URL}/api/solutions/vote`, {
-    method: 'POST',
-    data: { solutionId, vote },
-    ...authConfig,
-  })
-    .then(res => {
-      setSolutions(sols =>
-        sols.map(s =>
-          s._id === solutionId
-            ? {
-                ...s,
-                votes: res.data.totalVotes,
-                upvotedBy: Array(res.data.upvotes).fill(true),
-                downvotedBy: Array(res.data.downvotes).fill(true),
-              }
-            : s
-        )
-      );
+    apiRequest(`${BASE_URL}/api/solutions/vote`, {
+      method: 'POST',
+      data: { solutionId, vote },
+      ...authConfig,
     })
-    .catch(console.error);
-};
-
+      .then(res => {
+        setSolutions(sols =>
+          sols.map(s =>
+            s._id === solutionId
+              ? {
+                  ...s,
+                  votes: res.data.totalVotes,
+                  upvotedBy: Array(res.data.upvotes).fill(true),
+                  downvotedBy: Array(res.data.downvotes).fill(true),
+                }
+              : s
+          )
+        );
+      })
+      .catch(console.error);
+  };
 
   const toggleSolutionExpansion = id => {
     setExpandedSolutionIds(prev => {
       const newSet = new Set(prev);
-      newSet.has(id) ? newSet.delete(id) : newSet.add(id);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
       return newSet;
     });
   };
@@ -89,43 +90,57 @@ const SolutionCard = ({ problem, explanation }) => {
     return lines.slice(0, 3).join('\n') + (lines.length > 3 ? '\n...' : '');
   };
 
-const handleSubmitSolution = () => {
-  if (!userSolution.trim()) return setError('Please enter a solution.');
-  setLoading(true);
+  const handleSubmitSolution = () => {
+    if (!userSolution.trim()) return setError('Please enter a solution.');
+    setLoading(true);
 
-  apiRequest(`${BASE_URL}/api/solutions/add`, {
-    method: 'POST',
-    data: {
-      questionId: problem._id,
-      type: 'optimal',
-      language: currentTab,
-      content: userSolution,
-    },
-    ...authConfig,
-  })
-    .then(() =>
-      apiRequest(`${BASE_URL}/api/solutions/${problem._id}`, {
-        method: 'GET',
-        ...authConfig,
-      })
-    )
-    .then(res => {
-      setSolutions(res.data);
-      setUserSolution('');
-      setError('');
+    apiRequest(`${BASE_URL}/api/solutions/add`, {
+      method: 'POST',
+      data: {
+        questionId: problem._id,
+        type: 'optimal',
+        language: currentTab,
+        content: userSolution,
+      },
+      ...authConfig,
     })
-    .catch(() => setError('Failed to submit.'))
-    .finally(() => setLoading(false));
-};
-const raiseTicket = () => {
-  navigate('/community', {
-  state: {
-    problemId: problem._id,
-    title: problem.title,
-    platform: problem.platform,
-  },
-});
-}
+      .then(() =>
+        apiRequest(`${BASE_URL}/api/solutions/${problem._id}`, {
+          method: 'GET',
+          ...authConfig,
+        })
+      )
+      .then(res => {
+        setSolutions(res.data);
+        setUserSolution('');
+        setError('');
+      })
+      .catch(() => setError('Failed to submit.'))
+      .finally(() => setLoading(false));
+  };
+
+  const raiseTicket = () => {
+    navigate('/community', {
+      state: {
+        problemId: problem._id,
+        title: problem.title,
+        platform: problem.platform,
+      },
+    });
+  };
+
+
+  const easyRaw = explanation?.easyExplanation || problem.easyExplanation || '';
+  const realRaw = explanation?.realLifeExample || problem.realLifeExample || '';
+
+  
+  const formatNumbered = text => {
+    if (text.includes('\n')) return text;
+    return text.replace(/(?<=\.\s)(?=\d+\.\s)/g, '\n');
+  };
+
+  const easyText = formatNumbered(easyRaw);
+  const realText = formatNumbered(realRaw);
 
   return (
     <div className="mb-8 rounded-2xl overflow-hidden shadow-2xl bg-white border border-gray-200">
@@ -134,7 +149,9 @@ const raiseTicket = () => {
           <div>
             <h2 className="text-2xl font-extrabold text-gray-800">{problem?.title}</h2>
             <div className="mt-2 flex items-center gap-3">
-              <span className={`text-xs px-2 py-1 rounded-full text-white ${getPlatformColor()}`}>
+              <span
+                className={`text-xs px-2 py-1 rounded-full text-white ${getPlatformColor()}`}
+              >
                 {problem?.platform}
               </span>
               <span className="text-sm text-gray-600">
@@ -146,14 +163,13 @@ const raiseTicket = () => {
             onClick={raiseTicket}
             className="cursor-pointer flex items-center gap-2 text-sm px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition"
           >
-            <LifeBuoy size={18} className='cursor-pointer'/>
+            <LifeBuoy size={18} />
             Raise Ticket
           </button>
         </div>
       </div>
 
       <div className="divide-y divide-gray-200 bg-white">
-        
         <SectionToggle
           title="View User Solutions"
           icon={<Code size={20} className="text-blue-600" />}
@@ -161,7 +177,7 @@ const raiseTicket = () => {
           setExpanded={setUserSolutionsExpanded}
         >
           <div className="pb-4">
-            <div className=" flex gap-2 mb-4">
+            <div className="flex gap-2 mb-4">
               {['All', 'C++', 'Java'].map(lang => (
                 <button
                   key={lang}
@@ -230,14 +246,14 @@ const raiseTicket = () => {
                         onClick={() => voteSolution(sol._id, 'up')}
                         className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
                       >
-                        <ThumbsUp size={16} className='cursor-pointer'/>
+                        <ThumbsUp size={16} />
                         {sol.upvotedBy.length}
                       </button>
                       <button
                         onClick={() => voteSolution(sol._id, 'down')}
                         className="flex items-center gap-1 text-red-600 hover:text-red-800"
                       >
-                        <ThumbsDown size={16} className='cursor-pointer'/>
+                        <ThumbsDown size={16} />
                         {sol.downvotedBy.length}
                       </button>
                       <span className="ml-auto text-sm text-gray-500">
@@ -266,28 +282,65 @@ const raiseTicket = () => {
           </div>
         </SectionToggle>
 
-        
         <SectionToggle
           title="Problem Explanation (AI Based)"
           icon={<BookOpen size={20} className="text-green-600" />}
           expanded={explanationExpanded}
           setExpanded={setExplanationExpanded}
         >
-          <p className="text-gray-700">{explanation?.easyExplanation || 'Not available.'}</p>
+          <div className="text-gray-700">
+            {easyText
+              ? easyText.split('\n').map((line, idx) => {
+                  const match = line.match(/^(\d+\.\s*)(.*)$/);
+                  if (match) {
+                    return (
+                      <div key={idx} className="mb-2">
+                        <span className="font-bold">{match[1]}</span>
+                        {match[2]}
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div key={idx} className="mb-2">
+                        {line}
+                      </div>
+                    );
+                  }
+                })
+              : 'Not available.'}
+          </div>
         </SectionToggle>
 
-        
         <SectionToggle
           title="Real-life Use Case (AI Based)"
           icon={<Activity size={20} className="text-purple-600" />}
           expanded={realLifeUseCaseExpanded}
           setExpanded={setRealLifeUseCaseExpanded}
         >
-          <p className="text-gray-700">{explanation?.realLifeExample || 'Not available.'}</p>
+          <div className="text-gray-700">
+            {realText
+              ? realText.split('\n').map((line, idx) => {
+                  const match = line.match(/^(\d+\.\s*)(.*)$/);
+                  if (match) {
+                    return (
+                      <div key={idx} className="mb-2">
+                        <span className="font-bold">{match[1]}</span>
+                        {match[2]}
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div key={idx} className="mb-2">
+                        {line}
+                      </div>
+                    );
+                  }
+                })
+              : 'Not available.'}
+          </div>
         </SectionToggle>
       </div>
 
-      
       <div className="p-4 bg-white border-t border-gray-200">
         <a
           href={problem?.link || '#'}
