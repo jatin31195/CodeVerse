@@ -403,13 +403,11 @@ useEffect(() => {
         <Bell className="w-5 h-5" />
       </button>
 
-      {/* User avatar */}
       {user && (
-        <div className="relative ">
+        <div className="relative ml-3">
           <button
             onClick={() => setShowUserMenu((prev) => !prev)}
-            className="cursor-pointer w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-blue-500 hover:border-green-400 transition overflow-hidden flex items-center justify-center bg-gray-100"
-            aria-label="User menu"
+            className="w-12 h-12 cursor-pointer rounded-full border-3 border-blue-500 hover:border-green-400 transition overflow-hidden flex items-center justify-center bg-gray-100"
           >
             {user.profilePic ? (
               <img
@@ -418,8 +416,8 @@ useEffect(() => {
                 className="w-full h-full object-cover rounded-full"
               />
             ) : (
-              <span className="text-xs sm:text-sm font-semibold text-gray-700">
-                {getInitials(user.name)}
+              <span className="text-sm font-semibold text-gray-700">
+                {getInitials(user.username)}
               </span>
             )}
           </button>
@@ -427,25 +425,25 @@ useEffect(() => {
           <AnimatePresence>
             {showUserMenu && (
               <motion.div
-                initial={{ opacity: 0, y: -8 }}
+                initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.15 }}
-                className="absolute right-0 mt-2 w-40 sm:w-44 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden z-50"
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden z-50"
               >
                 <button
                   onClick={() => {
                     setShowUserMenu(false);
                     toggleSidebar();
                   }}
-                  className="w-full text-left px-3 py-2 hover:bg-gray-100 flex items-center gap-2 text-xs sm:text-sm"
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm"
                 >
-                  <LayoutPanelLeft className="w-4 h-4" />
+                  <LayoutPanelLeft className="w-4 h-4 hover:text-blue-600 cursor-pointer" />
                   Open Sidebar
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left px-3 py-2 hover:bg-gray-100 flex items-center gap-2 text-xs sm:text-sm text-red-600"
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm text-red-600"
                 >
                   <LogOut className="w-4 h-4" />
                   Logout

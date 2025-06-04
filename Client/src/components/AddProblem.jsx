@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Save, AlertTriangle, CalendarDays } from 'lucide-react';
+import { Save, AlertTriangle, CalendarDays, Edit2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import MainLayout from './MainLayout';
-import {toast} from 'react-toastify';
+import { toast } from 'react-toastify';
 import { BASE_URL } from '../config';
 import { apiRequest } from '../utils/api';
+
 const navLinks = [
   { name: 'POTD Calendar', path: '/custom' },
   { name: 'My Problems', path: '/my-problems' },
@@ -28,31 +29,30 @@ export default function AddProblem() {
   const [date, setDate] = useState('');
   const [platform, setPlatform] = useState('');
   const [title, setTitle] = useState('');
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+
   const api = axios.create({
     baseURL: `${BASE_URL}/api/custom/user-potd`,
-    withCredentials:true
+    withCredentials: true,
   });
 
- 
   useEffect(() => {
-  (async () => {
-    try {
-      const res = await apiRequest(`${BASE_URL}/api/custom/user-potd/lists`, {
-        method: 'GET',
-      });
-      setLists(res.data.lists || []);
-      if (res.data.lists.length) {
-        setSelectedList(res.data.lists[0]._id);
+    (async () => {
+      try {
+        const res = await apiRequest(`${BASE_URL}/api/custom/user-potd/lists`, {
+          method: 'GET',
+        });
+        setLists(res.data.lists || []);
+        if (res.data.lists.length) {
+          setSelectedList(res.data.lists[0]._id);
+        }
+      } catch (err) {
+        console.error(err);
+        toast.warning('Could not load your problem lists.');
       }
-    } catch (err) {
-      console.error(err);
-      toast.warning('Could not load your problem lists.');
-    }
-  })();
-}, []);
+    })();
+  }, []);
 
-
- 
   useEffect(() => {
     let cancelled = false;
     setTitle('');
@@ -65,7 +65,7 @@ export default function AddProblem() {
 
       if (host.includes('leetcode.com')) {
         setPlatform('LeetCode');
-        
+
         const parts = path.split('/').filter(Boolean);
         const idx = parts.indexOf('problems');
         if (idx !== -1 && parts[idx + 1]) {
@@ -73,13 +73,13 @@ export default function AddProblem() {
           setTitle(
             slug
               .split('-')
-              .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+              .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
               .join(' ')
           );
         }
       } else if (host.includes('geeksforgeeks.org')) {
         setPlatform('GeeksForGeeks');
-      
+
         const parts = path.split('/').filter(Boolean);
         const idx = parts.indexOf('problems');
         if (idx !== -1 && parts[idx + 1]) {
@@ -87,60 +87,49 @@ export default function AddProblem() {
           setTitle(
             slug
               .split('-')
-              .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+              .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
               .join(' ')
           );
         }
       } else if (host.includes('codeforces.com')) {
         setPlatform('Codeforces');
-       
+
         const parts = path.split('/').filter(Boolean);
         let contestId, letter;
         const ci = parts.indexOf('problemset');
         const cj = parts.indexOf('contest');
         if (ci !== -1 && parts[ci + 2] && parts[ci + 3]) {
-      
           contestId = parts[ci + 2];
           letter = parts[ci + 3];
         } else if (cj !== -1 && parts[cj + 1] && parts[cj + 3]) {
-      
           contestId = parts[cj + 1];
           letter = parts[cj + 3];
         }
 
-       
         if (contestId && letter) {
-          
           fetch(link, {
-            
             mode: 'cors',
           })
-            .then(res => res.text())
-            .then(html => {
+            .then((res) => res.text())
+            .then((html) => {
               if (cancelled) return;
-              const doc = new DOMParser().parseFromString(
-                html,
-                'text/html'
-              );
-            
+              const doc = new DOMParser().parseFromString(html, 'text/html');
               const titleDiv = doc.querySelector(
                 '.problem-statement .header .title'
               );
               if (titleDiv) {
                 setTitle(titleDiv.textContent.trim());
               } else {
-                
                 setTitle(`Problem ${contestId}${letter}`);
               }
             })
-            .catch(err => {
+            .catch((err) => {
               console.error('CF fetch failed', err);
               if (!cancelled) {
                 setTitle(`Problem ${contestId}${letter}`);
               }
             });
         } else {
-          
           setTitle('');
         }
       } else {
@@ -148,7 +137,6 @@ export default function AddProblem() {
         setTitle('');
       }
     } catch {
-      
       setPlatform('');
       setTitle('');
     }
@@ -159,35 +147,39 @@ export default function AddProblem() {
   }, [link]);
 
   const handleAddProblem = async () => {
-  if (!selectedList || !link || !date) {
-    toast.warning('Please choose a list, paste the URL, and pick a date.');
-    return;
-  }
-  try {
-    await apiRequest(`${BASE_URL}/api/custom/user-potd/list/add-question`, {
-      method: 'POST',
-      data: {
-        listId: selectedList,
-        platform,
-        title,
-        link,
-        date,
-      },
-    });
-    toast.success('Problem added successfully!');
-    setLink('');
-    setDate('');
-  } catch (err) {
-    console.error(err);
-    toast.error('Failed to add problem. Problem already exist or Internal Error');
-  }
-};
-
+    if (!selectedList || !link || !date) {
+      toast.warning('Please choose a list, paste the URL, and pick a date.');
+      return;
+    }
+    try {
+      await apiRequest(
+        `${BASE_URL}/api/custom/user-potd/list/add-question`,
+        {
+          method: 'POST',
+          data: {
+            listId: selectedList,
+            platform,
+            title,
+            link,
+            date,
+          },
+        }
+      );
+      toast.success('Problem added successfully!');
+      setLink('');
+      setDate('');
+      setIsEditingTitle(false);
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        'Failed to add problem. Problem already exist or Internal Error'
+      );
+    }
+  };
 
   return (
     <MainLayout navLinks={navLinks}>
       <div className="max-w-3xl mx-auto py-10">
-        
         <motion.div
           className="mb-8"
           initial="hidden"
@@ -207,7 +199,6 @@ export default function AddProblem() {
           <p className="text-gray-600">Just paste the URL and pick a date.</p>
         </motion.div>
 
-        
         <motion.div
           className="shadow-2xl rounded-lg overflow-hidden"
           initial="hidden"
@@ -226,7 +217,6 @@ export default function AddProblem() {
           </div>
 
           <div className="p-6 space-y-6">
-            
             <div>
               <label htmlFor="list" className="block text-base">
                 Select List
@@ -234,10 +224,10 @@ export default function AddProblem() {
               <select
                 id="list"
                 value={selectedList}
-                onChange={e => setSelectedList(e.target.value)}
+                onChange={(e) => setSelectedList(e.target.value)}
                 className="mt-1 h-11 w-full border border-gray-300 rounded px-3"
               >
-                {lists.map(lst => (
+                {lists.map((lst) => (
                   <option key={lst._id} value={lst._id}>
                     {lst.name} {lst.isPublic ? '(Public)' : '(Private)'}
                   </option>
@@ -245,7 +235,6 @@ export default function AddProblem() {
               </select>
             </div>
 
-            
             <div>
               <label htmlFor="link" className="block text-base">
                 Problem URL
@@ -255,7 +244,7 @@ export default function AddProblem() {
                 type="url"
                 placeholder="https://codeforces.com/…"
                 value={link}
-                onChange={e => setLink(e.target.value)}
+                onChange={(e) => setLink(e.target.value)}
                 className="mt-1 h-11 w-full border border-gray-300 rounded px-3"
               />
               <div className="flex items-start gap-2 text-xs text-gray-500 mt-1">
@@ -264,17 +253,35 @@ export default function AddProblem() {
               </div>
             </div>
 
-           
             <div className="space-y-1 text-sm text-gray-600">
               <p>
                 <strong>Platform:</strong> {platform || '—'}
               </p>
-              <p>
-                <strong>Title:</strong> {title || '—'}
+              <p className="flex items-center gap-2">
+                <strong>Title:</strong>
+                {isEditingTitle ? (
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    onBlur={() => setIsEditingTitle(false)}
+                    className="h-8 border border-gray-300 rounded px-2"
+                    autoFocus
+                  />
+                ) : (
+                  <>
+                    <span>{title || '—'}</span>
+                    {title && (
+                      <Edit2
+                        onClick={() => setIsEditingTitle(true)}
+                        className="h-4 w-4 text-gray-500 cursor-pointer"
+                      />
+                    )}
+                  </>
+                )}
               </p>
             </div>
 
-            
             <div>
               <label htmlFor="date" className="block text-base">
                 Schedule Date
@@ -283,12 +290,11 @@ export default function AddProblem() {
                 id="date"
                 type="date"
                 value={date}
-                onChange={e => setDate(e.target.value)}
+                onChange={(e) => setDate(e.target.value)}
                 className="mt-1 h-11 w-full border border-gray-300 rounded px-3"
               />
             </div>
 
-            
             <div className="pt-4">
               <motion.button
                 onClick={handleAddProblem}

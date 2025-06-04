@@ -218,8 +218,8 @@ const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
         {children}
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t md:hidden">
-  <div className="grid grid-cols-3 gap-1 p-2">
+      <div className="z-20 fixed bottom-0 left-0 right-0 bg-white border-t md:hidden">
+  <div className="grid grid-cols-3 gap-1 p-2 ">
     {navLinks.map((link) => {
       let iconElement;
       switch (link.name) {
