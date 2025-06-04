@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import io from 'socket.io-client';
 import Peer from 'simple-peer';
 import {
@@ -30,7 +31,8 @@ const VideoMeeting = () => {
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isAudioOn, setIsAudioOn] = useState(true);
 
- 
+  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
+
   const [currentUserId, setCurrentUserId] = useState(null);
   const peerRef = useRef(null);
   const localVideoRef = useRef(null);
@@ -55,7 +57,13 @@ const VideoMeeting = () => {
 }, [navigate]);
 
 
-  
+  const toggleSpeaker = () => {
+  if (remoteVideoRef.current) {
+    remoteVideoRef.current.muted = isSpeakerOn;
+    setIsSpeakerOn(!isSpeakerOn);
+  }
+};
+
   const useFakeMedia = new URLSearchParams(window.location.search).get('fake');
   useEffect(() => {
   let canvas, ctx, intervalId;
@@ -134,9 +142,11 @@ const VideoMeeting = () => {
     };
 
     const onOffer = data => {
-      console.log('Received offer:', data);
+      // console.log('Received offer:', data);
       setOffer(data.signal);
       setRole('answerer');
+      toast.info('Call Received – Please press green dial button to pick up');
+
     };
     const onAnswer = data => {
       console.log('Received answer:', data);
@@ -322,6 +332,16 @@ const VideoMeeting = () => {
           playsInline
         />
       </div>
+        {role === 'initiator' && !offer && (
+  <motion.p
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.6, ease: 'easeOut' }}
+    className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-600 bg-opacity-80 text-white text-sm px-4 py-2 rounded-full shadow-lg animate-pulse"
+  >
+    Press the green button below to start the call
+  </motion.p>
+)}
 
       <div className={`control-bar absolute bottom-0 left-0 right-0 p-4 bg-gray-900 bg-opacity-70 flex justify-center space-x-4 rounded-t-xl transition-all duration-300 ${controlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'}`}>
        
@@ -353,7 +373,13 @@ const VideoMeeting = () => {
         <button onClick={toggleVideo} className="bg-gray-500 text-white px-4 py-2 rounded" title={isVideoOn ? 'Camera Off' : 'Camera On'}>
           {isVideoOn ? <Video size={24} /> : <VideoOff size={24} />}
         </button>
-
+         <button
+    onClick={toggleSpeaker}
+    className="bg-gray-500 text-white px-4 py-2 rounded"
+    title={isSpeakerOn ? 'Mute Speaker' : 'Unmute Speaker'}
+  >
+    {isSpeakerOn ? '🔈' : '🔇'}
+  </button>
        
         {peerRef.current && (
           screenSharing ? (

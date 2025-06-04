@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Home, Calendar, Star, Users, LayoutDashboard,
-  Clock, BookOpen, PlusCircle, Bug, PanelLeftClose
+  Clock, BookOpen, PlusCircle, Bug, PanelLeftClose,HelpCircle
 } from 'lucide-react';
 import { BASE_URL } from '../config';
 import { apiRequest } from '../utils/api';
@@ -52,6 +52,7 @@ const Sidebar = ({ toggleSidebar }) => {
     { title: 'Time Table', path: '/schedule', icon: Clock },
     { title: 'Doubt Support', path: '/community', icon: Users },
     { title: 'Report Issue', path: '/report-issue', icon: Bug },
+    { title: 'New User Guide', path: '/new-user-guide', icon: HelpCircle },
   ];
 
   return (
