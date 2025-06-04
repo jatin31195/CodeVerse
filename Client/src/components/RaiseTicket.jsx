@@ -18,7 +18,7 @@ const getUserId = (user) => {
   return "";
 };
 
-const socket = io(`${BASE_URL}`, {
+const socket = io('https://www.codeverse.solutions', {
   transports: ["websocket", "polling"],
   withCredentials: true,
 });
@@ -54,21 +54,19 @@ const RaiseTicket = () => {
     };
   };
 
-  // 1) Initial data fetch
   useEffect(() => {
     fetchQuestions();
     fetchMyTickets();
     fetchOtherTickets();
   }, []);
 
-  // 2) Sync dropdown selection when both questions & navigation state arrive
   useEffect(() => {
     if (location.state?.problemId && questions.length > 0) {
       const match = questions.find((q) => q._id === location.state.problemId);
       if (match) {
         setSelectedQuestion(match._id);
         setTicketRaised(false);
-        // Optionally scroll the form into view:
+        
         document
           .getElementById("raise-ticket-section")
           ?.scrollIntoView({ behavior: "smooth" });
@@ -76,7 +74,7 @@ const RaiseTicket = () => {
     }
   }, [location.state, questions]);
 
-  // 3) Socket listener to refresh tickets
+ 
   useEffect(() => {
     socket.on("ticketsUpdated", refreshTickets);
     return () => socket.off("ticketsUpdated", refreshTickets);
@@ -92,7 +90,7 @@ const RaiseTicket = () => {
       }
     }
   }, [location.state, questions]);
-  // 4) Filter questions as user types
+  
   useEffect(() => {
     setFilteredQuestions(
       !searchTerm
@@ -138,12 +136,18 @@ const fetchOtherTickets = async () => {
       headers: getAuthConfig().headers,
       withCredentials: true,
     });
-    const all = res.data.tickets || res.data || [];
+    const all = Array.isArray(res.data?.tickets)
+      ? res.data.tickets
+      : Array.isArray(res.data)
+        ? res.data
+        : [];
+
     setOtherTickets(all.filter((t) => getUserId(t.raisedBy) !== currentUserId));
   } catch (err) {
     console.error('Error fetching other tickets:', err);
   }
 };
+
 
 
   const refreshTickets = async () => {
