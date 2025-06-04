@@ -5,10 +5,11 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './Sidebar';
-import {toast} from 'react-toastify'
-import '../App.css'
+import { toast } from 'react-toastify';
+import '../App.css';
 import { BASE_URL } from '../config';
 import { apiRequest } from '../utils/api';
+
 const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -21,32 +22,30 @@ const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const isActive = (path) => location.pathname === path;
 
- useEffect(() => {
-  apiRequest(`${BASE_URL}/api/auth/profile`, { method: 'GET' })
-    .then((res) => {
-      setUser(res.data?.data?.user);
-    })
-    .catch(() => {
-      setUser(null);
-      navigate('/login');
-    });
-}, [navigate]);
+  useEffect(() => {
+    apiRequest(`${BASE_URL}/api/auth/profile`, { method: 'GET' })
+      .then((res) => {
+        setUser(res.data?.data?.user);
+      })
+      .catch(() => {
+        setUser(null);
+        navigate('/login');
+      });
+  }, [navigate]);
 
- 
- 
-   const handleLogout = async () => {
-   try {
-     await apiRequest(`${BASE_URL}/api/auth/logout`, {
-       method: 'POST',
-     });
-   } catch (err) {
-     console.error('Logout failed', err);
-   } finally {
-     setUser(null);
-     setShowUserMenu(false);
-     navigate('/login');
-   }
- };
+  const handleLogout = async () => {
+    try {
+      await apiRequest(`${BASE_URL}/api/auth/logout`, {
+        method: 'POST',
+      });
+    } catch (err) {
+      console.error('Logout failed', err);
+    } finally {
+      setUser(null);
+      setShowUserMenu(false);
+      navigate('/login');
+    }
+  };
 
   const getInitials = (name) =>
     name
@@ -58,156 +57,145 @@ const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
   return (
     <div className="min-h-screen bg-white">
       <header className="sticky top-0 z-50 bg-white bg-opacity-95 backdrop-blur-sm shadow-md">
-  <div className="container mx-auto relative flex h-20 items-center justify-between px-4">
-    
-    <div className="flex items-center gap-3">
-  <div className="relative inline-block group">
-    <button
-      onClick={toggleSidebar}
-      className="p-2"
-      aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
-    >
-      {!sidebarOpen && (
-        <PanelRight className="h-8 w-8 hover:text-blue-600 cursor-pointer" />
-      )}
-    </button>
-    <div className="absolute left-1/2 top-0 ml-10 mt-4 -translate-x-1/2 translate-y-full rounded bg-white px-6 py-1 text-xs text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow w-max">
-      {sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
-    </div>
-  </div>
-</div>
-
-
-    <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-      <Link to="/home" className="flex-shrink-0">
-        <img
-          src="/codelogo1.png"
-          alt="CodeVerse"
-          className="h-12 w-auto"
-        />
-      </Link>
-    </div>
-
-    <div className="flex items-center gap-6">
-      <nav className="hidden md:flex items-center gap-6">
-        {navLinks.map((link) => (
-          <Link
-            key={link.path}
-            to={link.path}
-            className={`relative py-2 transition-colors hover:text-purple-600 ${
-              isActive(link.path)
-                ? 'text-purple-600 after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-purple-600'
-                : 'text-gray-700'
-            }`}
-          >
-            {link.name}
-          </Link>
-        ))}
-      </nav>
-
-     
-
-      {user && (
-        <div className="relative ml-3">
-          <button
-            onClick={() => setShowUserMenu((prev) => !prev)}
-            className="w-12 h-12 cursor-pointer rounded-full border-3 border-blue-500 hover:border-green-400 transition overflow-hidden flex items-center justify-center bg-gray-100"
-          >
-            {user.profilePic ? (
-              <img
-                src={user.profilePic}
-                alt={user.name}
-                className="w-full h-full object-cover rounded-full"
-              />
-            ) : (
-              <span className="text-sm font-semibold text-gray-700">
-                {getInitials(user.username)}
-              </span>
-            )}
-          </button>
-
-          <AnimatePresence>
-            {showUserMenu && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden z-50"
+        <div className="container mx-auto relative flex h-20 items-center justify-between px-4">
+          <div className="flex items-center gap-3">
+            <div className="relative inline-block group">
+              <button
+                onClick={toggleSidebar}
+                className="p-2"
+                aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
               >
-                <button
-                  onClick={() => {
-                    setShowUserMenu(false);
-                    toggleSidebar();
-                  }}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm"
+                {!sidebarOpen && (
+                  <PanelRight className="h-8 w-8 hover:text-blue-600 cursor-pointer" />
+                )}
+              </button>
+              <div className="absolute left-1/2 top-0 ml-10 mt-4 -translate-x-1/2 translate-y-full rounded bg-white px-6 py-1 text-xs text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow w-max">
+                {sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+              </div>
+            </div>
+          </div>
+
+          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <Link to="/home" className="flex-shrink-0">
+              <img src="/codelogo1.png" alt="CodeVerse" className="h-12 w-auto" />
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <nav className="hidden lg:flex items-center gap-6">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`relative py-2 transition-colors hover:text-purple-600 ${
+                    isActive(link.path)
+                      ? 'text-purple-600 after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-purple-600'
+                      : 'text-gray-700'
+                  }`}
                 >
-                  <LayoutPanelLeft className="w-4 h-4 hover:text-blue-600 cursor-pointer" />
-                  Open Sidebar
-                </button>
+                  {link.name}
+                </Link>
+              ))}
+            </nav>
+
+            {user && (
+              <div className="relative ml-3">
                 <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm text-red-600"
+                  onClick={() => setShowUserMenu((prev) => !prev)}
+                  className="w-12 h-12 cursor-pointer rounded-full border-3 border-blue-500 hover:border-green-400 transition overflow-hidden flex items-center justify-center bg-gray-100"
                 >
-                  <LogOut className="w-4 h-4" />
-                  Logout
+                  {user.profilePic ? (
+                    <img
+                      src={user.profilePic}
+                      alt={user.name}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <span className="text-sm font-semibold text-gray-700">
+                      {getInitials(user.username)}
+                    </span>
+                  )}
                 </button>
-              </motion.div>
+
+                <AnimatePresence>
+                  {showUserMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden z-50"
+                    >
+                      <button
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          toggleSidebar();
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm"
+                      >
+                        <LayoutPanelLeft className="w-4 h-4 hover:text-blue-600 cursor-pointer" />
+                        Open Sidebar
+                      </button>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm text-red-600"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             )}
-          </AnimatePresence>
+          </div>
         </div>
-      )}
-    </div>
-  </div>
 
-  
-  {isMenuOpen && (
-    <div className="md:hidden animate-fade-in bg-white border-t">
-      <div className="container mx-auto py-4 px-4 flex flex-col gap-4">
-        {navLinks.map((link) => (
-          <Link
-            key={link.path}
-            to={link.path}
-            onClick={() => setIsMenuOpen(false)}
-            className={`py-3 px-4 rounded-md transition-colors ${
-              isActive(link.path)
-                ? 'bg-purple-100 text-purple-600'
-                : 'hover:bg-gray-100 text-gray-700'
-            }`}
-          >
-            {link.name}
-          </Link>
-        ))}
-      </div>
-    </div>
-  )}
+        {isMenuOpen && (
+          <div className="lg:hidden animate-fade-in bg-white border-t">
+            <div className="container mx-auto py-4 px-4 flex flex-col gap-4">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`py-3 px-4 rounded-md transition-colors ${
+                    isActive(link.path)
+                      ? 'bg-purple-100 text-purple-600'
+                      : 'hover:bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
- 
-  <AnimatePresence>
-    {sidebarOpen && (
-      <div className="fixed inset-0 z-20">
-        <motion.div
-          className="absolute inset-0 bg-black opacity-50"
-          onClick={toggleSidebar}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.5 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-        />
-        <motion.div
-          className="absolute left-0 top-0 bottom-0 w-64 bg-white shadow-lg z-30"
-          initial={{ x: -256 }}
-          animate={{ x: 0 }}
-          exit={{ x: -256 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Sidebar toggleSidebar={toggleSidebar} />
-        </motion.div>
-      </div>
-    )}
-  </AnimatePresence>
-</header>
-
+        <AnimatePresence>
+          {sidebarOpen && (
+            <div className="fixed inset-0 z-20">
+              <motion.div
+                className="absolute inset-0 bg-black opacity-50"
+                onClick={toggleSidebar}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.5 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              />
+              <motion.div
+                className="absolute left-0 top-0 bottom-0 w-64 bg-white shadow-lg z-30"
+                initial={{ x: -256 }}
+                animate={{ x: 0 }}
+                exit={{ x: -256 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Sidebar toggleSidebar={toggleSidebar} />
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </header>
 
       <main className={`${fullPage ? '' : 'container mx-auto px-4 scrollbar-hide overflow-x-hidden'} pb-20`}>
         {title && !fullPage && (
@@ -218,70 +206,68 @@ const MainLayout = ({ children, title, fullPage = false, navLinks = [] }) => {
         {children}
       </main>
 
-      <div className="z-20 fixed bottom-0 left-0 right-0 bg-white border-t md:hidden">
-  <div className="grid grid-cols-3 gap-1 p-2 ">
-    {navLinks.map((link) => {
-      let iconElement;
-      switch (link.name) {
-        case 'POTD Calendar':
-          iconElement = <CalendarDays size={20} />;
-          break;
-        case 'My Problems':
-          iconElement = <List size={20} />;
-          break;
-        case 'Add Problem':
-          iconElement = <Plus size={20} />;
-          break;
-        case 'LeetCode':
-          iconElement = (
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/1/19/LeetCode_logo_black.png"
-              alt="LeetCode"
-              className="h-5 w-5"
-            />
-          );
-          break;
-        case 'Geeks for Geeks':
-          iconElement = (
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/GeeksforGeeks.svg/120px-GeeksforGeeks.svg.png
-"
-              alt="GFG"
-              className="h-5 w-6"
-            />
-          );
-          break;
-        case 'CodeForces':
-          iconElement = (
-            <img
-              src="https://i.imghippo.com/files/vgS4569f.png"
-              alt="CodeForces"
-              className="h-5 w-5"
-            />
-          );
-          break;
-        default:
-          iconElement = <Menu size={20} />;
-      }
+      <div className="z-20 fixed bottom-0 left-0 right-0 bg-white border-t lg:hidden">
+        <div className="grid grid-cols-3 gap-1 p-2">
+          {navLinks.map((link) => {
+            let iconElement;
+            switch (link.name) {
+              case 'POTD Calendar':
+                iconElement = <CalendarDays size={20} />;
+                break;
+              case 'My Problems':
+                iconElement = <List size={20} />;
+                break;
+              case 'Add Problem':
+                iconElement = <Plus size={20} />;
+                break;
+              case 'LeetCode':
+                iconElement = (
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/1/19/LeetCode_logo_black.png"
+                    alt="LeetCode"
+                    className="h-5 w-5"
+                  />
+                );
+                break;
+              case 'Geeks for Geeks':
+                iconElement = (
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/GeeksforGeeks.svg/120px-GeeksforGeeks.svg.png"
+                    alt="GFG"
+                    className="h-5 w-6"
+                  />
+                );
+                break;
+              case 'CodeForces':
+                iconElement = (
+                  <img
+                    src="https://i.imghippo.com/files/vgS4569f.png"
+                    alt="CodeForces"
+                    className="h-5 w-5"
+                  />
+                );
+                break;
+              default:
+                iconElement = <Menu size={20} />;
+            }
 
-      return (
-        <Link
-          key={link.path}
-          to={link.path}
-          className={`flex flex-col items-center p-2 ${
-            isActive(link.path)
-              ? 'text-purple-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          {iconElement}
-          <span className="text-xs mt-1">{link.name}</span>
-        </Link>
-      );
-    })}
-  </div>
-</div>
-
+            return (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`flex flex-col items-center p-2 ${
+                  isActive(link.path)
+                    ? 'text-purple-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {iconElement}
+                <span className="text-xs mt-1">{link.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };

@@ -124,7 +124,7 @@ useEffect(() => {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.2 }}
-                            className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden z-50"
+                            className="absolute right-0 mt-2 w-48 bg-white text-black border border-gray-200 rounded-md shadow-lg overflow-hidden z-50"
                           >
                             <button
                               onClick={() => {
