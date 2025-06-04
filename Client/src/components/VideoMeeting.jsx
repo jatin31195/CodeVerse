@@ -8,10 +8,11 @@ import {
 import { toast } from 'react-toastify';
 import { BASE_URL } from '../config';
 import { apiRequest } from '../utils/api';
-const socket = io(`${BASE_URL}`, {
+const socket = io('https://www.codeverse.solutions', {
   transports: ['websocket'],
   withCredentials: true,
 });
+
 
 const VideoMeeting = () => {
   const { meetingRoom } = useParams();
