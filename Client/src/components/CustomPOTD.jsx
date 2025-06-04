@@ -40,14 +40,27 @@ export default function CustomPOTD() {
       const own = await apiRequest(`${BASE_URL}/api/custom/user-potd/lists`, { method: 'GET' });
       const pub = await apiRequest(`${BASE_URL}/api/custom/user-potd/lists/public`, { method: 'GET' });
 
-      const combined = [...own.data.lists, ...pub.data.lists];
+      const uniqueById = new Map();
+[...own.data.lists, ...pub.data.lists].forEach((list) => {
+  uniqueById.set(list._id, list); // overwrite duplicates
+});
+const combined = Array.from(uniqueById.values());
+
 
       setAllLists(combined);
       setFilteredLists(combined);
 
-      if (combined.length) {
-        selectList(combined[0]._id);
-      }
+      const storedListId = localStorage.getItem('currentList');
+const matchingList = combined.find((l) => l._id === storedListId);
+
+if (matchingList) {
+  selectList(matchingList._id);
+  setCurrentList(matchingList._id);
+} else if (combined.length) {
+  selectList(combined[0]._id);
+  setCurrentList(combined[0]._id);
+}
+
     } catch (err) {
       toast.error('Failed to fetch lists: ' + (err.message || err));
     } finally {
