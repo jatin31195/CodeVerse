@@ -27,6 +27,7 @@ import ReportIssuePage from "./components/ReportIssuePage";
 
 import { apiRequest } from "./utils/api";
 import { BASE_URL } from "./config";
+import NewUserGuide from "./components/NewUserGuide";
 
 const AppContent = () => {
   const [profileChecked, setProfileChecked] = useState(false);
@@ -94,6 +95,7 @@ const AppContent = () => {
         <Route path="/my-problems" element={<MyProblem />} />
         <Route path="/add-problem" element={<AddProblem />} />
         <Route path="/report-issue" element={<ReportIssuePage />} />
+        <Route path="new-user-guide" element={<NewUserGuide/>}/>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

@@ -42,30 +42,30 @@ const fetchListById = async (id) => {
   }
 };
 
-const addQuestionToListAPI = async (listId, questionData) => {
-  try {
-    const res = await apiRequest(`${BASE_URL}/api/fav/add-question`, {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: { listId, questionData },
-    });
-    return res.data;
-  } catch (error) {
-    toast.error("Failed to add question");
-    throw error;
-  }
-};
-
 const removeQuestionFromListAPI = async (listId, questionData) => {
   try {
     const res = await apiRequest(`${BASE_URL}/api/fav/remove-question`, {
       method: "POST",
       headers: getAuthHeaders(),
-      body: { listId, questionData },
+      body: JSON.stringify({ listId, questionData }),
     });
     return res.data;
   } catch (error) {
     toast.error("Failed to remove question");
+    throw error;
+  }
+};
+
+const addQuestionToListAPI = async (listId, questionData) => {
+  try {
+    const res = await apiRequest(`${BASE_URL}/api/fav/add-question`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ listId, questionData }),
+    });
+    return res.data;
+  } catch (error) {
+    toast.error("Failed to add question");
     throw error;
   }
 };
@@ -162,9 +162,9 @@ const SearchBar = ({
                 </div>
                 <div className="flex items-center space-x-2 mt-1 flex-wrap">
                   <span className="px-2 py-1 text-xs bg-gray-200 rounded-full">
-                    {question.platform?.toLowerCase() === "leetcode"
+                    {normalizePlatform(question.platform) === "leetcode"
                       ? "LeetCode"
-                      : question.platform?.toLowerCase() === "gfg"
+                      : normalizePlatform(question.platform) === "gfg"
                       ? "GeeksForGeeks"
                       : "CodeForces"}
                   </span>
@@ -179,77 +179,7 @@ const SearchBar = ({
   );
 };
 
-const QuestionCard = ({ question, listId, onDeleted }) => {
-  const handleDelete = async (e) => {
-    e.stopPropagation();
-    try {
-      const questionData = {
-        _id: question._id,
-        questionId: question.questionId,
-        title: question.title,
-        questionUrl: question.questionUrl,
-        platform: question.platform,
-      };
-      await removeQuestionFromListAPI(listId, questionData);
-      toast.success(`Deleted question "${question.title}"`);
-      onDeleted();
-    } catch {
-      toast.error("Failed to delete question");
-    }
-  };
 
-  const platformLower = question.platform?.toLowerCase() || "";
-
-  const getPlatformColor = (platform) => {
-    if (platform === "leetcode")
-      return "bg-yellow-200 text-yellow-800 border-yellow-300";
-    if (platform === "gfg") return "bg-green-200 text-green-800 border-green-300";
-    return "bg-blue-200 text-blue-800 border-blue-300";
-  };
-
-  return (
-    <motion.div
-      onClick={() => window.open(question.questionUrl, "_blank")}
-      className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition relative cursor-pointer flex flex-col justify-between"
-      whileHover={{ scale: 1.02 }}
-    >
-      <button
-        onClick={handleDelete}
-        className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
-      >
-        <Trash2 size={16} />
-      </button>
-      <div>
-        <h3 className="text-base font-medium mb-2 line-clamp-2">
-          {question.title}
-        </h3>
-        <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <span
-            className={`px-2 py-1 text-xs rounded-full border ${getPlatformColor(
-              platformLower
-            )}`}
-          >
-            {platformLower === "leetcode"
-              ? "LeetCode"
-              : platformLower === "gfg"
-              ? "GeeksForGeeks"
-              : "CodeForces"}
-          </span>
-        </div>
-      </div>
-      <a
-        href={question.questionUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => e.stopPropagation()}
-        className="mt-auto inline-flex items-center text-sm text-purple-600 hover:text-purple-800 transition"
-      >
-        <span className="mr-1">Open Problem</span>
-        <Code size={14} />
-      </a>
-    </motion.div>
-  );
-};
 
 const AddQuestionModal = ({ listId, onQuestionAdded }) => {
   const [open, setOpen] = useState(false);
@@ -466,7 +396,7 @@ const AddQuestionModal = ({ listId, onQuestionAdded }) => {
                       className="text-gray-900 w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
                     >
                       <option className="bg-white" value="LeetCode">LeetCode</option>
-                      <option className="bg-white" value="GeeksForGeeks">GeeksForGeeks</option>
+                      <option className="bg-white" value="GFG">GeeksForGeeks</option>
                       <option className="bg-white" value="CodeForces">CodeForces</option>
                       <option className="bg-white" value="Other">Other</option>
                     </select>
@@ -504,6 +434,91 @@ const AddQuestionModal = ({ listId, onQuestionAdded }) => {
   );
 };
 
+const normalizePlatform = (plat) => {
+  const p = plat?.toLowerCase() || "";
+  if (p.includes("leetcode")) return "leetcode";
+  if (p === "gfg" || p === "geeksforgeeks") return "gfg";
+  if (p.includes("codeforces") || p.includes("cf")) return "codeforces";
+  return "other";
+};
+
+
+
+
+
+const QuestionCard = ({ question, listId, onDeleted }) => {
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    const questionData = {
+      _id: question._id,
+      questionId: question.questionId,
+      title: question.title,
+      questionUrl: question.questionUrl,
+      platform: question.platform,
+    };
+    try {
+      await removeQuestionFromListAPI(listId, questionData);
+      toast.success(`Deleted question "${question.title}"`);
+      onDeleted();
+    } catch {
+      toast.error("Failed to delete question");
+    }
+  };
+
+  const platformKey = normalizePlatform(question.platform);
+
+  const getPlatformColor = (platform) => {
+    if (platform === "leetcode")
+      return "bg-yellow-200 text-yellow-800 border-yellow-300";
+    if (platform === "gfg")
+      return "bg-green-200 text-green-800 border-green-300";
+    return "bg-blue-200 text-blue-800 border-blue-300";
+  };
+
+  return (
+    <motion.div
+      onClick={() => window.open(question.questionUrl, "_blank")}
+      className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition relative cursor-pointer flex flex-col justify-between"
+      whileHover={{ scale: 1.02 }}
+    >
+      <button
+        onClick={handleDelete}
+        className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+      >
+        <Trash2 size={16} />
+      </button>
+      <div>
+        <h3 className="text-base font-medium mb-2 line-clamp-2">
+          {question.title}
+        </h3>
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <span
+            className={`px-2 py-1 text-xs rounded-full border ${getPlatformColor(
+              platformKey
+            )}`}
+          >
+            {platformKey === "leetcode"
+              ? "LeetCode"
+              : platformKey === "gfg"
+              ? "GeeksForGeeks"
+              : "CodeForces"}
+          </span>
+        </div>
+      </div>
+      <a
+        href={question.questionUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        className="mt-auto inline-flex items-center text-sm text-purple-600 hover:text-purple-800 transition"
+      >
+        <span className="mr-1">Open Problem</span>
+        <Code size={14} />
+      </a>
+    </motion.div>
+  );
+};
+
 const ListView = () => {
   const { id } = useParams();
   const [list, setList] = useState(null);
@@ -517,7 +532,11 @@ const ListView = () => {
     if (foundList) {
       setList(foundList);
     } else {
-      setList({ listName: "My List", questions: [], updatedAt: new Date().toISOString() });
+      setList({
+        listName: "My List",
+        questions: [],
+        updatedAt: new Date().toISOString(),
+      });
     }
   };
 
@@ -528,17 +547,22 @@ const ListView = () => {
   useEffect(() => {
     if (!list) return;
     let filtered = [...(list.questions || [])];
+
+    // Filter by normalized platform
     if (activeFilter !== "all") {
       filtered = filtered.filter(
-        (q) => q.platform?.toLowerCase() === activeFilter
+        (q) => normalizePlatform(q.platform) === activeFilter
       );
     }
+
+    // Filter by title search
     if (searchQuery.trim()) {
       const lowerQuery = searchQuery.toLowerCase();
       filtered = filtered.filter((q) =>
         q.title?.toLowerCase().includes(lowerQuery)
       );
     }
+
     setFilteredQuestions(filtered);
   }, [list, searchQuery, activeFilter]);
 
@@ -550,17 +574,19 @@ const ListView = () => {
     setActiveFilter(value);
   };
 
+  // Count how many questions per normalized platform
   const countByPlatform =
     list?.questions?.reduce((acc, q) => {
-      const platformLower = q.platform?.toLowerCase();
-      if (platformLower) {
-        acc[platformLower] = (acc[platformLower] || 0) + 1;
+      const key = normalizePlatform(q.platform);
+      if (key && key !== "other") {
+        acc[key] = (acc[key] || 0) + 1;
       }
       return acc;
     }, {}) || {};
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
+      {/* Header */}
       <div className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-4 sm:py-6 mb-4 sm:mb-6">
         <div className="container max-w-7xl mx-auto px-4 sm:px-6">
           <button
@@ -578,20 +604,28 @@ const ListView = () => {
               <p className="text-white/80 text-sm sm:text-base mt-1">
                 {list?.questions?.length || 0} questions • Updated{" "}
                 {list && list.updatedAt
-                  ? formatDistanceToNow(new Date(list.updatedAt), { addSuffix: true })
+                  ? formatDistanceToNow(new Date(list.updatedAt), {
+                      addSuffix: true,
+                    })
                   : "just now"}
               </p>
             </div>
             <div className="flex items-center space-x-2">
-              <AddQuestionModal listId={list?._id || id} onQuestionAdded={loadList} />
+              <AddQuestionModal
+                listId={list?._id || id}
+                onQuestionAdded={loadList}
+              />
             </div>
           </div>
         </div>
       </div>
 
+      {/* Main Content */}
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 pb-8 sm:pb-12">
         <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left Column */}
           <div className="flex-1">
+            {/* Search + Add Button */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
               <SearchBar
                 onSearch={handleSearch}
@@ -601,10 +635,11 @@ const ListView = () => {
                 className="w-full sm:w-2/3"
               />
               <div className="w-full sm:w-1/3 flex justify-end sm:justify-start">
-                {/* AddQuestionModal already rendered above */}
+                {/* AddQuestionModal is already rendered above */}
               </div>
             </div>
 
+            {/* Platform Filters */}
             <div className="mb-6 overflow-x-auto">
               <div className="flex space-x-2">
                 <button
@@ -617,7 +652,7 @@ const ListView = () => {
                 >
                   All ({list?.questions?.length || 0})
                 </button>
-                {countByPlatform.leetcode && (
+                {countByPlatform.leetcode > 0 && (
                   <button
                     onClick={() => handleFilterChange("leetcode")}
                     className={`px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-base transition ${
@@ -629,7 +664,7 @@ const ListView = () => {
                     LeetCode ({countByPlatform.leetcode})
                   </button>
                 )}
-                {countByPlatform.gfg && (
+                {countByPlatform.gfg > 0 && (
                   <button
                     onClick={() => handleFilterChange("gfg")}
                     className={`px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-base transition ${
@@ -641,7 +676,7 @@ const ListView = () => {
                     GFG ({countByPlatform.gfg})
                   </button>
                 )}
-                {countByPlatform.codeforces && (
+                {countByPlatform.codeforces > 0 && (
                   <button
                     onClick={() => handleFilterChange("codeforces")}
                     className={`px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-base transition ${
@@ -656,17 +691,24 @@ const ListView = () => {
               </div>
             </div>
 
+            {/* Question Grid or “No questions” message */}
             {list?.questions?.length === 0 ? (
               <div className="text-center py-10 sm:py-12 bg-white rounded-lg shadow-sm">
-                <h3 className="text-lg font-medium text-gray-600">No questions available</h3>
-                <p className="text-gray-500 mt-2">Add your first question to get started</p>
+                <h3 className="text-lg font-medium text-gray-600">
+                  No questions available
+                </h3>
+                <p className="text-gray-500 mt-2">
+                  Add your first question to get started
+                </p>
               </div>
             ) : filteredQuestions.length === 0 ? (
               <div className="text-center py-10 sm:py-12 bg-white rounded-lg shadow-sm">
                 <h3 className="text-lg font-medium text-gray-600">
                   No questions match your criteria
                 </h3>
-                <p className="text-gray-500 mt-2">Try a different search term or filter</p>
+                <p className="text-gray-500 mt-2">
+                  Try a different search term or filter
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -682,34 +724,42 @@ const ListView = () => {
             )}
           </div>
 
+          {/* Right Sidebar: Platform Distribution */}
           <div className="hidden lg:block lg:w-1/4">
             <div className="bg-white shadow-sm p-5 rounded-lg sticky top-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center">
-                <ListFilter className="mr-2 h-5 w-5 text-purple-500" /> Platform Distribution
+                <ListFilter className="mr-2 h-5 w-5 text-purple-500" /> Platform
+                Distribution
               </h3>
               <div className="space-y-2">
-                {countByPlatform.leetcode && (
+                {countByPlatform.leetcode > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="px-2 py-1 border rounded-full text-xs bg-yellow-100 text-yellow-800">
                       LeetCode
                     </span>
-                    <span className="font-medium">{countByPlatform.leetcode}</span>
+                    <span className="font-medium">
+                      {countByPlatform.leetcode}
+                    </span>
                   </div>
                 )}
-                {countByPlatform.gfg && (
+                {countByPlatform.gfg > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="px-2 py-1 border rounded-full text-xs bg-green-100 text-green-800">
                       GeeksForGeeks
                     </span>
-                    <span className="font-medium">{countByPlatform.gfg}</span>
+                    <span className="font-medium">
+                      {countByPlatform.gfg}
+                    </span>
                   </div>
                 )}
-                {countByPlatform.codeforces && (
+                {countByPlatform.codeforces > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="px-2 py-1 border rounded-full text-xs bg-blue-100 text-blue-800">
                       CodeForces
                     </span>
-                    <span className="font-medium">{countByPlatform.codeforces}</span>
+                    <span className="font-medium">
+                      {countByPlatform.codeforces}
+                    </span>
                   </div>
                 )}
               </div>
@@ -722,3 +772,4 @@ const ListView = () => {
 };
 
 export default ListView;
+
