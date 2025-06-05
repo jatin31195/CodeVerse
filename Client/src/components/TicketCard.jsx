@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { MessageSquare, Video, VideoOff, Check, X, Clock, AlertCircle, Code } from 'lucide-react';
+import {
+  MessageSquare,
+  Video,
+  VideoOff,
+  Check,
+  X,
+  Clock,
+  AlertCircle,
+  Code,
+} from 'lucide-react';
 
 const getRaisedByInitial = (raisedBy) => {
   if (typeof raisedBy === 'string') return raisedBy.charAt(0);
@@ -13,6 +22,7 @@ const TicketCard = ({
   onAcceptMeet,
   onJoinMeet,
   onCloseMeet,
+  onCloseTicket,
   onOpenTextSolution,
   currentTicket,
   solutionText,
@@ -21,29 +31,6 @@ const TicketCard = ({
   onRequestMeet,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
-
-  const videoMeetStatus =
-    ticket.videoMeetStatus ||
-    (ticket.videoMeetRequest && ticket.videoMeetRequest.status === 'pending' ? 'pending' : '');
-
-  const getStatusBadge = (status) => {
-    switch (status.toLowerCase()) {
-      case 'open':
-        return <span className="ticket-badge status-open">Open</span>;
-      case 'in progress':
-        return <span className="ticket-badge status-in-progress">In Progress</span>;
-      case 'resolved':
-        return <span className="ticket-badge status-resolved">Resolved</span>;
-      case 'closed':
-        return <span className="ticket-badge status-closed">Closed</span>;
-      case 'video-pending':
-        return <span className="ticket-badge status-pending">Video Pending</span>;
-      case 'video-accepted':
-        return <span className="ticket-badge status-accepted">Video Accepted</span>;
-      default:
-        return <span className="ticket-badge status-open">Open</span>;
-    }
-  };
 
   const cardBackgroundClass =
     ticket.status.toLowerCase() === 'open'
@@ -54,7 +41,6 @@ const TicketCard = ({
       ? 'from-green-500/10 to-emerald-500/10'
       : 'from-gray-500/10 to-gray-700/10';
 
- 
   const displaySolutions =
     ticket.solutions && ticket.solutions.length > 0 ? (
       ticket.solutions.map((sol) => (
@@ -92,12 +78,13 @@ const TicketCard = ({
   return (
     <div
       className={`relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br ${cardBackgroundClass} backdrop-blur-md transition-all duration-300 ${
-        isHovered ? 'translate-y-[-4px] shadow-lg shadow-codeverse-purple/20' : 'shadow-md shadow-black/20'
+        isHovered
+          ? 'translate-y-[-4px] shadow-lg shadow-codeverse-purple/20'
+          : 'shadow-md shadow-black/20'
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      
       <div
         className={`absolute inset-0 bg-gradient-to-r from-codeverse-cyan via-codeverse-purple to-codeverse-blue opacity-0 transition-opacity duration-300 ${
           isHovered ? 'opacity-20' : ''
@@ -110,21 +97,47 @@ const TicketCard = ({
             <div className="h-7 w-7 flex items-center justify-center rounded-full bg-gradient-to-r from-codeverse-cyan to-codeverse-purple text-white">
               <Code className="h-3.5 w-3.5" />
             </div>
-            <h3 className="font-medium text-base text-white">{ticket.questionName}</h3>
-            <div className="ml-2">{getStatusBadge(ticket.status)}</div>
+            {ticket.questionUrl ? (
+              <a
+                href={ticket.questionUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-base text-white hover:underline flex items-center"
+              >
+                {ticket.questionName}
+                {ticket.questionPlatform && (
+                  <span className="ml-2 px-2 py-0.5 bg-codeverse-purple/20 text-xs text-codeverse-purple rounded">
+                    {ticket.questionPlatform}
+                  </span>
+                )}
+              </a>
+            ) : (
+              <h3 className="font-medium text-base text-white">
+                {ticket.questionName}
+                {ticket.questionPlatform && (
+                  <span className="ml-2 px-2 py-0.5 bg-codeverse-purple/20 text-xs text-codeverse-purple rounded">
+                    {ticket.questionPlatform}
+                  </span>
+                )}
+              </h3>
+            )}
           </div>
+
           {isMyTicket && (
             <div className="flex items-center text-xs text-gray-400">
               <Clock className="h-3 w-3 mr-1" />
               <span>{ticket.timeAgo}</span>
             </div>
           )}
+
           {!isMyTicket && (
             <div className="relative group">
               <div className="flex items-center text-xs bg-black/30 px-2 py-1 rounded-full border border-white/10 hover:bg-black/50 transition-colors cursor-pointer">
-                <span className="font-medium text-gray-400">By: </span>
+                <span className="font-medium text-gray-400">By:</span>
                 <span className="ml-1 text-white">
-                  {ticket.raisedBy && ticket.raisedBy.username ? ticket.raisedBy.username : ticket.raisedBy}
+                  {ticket.raisedBy && ticket.raisedBy.username
+                    ? ticket.raisedBy.username
+                    : ticket.raisedBy}
                 </span>
               </div>
               <div className="absolute left-0 bottom-[-70px] w-48 p-2 bg-black/80 border border-white/10 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
@@ -134,9 +147,13 @@ const TicketCard = ({
                   </div>
                   <div>
                     <p className="text-sm font-medium">
-                      {ticket.raisedBy && ticket.raisedBy.username ? ticket.raisedBy.username : ticket.raisedBy}
+                      {ticket.raisedBy && ticket.raisedBy.username
+                        ? ticket.raisedBy.username
+                        : ticket.raisedBy}
                     </p>
-                    <p className="text-xs text-gray-400">Active Contributor</p>
+                    <p className="text-xs text-gray-400">
+                      Active Contributor
+                    </p>
                   </div>
                 </div>
               </div>
@@ -144,13 +161,16 @@ const TicketCard = ({
           )}
         </div>
 
-        <p className="text-xs text-gray-400 mb-3 line-clamp-2">{ticket.description}</p>
+        <p className="text-xs text-gray-400 mb-3 line-clamp-2">
+          {ticket.description}
+        </p>
 
-       
         <div className="mb-3">
           <div className="flex items-center mb-2">
             <div className="h-px flex-1 bg-white/10"></div>
-            <span className="px-2 text-xs uppercase tracking-wider text-gray-400 font-medium">Solution</span>
+            <span className="px-2 text-xs uppercase tracking-wider text-gray-400 font-medium">
+              Solution
+            </span>
             <div className="h-px flex-1 bg-white/10"></div>
           </div>
           {displaySolutions ? (
@@ -163,20 +183,27 @@ const TicketCard = ({
           )}
         </div>
 
-       
-        <div className="mt-3">
+        <div className="mt-3 space-y-2">
+          {isMyTicket && ticket.status.toLowerCase() === 'open' && (
+            <button
+              onClick={() => onCloseTicket(ticket._id)}
+              className="bg-red-600 text-white rounded-md px-3 py-1 text-xs hover:bg-red-700 transition-colors flex items-center"
+            >
+              <X className="h-3 w-3 mr-1" /> Close Ticket
+            </button>
+          )}
           {isMyTicket ? (
             ticket.videoMeetRequest && ticket.videoMeetRequest.status === 'pending' ? (
               <div className="flex items-center space-x-2">
                 <button
                   onClick={onAcceptMeet}
-                  className="cursor-pointer bg-gradient-to-r from-green-600 to-green-500 text-white rounded-md px-3 py-1 text-xs font-medium hover:opacity-90 transition-opacity flex items-center"
+                  className="bg-gradient-to-r from-green-600 to-green-500 text-white rounded-md px-3 py-1 text-xs hover:opacity-90 transition-opacity flex items-center"
                 >
                   <Check className="h-3 w-3 mr-1 " /> Accept Request
                 </button>
                 <button
                   onClick={onCloseMeet}
-                  className="cursor-pointer bg-black/30 text-white rounded-md px-3 py-1 text-xs font-medium hover:bg-black/50 transition-colors flex items-center border border-white/10"
+                  className="bg-black/30 text-white rounded-md px-3 py-1 text-xs hover:bg-black/50 transition-colors flex items-center border border-white/10"
                 >
                   <X className="h-3 w-3 mr-1 " /> Decline
                 </button>
@@ -185,15 +212,13 @@ const TicketCard = ({
               <div className="flex items-center space-x-2">
                 <button
                   onClick={onJoinMeet}
-                  className="cursor-pointer relative overflow-hidden group bg-gradient-to-r from-codeverse-cyan to-codeverse-blue text-white rounded-md px-3 py-1 text-xs font-medium transition-all duration-300 hover:shadow-lg hover:shadow-codeverse-cyan/30"
+                  className="relative overflow-hidden group bg-gradient-to-r from-codeverse-cyan to-codeverse-blue text-white rounded-md px-3 py-1 text-xs hover:shadow-lg hover:shadow-codeverse-cyan/30 transition-all duration-300 flex items-center"
                 >
-                  <span className="relative flex items-center">
-                    <Video className="h-3 w-3 mr-1" /> Join Meet
-                  </span>
+                  <Video className="h-3 w-3 mr-1" /> Join Meet
                 </button>
                 <button
                   onClick={onCloseMeet}
-                  className="cursor-pointer bg-gradient-to-r from-red-600 to-red-500 text-white rounded-md px-3 py-1 text-xs font-medium hover:opacity-90 transition-opacity flex items-center"
+                  className="bg-gradient-to-r from-red-600 to-red-500 text-white rounded-md px-3 py-1 text-xs hover:opacity-90 transition-opacity flex items-center"
                 >
                   <VideoOff className="h-3 w-3 mr-1" /> Close Meet
                 </button>
@@ -201,64 +226,56 @@ const TicketCard = ({
             ) : ticket.status === 'video-active' ? (
               <button
                 onClick={onCloseMeet}
-                className="cursor-pointer bg-gradient-to-r from-red-600 to-red-500 text-white rounded-md px-3 py-1 text-xs font-medium hover:opacity-90 transition-opacity flex items-center"
+                className="bg-gradient-to-r from-red-600 to-red-500 text-white rounded-md px-3 py-1 text-xs hover:opacity-90 transition-opacity flex items-center"
               >
                 <VideoOff className="h-3 w-3 mr-1" /> End Meet
               </button>
-            ) : (
-              <div className="text-xs text-gray-400"></div>
-            )
+            ) : null
+          ) : ticket.videoMeetRequest && ticket.videoMeetRequest.status === 'pending' ? (
+            <div className="text-xs text-gray-400">
+              Waiting for ticket raiser to accept the video meet request...
+            </div>
+          ) : ticket.status === 'video-accepted' ? (
+            <button
+              onClick={onJoinMeet}
+              className="relative overflow-hidden group bg-gradient-to-r from-codeverse-cyan to-codeverse-blue text-white rounded-md px-3 py-1 text-xs hover:shadow-lg hover:shadow-codeverse-cyan/30 transition-all duration-300 flex items-center"
+            >
+              <Video className="h-3 w-3 mr-1" /> Join Meet
+            </button>
           ) : (
-            ticket.videoMeetRequest && ticket.videoMeetRequest.status === 'pending' ? (
-              <div className="text-xs text-gray-400">
-                Waiting for ticket raiser to accept the video meet request...
+            <div className="space-y-2">
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => onOpenTextSolution && onOpenTextSolution(ticket)}
+                  className="w-1/2 bg-black/30 border border-white/10 text-white rounded-md px-3 py-1 text-xs hover:bg-black/50 transition-colors flex items-center justify-center"
+                >
+                  <MessageSquare className="h-3 w-3 mr-1" /> Provide Text Solution
+                </button>
+                <button
+                  onClick={() => onRequestMeet && onRequestMeet(ticket._id)}
+                  className="w-1/2 bg-black/30 border border-white/10 relative overflow-hidden group bg-gradient-to-r from-codeverse-cyan to-codeverse-purple text-white rounded-md px-3 py-1 text-xs hover:shadow-lg hover:shadow-codeverse-purple/30 transition-all duration-300 flex items-center justify-center"
+                >
+                  <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-codeverse-purple to-codeverse-cyan opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                  <Video className="h-3 w-3 mr-1" /> Request Video Meet
+                </button>
               </div>
-            ) : ticket.status === 'video-accepted' ? (
-              <button
-                onClick={onJoinMeet}
-                className="relative overflow-hidden group bg-gradient-to-r from-codeverse-cyan to-codeverse-blue text-white rounded-md px-3 py-1 text-xs font-medium transition-all duration-300 hover:shadow-lg hover:shadow-codeverse-cyan/30"
-              >
-                <span className="cursor-pointer relative flex items-center">
-                  <Video className="h-3 w-3 mr-1" /> Join Meet
-                </span>
-              </button>
-            ) : (
-              <div>
-                <div className="flex space-x-2">
+              {currentTicket && currentTicket._id === ticket._id && (
+                <div className="mt-2">
+                  <textarea
+                    placeholder="Enter text solution"
+                    value={solutionText}
+                    onChange={onSolutionTextChange}
+                    className="w-full p-2 rounded-md bg-black/20 border border-white/10 text-white"
+                  ></textarea>
                   <button
-                    onClick={() => onOpenTextSolution && onOpenTextSolution(ticket)}
-                    className="w-1/2 bg-black/30 border border-white/10 cursor-pointer text-white rounded-md px-3 py-1 text-xs font-medium hover:bg-black/50 transition-colors flex items-center justify-center"
+                    onClick={() => onSubmitSolution(ticket._id)}
+                    className="mt-2 bg-gradient-to-r from-codeverse-cyan to-codeverse-purple text-white px-3 py-1 rounded-md text-xs"
                   >
-                    <MessageSquare className="h-3 w-3 mr-1" /> Provide Text Solution
-                  </button>
-                  <button
-                    onClick={() => onRequestMeet && onRequestMeet(ticket._id)}
-                    className="w-1/2 bg-black/30 border border-white/10 cursor-pointer relative overflow-hidden group bg-gradient-to-r from-codeverse-cyan to-codeverse-purple text-white rounded-md px-3 py-1 text-xs font-medium transition-all duration-300 hover:shadow-lg hover:shadow-codeverse-purple/30"
-                  >
-                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-codeverse-purple to-codeverse-cyan opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                    <span className="relative flex items-center justify-center">
-                      <Video className="h-3 w-3 mr-1" /> Request Video Meet
-                    </span>
+                    Submit Solution
                   </button>
                 </div>
-                {currentTicket && currentTicket._id === ticket._id && (
-                  <div className="mt-2">
-                    <textarea
-                      placeholder="Enter text solution"
-                      value={solutionText}
-                      onChange={onSolutionTextChange}
-                      className="w-full p-2 rounded-md bg-black/20 border border-white/10 text-white"
-                    ></textarea>
-                    <button
-                      onClick={() => onSubmitSolution(ticket._id)}
-                      className="mt-2 bg-gradient-to-r from-codeverse-cyan to-codeverse-purple text-white px-3 py-1 rounded-md text-xs"
-                    >
-                      Submit Solution
-                    </button>
-                  </div>
-                )}
-              </div>
-            )
+              )}
+            </div>
           )}
         </div>
       </div>
