@@ -292,10 +292,15 @@ const handleJoinOrCreateVideoMeet = async (ticket, isMyTicket) => {
       />
       <Header onNewTicket={() => {}} />
       <main className="container pb-12 max-w-4xl mx-auto">
+        <div className="fixed top-25 left-6 bg-white/80 backdrop-blur-md shadow-md rounded-full px-4 py-2 text-sm text-gray-800 flex items-center gap-2 border border-gray-300 hover:shadow-lg transition-all duration-400 z-40 animate-pulse">
+  <span className="text-blue-600 font-semibold">Tip:</span>
+  <span>If you have doubts on any recent POTD question, search for it first. Then, raise a ticket to request a video or text solution via VideoMeeting.</span>
+</div>
+
         {/* Raise Ticket Section */}
         <motion.section
           id="raise-ticket-section"
-          className="mb-8 animate-slide-up"
+          className="mb-8 animate-slide-up mt-10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}

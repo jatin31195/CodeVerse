@@ -6,8 +6,13 @@ const DashboardLayout = ({
   sidebarOpen,
   toggleSidebar,
 }) => (
+    
   <div className=" min-h-screen w-full bg-gradient-to-br from-white via-slate-50 to-purple-50 text-gray-900 transition-colors duration-300">
     <main className="flex flex-col w-full px-4 sm:px-6 lg:px-8 py-8 relative">
+    <div className="fixed top-25 left-6 bg-white/80 backdrop-blur-md shadow-md rounded-full px-4 py-2 text-sm text-gray-800 flex items-center gap-2 border border-gray-300 hover:shadow-lg transition-all duration-400 z-40 animate-pulse">
+  <span className="text-blue-600 font-semibold">Tip:</span>
+  <span>Connect your LeetCode, GFG, and Codeforces accounts to track your progress seamlessly.</span>
+</div>
 
     
       <div className="absolute -top-28 -right-24 w-72 h-72 bg-purple-400/20 rounded-full blur-3xl -z-10" />

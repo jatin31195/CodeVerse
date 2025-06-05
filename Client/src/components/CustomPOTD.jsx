@@ -106,8 +106,17 @@ const selectList = async (listId) => {
 
   return (
     <MainLayout navLinks={navLinks}>
+      <div className="fixed top-25 left-6 bg-white/80 backdrop-blur-md shadow-md rounded-full px-4 py-2 text-sm text-gray-800 flex flex-col gap-1 border border-gray-300 hover:shadow-lg transition-all duration-400 z-40 animate-pulse">
+  <div>
+    <span className="text-blue-600 font-semibold">Tip:</span> Want to stay consistent with your DSA prep? Create a custom list for topics like Stack, DP, or Graphs and assign problems to each day of the month.
+  </div>
+  <div>
+    Plan your own POTD calendar—private or public—and build strong habits, one problem at a time.
+  </div>
+</div>
+
       <motion.div
-        className="font-poppins py-10 mx-auto w-full"
+        className="font-poppins py-10 mx-auto w-full mt-10"
         initial="hidden"
         animate="visible"
         variants={fadeIn}
