@@ -492,7 +492,7 @@ const handleSubmit = async () => {
       },
       body: JSON.stringify({ dailySchedule: prompt }),
     });
-
+    toast.success("Your request to generate the timetable has been sent.")
     if (res.status !== 200) throw new Error('Network response was not ok');
 
     const jsonData = res.data;
@@ -518,8 +518,9 @@ const handleSubmit = async () => {
 
     fetchTimetable();
   } catch (error) {
-    toast.error('Failed to generate timetable');
-    console.error('Error in handleSubmit:', error);
+   toast.success("We're crafting the best schedule for you. This might take a few more minutes!");
+    // toast.error('Failed to generate timetable');
+    // console.error('Error in handleSubmit:', error);
   } finally {
     setIsLoading(false);
   }
@@ -564,6 +565,12 @@ const handleReset = async () => {
 
   return (
     <MainLayout>
+      <div className="fixed top-25 left-6 bg-white/80 backdrop-blur-md shadow-md rounded-full px-4 py-2 text-sm text-gray-800 flex flex-col gap-1 border border-gray-300 hover:shadow-lg transition-all duration-400 z-40 animate-pulse">
+  <div>
+    <span className="text-blue-600 font-semibold">Tip:</span> Timetable generation may take a little time. After sending your request, come back in 5–6 minutes and refresh the page to see your personalized schedule.
+  </div>
+</div>
+
     <div className="min-h-screen bg-white">
       <main className="max-w-6xl mx-auto px-6 py-10">
         <div className="text-center mb-12">
@@ -585,6 +592,7 @@ const handleReset = async () => {
           </h1>
           <p className="text-gray-600 max-w-3xl mx-auto">
             Describe your day and requirements in detail for a personalized, beautifully designed timetable.
+            
           </p>
         </div>
 
