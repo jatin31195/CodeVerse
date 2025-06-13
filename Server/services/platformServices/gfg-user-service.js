@@ -1,143 +1,147 @@
 const axios = require("axios");
+const cheerio = require("cheerio");
 const { JSDOM } = require("jsdom");
 
-// Function to extract data using XPath
+
 function getElementByXpath(document, path) {
-    const element = document.evaluate(path, document, null, 9, null).singleNodeValue;
-    return element ? element.textContent.replace(/\D/g, "") : "0"; // Extract numbers or return "0"
+
+  const result = document.evaluate(path, document, null, 9, null);
+  const el     = result.singleNodeValue;
+  return el
+    ? el.textContent.replace(/\D/g, "") 
+    : "0";
 }
 
-// Function to extract languages used
+
+
 function extractLanguagesUsed(document) {
-    let languagesUsed = [];
-    const languageElements = document.querySelectorAll('.educationDetails_head_right--text__lLOHI');
-
-    languageElements.forEach(el => {
-        const text = el.textContent.trim();
-        if (text && !text.includes("Languages Used")) { // Avoid headings
-            languagesUsed.push(text);
-        }
-    });
-
-    return languagesUsed.length > 0 ? languagesUsed : ["Unknown"];
+  const langs = [];
+  document.querySelectorAll('.educationDetails_head_right--text__lLOHI').forEach(el => {
+    const txt = el.textContent.trim();
+    if (txt && !txt.includes("Languages Used")) langs.push(txt);
+  });
+  return langs.length ? langs : ["Unknown"];
 }
 
-// Function to fetch user's yearly problem-solving heatmap
 const fetchGfgProblemHeatmap = async (username) => {
-    try {
-        let currentYear = new Date().getFullYear();
-        let heatmapData = {};
-        let firstActiveYear = currentYear; // Assume the user started in the current year
-
-        // Start from the earliest year and fetch all data
-        for (let year = firstActiveYear; year <= currentYear; year++) {
-            const response = await axios.post(
-                "https://practiceapi.geeksforgeeks.org/api/v1/user/problems/submissions/",
-                { handle: username, requestType: "getYearwiseUserSubmissions", year, month: "" }
-            );
-
-            if (!response.data || !response.data.result) continue;
-
-            const yearlyData = response.data.result;
-            if (Object.keys(yearlyData).length > 0) {
-                firstActiveYear = Math.min(firstActiveYear, year); // Update first active year dynamically
-                for (const key in yearlyData) {
-                    heatmapData[Math.floor(new Date(key).getTime() / 1000)] = yearlyData[key];
-                }
-            }
-        }
-
-        return { platformName: "GFG", heatmapData };
-    } catch (error) {
-        console.error(`Error fetching GFG problem heatmap for ${username}:`, error.message);
-        return { platformName: "GFG", heatmapData: {} };
+  try {
+    const currentYear = new Date().getFullYear();
+    const heatmapData = {};
+    for (let year = currentYear; year <= currentYear; year++) {
+      const resp = await axios.post(
+        "https://practiceapi.geeksforgeeks.org/api/v1/user/problems/submissions/",
+        { handle: username, requestType: "getYearwiseUserSubmissions", year, month: "" }
+      );
+      const yearly = resp.data.result || {};
+      for (const date in yearly) {
+        heatmapData[Math.floor(new Date(date).getTime() / 1000)] = yearly[date];
+      }
     }
+    return { platformName: "GFG", heatmapData };
+  } catch (err) {
+    console.error(`Error fetching problem heatmap for ${username}:`, err.message);
+    return { platformName: "GFG", heatmapData: {} };
+  }
 };
 
-// Function to scrape contest heatmap from profile
+
 const fetchGfgContestHeatmap = async (username) => {
-    try {
-        const profileUrl = `https://auth.geeksforgeeks.org/user/${username}`;
-        const pageResponse = await axios.get(profileUrl);
-        const dom = new JSDOM(pageResponse.data);
-        const document = dom.window.document;
+  try {
+    const profileUrl = `https://auth.geeksforgeeks.org/user/${username}`;
+    const { data } = await axios.get(profileUrl);
+    const { document } = new JSDOM(data).window;
 
-        let contestDates = [];
-        const contestElements = document.querySelectorAll(".calendar-heatmap rect");
-
-        contestElements.forEach((el) => {
-            const date = el.getAttribute("data-date");
-            const count = el.getAttribute("data-count");
-
-            if (date && count && parseInt(count) > 0) {
-                contestDates.push({ timestamp: Math.floor(new Date(date).getTime() / 1000), count: parseInt(count) });
-            }
+    const contestDates = [];
+    document.querySelectorAll("rect[data-date]").forEach(rect => {
+      const date = rect.getAttribute("data-date");
+      const count = parseInt(rect.getAttribute("data-count"), 10);
+      if (date && count > 0) {
+        contestDates.push({
+          timestamp: Math.floor(new Date(date).getTime() / 1000),
+          count
         });
-
-        return { platformName: "GFG", contestHeatmap: contestDates };
-    } catch (error) {
-        console.error(`Error fetching GFG contest heatmap for ${username}:`, error.message);
-        return { platformName: "GFG", contestHeatmap: [] };
-    }
+      }
+    });
+    return { platformName: "GFG", contestHeatmap: contestDates };
+  } catch (err) {
+    console.error(`Error fetching contest heatmap for ${username}:`, err.message);
+    return { platformName: "GFG", contestHeatmap: [] };
+  }
 };
 
-// Fetch user profile details
+
 exports.fetchGfgUserDetails = async (username) => {
-    try {
-        const response = await axios.get(`https://authapi.geeksforgeeks.org/api-get/user-profile-info/?handle=${username}`);
+  try {
+  
+    const apiUrl = `https://authapi.geeksforgeeks.org/api-get/user-profile-info/?handle=${username}`;
+    const apiRes = await axios.get(apiUrl);
+    const data = apiRes.data?.data;
+    if (!data) throw new Error("Invalid API response");
 
-        if (!response.data || !response.data.data) {
-            throw new Error("Invalid API response");
-        }
+    
+    const authUrl = `https://auth.geeksforgeeks.org/user/${username}`;
+    const authPage = await axios.get(authUrl);
+    const dom = new JSDOM(authPage.data);
+    const document = dom.window.document;
 
-        const data = response.data.data;
-        const profileLink = `https://auth.geeksforgeeks.org/user/${username}`;
+    
+    const submissionCount = [
+      { difficulty: "All",    count: data.total_problems_solved || 0 },
+      { difficulty: "School", count: getElementByXpath(document, "//div[contains(text(),'SCHOOL')]") },
+      { difficulty: "Basic",  count: getElementByXpath(document, "//div[contains(text(),'BASIC')]") },
+      { difficulty: "Easy",   count: getElementByXpath(document, "//div[contains(text(),'EASY')]") },
+      { difficulty: "Medium", count: getElementByXpath(document, "//div[contains(text(),'MEDIUM')]") },
+      { difficulty: "Hard",   count: getElementByXpath(document, "//div[contains(text(),'HARD')]") }
+    ];
 
-        // Fetch and parse the user's profile page for additional details
-        const pageResponse = await axios.get(profileLink);
-        const dom = new JSDOM(pageResponse.data);
-        const document = dom.window.document;
+    const languagesUsed    = extractLanguagesUsed(document);
+    const problemHeatmap  = await fetchGfgProblemHeatmap(username);
+    const contestHeatmap  = await fetchGfgContestHeatmap(username);
 
-        // Extract difficulty-wise solved problem counts
-        const submissionCount = [
-            { difficulty: "All", count: data.total_problems_solved || 0 },
-            { difficulty: "School", count: getElementByXpath(document, "//div[contains(text(), 'SCHOOL')]") },
-            { difficulty: "Basic", count: getElementByXpath(document, "//div[contains(text(), 'BASIC')]") },
-            { difficulty: "Easy", count: getElementByXpath(document, "//div[contains(text(), 'EASY')]") },
-            { difficulty: "Medium", count: getElementByXpath(document, "//div[contains(text(), 'MEDIUM')]") },
-            { difficulty: "Hard", count: getElementByXpath(document, "//div[contains(text(), 'HARD')]") }
-        ];
+  
+    const wwwUrl = `https://www.geeksforgeeks.org/user/${username}/`;
+    const wwwRes = await axios.get(wwwUrl);
+    const $ = cheerio.load(wwwRes.data);
+    
+const script = $("script#__NEXT_DATA__").html() || "";
+let rating = 0, totalContests = 0;
 
-        // Extract languages used dynamically using class selector
-        const languagesUsed = extractLanguagesUsed(document);
+if (script) {
+  const jsonData = JSON.parse(script);
+  const cData    = jsonData.props.pageProps.contestData || {};
 
-        // Fetch heatmaps
-        const problemHeatmap = await fetchGfgProblemHeatmap(username);
-        const contestHeatmap = await fetchGfgContestHeatmap(username);
+  
+  rating = cData.user_contest_data?.current_rating || 0;
 
-        return {
-            username: data.name || username,
-            profilePic: "", // GFG API does not provide profile pictures
-            ranking: data.institute_rank || "N/A",
-            contest: {
-                rating: data.score || 0,
-                totalContests: data.monthly_score || 0
-            },
-            submissions: {
-                total: data.total_problems_solved || 0,
-                difficultyBreakdown: submissionCount
-            },
-            languagesUsed,
-            streak: data.pod_solved_longest_streak || 0,
-            totalActiveDays: Object.keys(problemHeatmap.heatmapData).length,
-            heatmaps: {
-                problems: problemHeatmap,
-                contests: contestHeatmap
-            },
-            profileLink
-        };
-    } catch (error) {
-        console.error(`Error fetching GFG user details for ${username}:`, error.message);
-        return null;
-    }
+  
+  totalContests = cData.user_contest_data?.no_of_participated_contest || 0;
+}
+
+
+   
+    return {
+      username: data.name || username,
+      profilePic: "",
+      ranking: data.institute_rank || "N/A",
+      contest: {
+        rating,
+        totalContests
+      },
+      submissions: {
+        total: data.total_problems_solved || 0,
+        difficultyBreakdown: submissionCount
+      },
+      languagesUsed,
+      streak: data.pod_solved_longest_streak || 0,
+      totalActiveDays: Object.keys(problemHeatmap.heatmapData).length,
+      heatmaps: {
+        problems: problemHeatmap,
+        contests: contestHeatmap
+      },
+      profileLink: authUrl
+    };
+  } catch (error) {
+    console.error(`Error fetching GFG user details for ${username}:`, error.message);
+    return null;
+  }
 };
