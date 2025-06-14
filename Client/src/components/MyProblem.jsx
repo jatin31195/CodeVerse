@@ -231,35 +231,48 @@ function ListCard({ list, isCurrent, onSelect, api }) {
   const [count, setCount] = useState(0);
   const [publicState, setPublicState] = useState(list.isPublic);
 
- useEffect(() => {
-  (async () => {
-    try {
-      const res = await apiRequest(`${BASE_URL}/api/custom/user-potd/list/${list._id}/questions`, {
-        method: 'GET',
-      });
-      setCount(Array.isArray(res.data.questions) ? res.data.questions.length : 0);
-    } catch {
-      setCount(0);
-    }
-  })();
-}, [list._id]);
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiRequest(
+          `${BASE_URL}/api/custom/user-potd/list/${list._id}/questions`,
+          { method: 'GET' }
+        );
+        if (Array.isArray(res.data.questions)) {
+          const total = res.data.questions.reduce((sum, entry) => {
+            const problems = Array.isArray(entry.problems) ? entry.problems : [];
+            return sum + problems.length;
+          }, 0);
+          setCount(total);
+        } else {
+          setCount(0);
+        }
+      } catch {
+        setCount(0);
+      }
+    })();
+  }, [list._id]);
 
-const toggleVisibility = async () => {
-  try {
-    const res = await apiRequest(`${BASE_URL}/api/custom/user-potd/list/${list._id}/visibility`, {
-      method: 'PATCH',
-      body: { isPublic: !publicState },
-      headers: { 'Content-Type': 'application/json' },
-    });
-    if (res.data.success) {
-      setPublicState(res.data.list.isPublic);
-      toast.success(`List is now ${res.data.list.isPublic ? 'Public' : 'Private'}`);
+  const toggleVisibility = async () => {
+    try {
+      const res = await apiRequest(
+        `${BASE_URL}/api/custom/user-potd/list/${list._id}/visibility`,
+        {
+          method: 'PATCH',
+          body: { isPublic: !publicState },
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+      if (res.data.success) {
+        setPublicState(res.data.list.isPublic);
+        toast.success(
+          `List is now ${res.data.list.isPublic ? 'Public' : 'Private'}`
+        );
+      }
+    } catch {
+      toast.error('Could not update visibility');
     }
-  } catch (err) {
-    console.error('Visibility update failed:', err);
-    toast.error('Could not update visibility');
-  }
-};
+  };
 
   return (
     <motion.div
@@ -274,9 +287,7 @@ const toggleVisibility = async () => {
     >
       <div className="flex justify-between items-start mb-2">
         <div>
-          <h3 className="text-lg font-bold flex items-center">
-            {list.name}
-          </h3>
+          <h3 className="text-lg font-bold flex items-center">{list.name}</h3>
           <p className="text-sm text-gray-500">
             Created on {format(new Date(list.createdAt), 'MMM d, yyyy')}
           </p>
@@ -286,9 +297,11 @@ const toggleVisibility = async () => {
           title={publicState ? 'Public' : 'Private'}
           className="p-2 hover:bg-gray-100 rounded"
         >
-          {publicState
-            ? <Eye className="h-5 w-5 text-green-600" />
-            : <EyeOff className="h-5 w-5 text-red-600" />}
+          {publicState ? (
+            <Eye className="h-5 w-5 text-green-600" />
+          ) : (
+            <EyeOff className="h-5 w-5 text-red-600" />
+          )}
         </button>
       </div>
 
@@ -301,19 +314,21 @@ const toggleVisibility = async () => {
         onClick={isCurrent ? undefined : onSelect}
         disabled={isCurrent}
         whileHover={!isCurrent ? { scale: 1.03 } : {}}
-        className={`
-          w-full flex items-center justify-center 
-          px-4 py-2 rounded transition-all duration-200
-          ${isCurrent
+        className={`w-full flex items-center justify-center px-4 py-2 rounded transition-all duration-200 ${
+          isCurrent
             ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
             : 'border border-purple-600 text-purple-600 hover:bg-gradient-to-r hover:from-purple-600 hover:to-blue-600 hover:text-white'
-          }
-        `}
+        }`}
       >
-        {isCurrent
-          ? <><Check className="mr-1 h-4 w-4" /> Current List</>
-          : 'Select List'}
+        {isCurrent ? (
+          <>
+            <Check className="mr-1 h-4 w-4" /> Current List
+          </>
+        ) : (
+          'Select List'
+        )}
       </motion.button>
     </motion.div>
   );
 }
+

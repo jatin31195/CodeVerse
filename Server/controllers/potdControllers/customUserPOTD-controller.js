@@ -4,8 +4,9 @@ const {
   getPublicLists,
   getQuestionsFromList,
   updateListVisibility,
-  getOwnLists, 
+  getOwnLists,
 } = require("../../services/potdServices/customUserPOTD-service");
+
 const handleGetOwnLists = async (req, res) => {
   const userId = req.user.userId;
   try {
@@ -16,6 +17,7 @@ const handleGetOwnLists = async (req, res) => {
     res.status(500).json({ success: false, message: "Could not fetch lists." });
   }
 };
+
 const handleCreateList = async (req, res) => {
   const { name, isPublic } = req.body;
   const userId = req.user.userId;
@@ -57,7 +59,6 @@ const handleAddQuestion = async (req, res) => {
   }
 };
 
-
 const handleUpdateListVisibility = async (req, res) => {
   const { listId } = req.params;
   const { isPublic } = req.body;
@@ -94,8 +95,6 @@ const handleGetQuestionsFromList = async (req, res) => {
     res.status(500).json({ success: false });
   }
 };
-
-
 
 module.exports = {
   handleCreateList,
