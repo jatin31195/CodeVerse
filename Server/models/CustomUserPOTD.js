@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const { v4: uuidv4 } = require("uuid");
 
 const problemSchema = new mongoose.Schema({
+  _id:     { type: String, default: uuidv4 },
   platform: { type: String, required: true },
   title:    { type: String, required: true },
   link:     { type: String, required: true },
