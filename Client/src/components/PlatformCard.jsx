@@ -29,7 +29,7 @@ const PlatformCard = ({ platform, username, onSave, isConnected }) => {
 
   const handleSave = () => {
     if (newUsername.trim()) {
-      onSave(newUsername);
+      onSave(newUsername.trim());
       setIsOpen(false);
       toast.success(`Connected to ${name}!`);
     }
@@ -45,8 +45,8 @@ const PlatformCard = ({ platform, username, onSave, isConnected }) => {
         animate={{ opacity: 1, y: 0 }}
         whileHover={{ scale: 1.02 }}
       >
-        <div className={`h-2 w-full rounded-t-2xl bg-gradient-to-r ${color}`}></div>
-        <div className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className={`h-2 w-full rounded-t-2xl bg-gradient-to-r ${color}`} />
+        <div className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 flex-wrap">
           <div className="flex items-center space-x-4">
             <div className="w-10 h-10 rounded-full bg-white shadow-inner flex items-center justify-center">
               <img src={logo} alt={name} className="w-6 h-6 object-contain" />
@@ -54,13 +54,16 @@ const PlatformCard = ({ platform, username, onSave, isConnected }) => {
             <div>
               <h3 className="font-semibold text-gray-800 text-lg">{name}</h3>
               {username && (
-                <p className="text-sm text-gray-500 tracking-wide break-all">@{username}</p>
+                <p className="text-sm text-gray-500 tracking-wide break-all">
+                  @{username}
+                </p>
               )}
             </div>
           </div>
+
           <button
             onClick={() => setIsOpen(true)}
-            className="w-full sm:w-auto px-4 py-2 sm:px-4 sm:py-1.5 text-sm bg-gradient-to-r from-gray-700 to-gray-900 text-white rounded-lg hover:brightness-110 transition"
+            className="w-full sm:w-auto px-4 py-2 sm:px-4 sm:py-1.5 text-sm bg-gradient-to-r from-gray-700 to-gray-900 text-white rounded-lg hover:brightness-110 transition whitespace-nowrap"
           >
             {isConnected ? "Update" : "Connect"}
           </button>
