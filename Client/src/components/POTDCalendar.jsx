@@ -77,30 +77,45 @@ const POTDCalendar = ({ selectedDate, onSelectDate, platform, showAddIcon = true
   };
 
   const addToFavorites = async (listId) => {
-  if (!selectedDateForModal) return toast.error('No date selected');
+  if (!selectedDateForModal) {
+    return toast.error('No date selected');
+  }
+
   try {
+    // Fetch the POTD for that date
     const potdRes = await apiRequest(
       `${BASE_URL}/api/ques/${platform}/potd/${format(selectedDateForModal, 'yyyy-MM-dd')}`,
-      {
-        method: 'GET',
-      }
+      { method: 'GET' }
     );
     const potd = potdRes.data?.data;
-    if (!potd?._id) return toast.error('No question on that date');
+    if (!potd?._id) {
+      return toast.error('No question on that date');
+    }
 
-    // Add question to favorite list
+    // Build the full questionData object
+    const questionData = {
+      questionId: potd._id,
+      title: potd.title,
+      questionUrl: potd.link || potd.url,
+      platform: potd.platform,
+    };
+
+    // POST it exactly like your ListView/AddQuestionModal does
     await apiRequest(`${API_BASE_URL}/add-question`, {
       method: 'POST',
-      body: { listId, questionId: potd._id },
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listId, questionData }),
     });
 
     toast.success('Added to favorite list!');
     setModalOpen(false);
-  } catch {
+    fetchFavoriteLists(); // refresh sidebar lists if needed
+  } catch (err) {
+    console.error('addToFavorites error:', err);
     toast.error('Error adding to list');
   }
 };
+
 
   
   const renderDayLaptop = (day) => {

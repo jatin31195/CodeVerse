@@ -354,10 +354,11 @@ const Home = () => {
 
                     <h4 className="font-semibold mb-2">Real‑Life Example</h4>
                     <ul className="list-disc list-inside text-gray-600 mb-4">
-                      {leetProblem.realLifeExample.split('\n').map((line, i) =>
-                        line.trim() ? <li key={i}>{line.trim()}</li> : null
-                      )}
-                    </ul>
+  {leetProblem.realLifeExample
+    .split(/(?=\d+\.\s)/)
+    .map((line, i) => line.trim() && <li key={i}>{line.trim()}</li>)}
+</ul>
+
 
                     <div className="flex justify-between items-center">
                       <MessageSquare className="h-4 w-4 text-gray-500" />

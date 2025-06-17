@@ -101,6 +101,8 @@ export default function GFG() {
             tags: data.tags || [],
             easyExplanation: data.easyExplanation || '',
             realLifeExample: data.realLifeExample || '',
+            platform: data.platform || 'GFG',
+
           });
         }
       } catch (err) {
@@ -237,6 +239,7 @@ export default function GFG() {
           <POTDCalendar
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
+            platform="gfg"   
           />
         </motion.div>
 
