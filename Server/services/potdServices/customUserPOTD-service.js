@@ -7,9 +7,11 @@ async function createCustomPOTDList(userId, name, isPublic = false) {
   await User.findByIdAndUpdate(userId, { $push: { customPOTDLists: newList._id } });
   return newList;
 }
+
 async function getOwnLists(userId) {
   return await CustomPOTDList.find({ createdBy: userId });
 }
+
 async function updateListVisibility(userId, listId, isPublic) {
   const list = await CustomPOTDList.findById(listId);
   if (!list) return { success: false, message: "List not found." };
@@ -22,7 +24,6 @@ async function updateListVisibility(userId, listId, isPublic) {
   return { success: true, message: "List visibility updated.", list };
 }
 
-// Optional: Renaming a list
 async function renameCustomPOTDList(userId, listId, newName) {
   const list = await CustomPOTDList.findById(listId);
   if (!list) return { success: false, message: "List not found." };
@@ -42,8 +43,17 @@ async function addQuestionToList(userId, listId, questionData) {
     return { success: false, message: "Only the owner can add questions." };
   }
 
-  const question = await CustomUserPOTD.create({ list_id: listId, ...questionData });
-  return { success: true, data: question };
+  const inputDate = new Date(questionData.date);
+  const date = new Date(Date.UTC(inputDate.getFullYear(), inputDate.getMonth(), inputDate.getDate()));
+
+
+  const entry = await CustomUserPOTD.findOneAndUpdate(
+    { list_id: listId, date },
+    { $push: { problems: { platform: questionData.platform, title: questionData.title, link: questionData.link } } },
+    { upsert: true, new: true }
+  );
+
+  return { success: true, data: entry };
 }
 
 async function getPublicLists() {

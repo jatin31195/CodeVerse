@@ -71,6 +71,7 @@ const UserSchema = new mongoose.Schema({
   favoriteLists: [{ type: mongoose.Schema.Types.ObjectId, ref: "FavoriteList" }],
   solutions: [{ type: String, ref: "Solution" }],
   customPOTDLists: [{ type: String, ref: "CustomPOTDList" }],
+  questionsDone: { type: Number, default: 0 },
 });
 
 const UserModel = mongoose.model("User", UserSchema);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserPlus } from 'lucide-react';
 import DashboardLayout from './DashboardLayout';
@@ -49,6 +50,9 @@ export default function Dashboard() {
 
   const [combinedDsaCount, setCombinedDsaCount] = useState(0);
   const [combinedCpCount, setCombinedCpCount] = useState(0);
+const [questionsDoneCount, setQuestionsDoneCount] = useState(0);
+const [showPlatforms, setShowPlatforms] = useState(true);
+
   useEffect(() => {
   apiRequest(`${BASE_URL}/api/auth/profile`, { method: 'GET' })
     .then(json => {
@@ -60,12 +64,15 @@ export default function Dashboard() {
           dob: new Date(u.dateOfBirth).toLocaleDateString(),
           gender: u.gender,
           avatarUrl: u.profilePic,
+          
         });
         setPlatforms({
           leetcode: u.leetcodeUsername || null,
           codeforces: u.codeforcesUsername || null,
           gfg: u.gfgUsername || null,
         });
+        setQuestionsDoneCount(u.questionsDone || 0);
+
       } else {
         toast.error('Failed to load user profile.');
       }
@@ -398,27 +405,58 @@ useEffect(() => {
             <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
               <UserProfileCard {...userData} />
             </motion.div>
+              <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+  <div className="bg-purple-50 border border-purple-200 rounded-lg px-6 py-4 shadow-sm flex items-center justify-between">
+    <div>
+      <h3 className="text-lg font-semibold text-purple-700">Custom POTD Solved</h3>
+      <p className="text-3xl font-bold text-purple-900 mt-1">{questionsDoneCount}</p>
+    </div>
+    <div className="text-purple-600">
+      <Trophy className="h-10 w-10" />
+    </div>
+  </div>
+</motion.div>
+
 
             <motion.section
               className="space-y-4"
               variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
             >
-              <h2 className="text-2xl font-bold">Connected Platforms</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                {['leetcode', 'codeforces', 'gfg'].map(p => (
-                  <motion.div
-                    key={p}
-                    variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
-                  >
-                    <PlatformCard
-                      platform={p}
-                      username={platforms[p]}
-                      isConnected={!!platforms[p]}
-                      onSave={u => savePlatform(p, u)}
-                    />
-                  </motion.div>
-                ))}
-              </div>
+              {/* Connected Platforms */}
+<section>
+  {/* header with toggle */}
+  <div className="flex items-center justify-between mb-4">
+    <h2 className="text-2xl font-bold">Connected Platforms</h2>
+    <button
+      onClick={() => setShowPlatforms(v => !v)}
+      className="px-3 py-1 bg-gray-200 rounded-full text-sm"
+    >
+      {showPlatforms ? 'Hide All' : 'Show All'}
+    </button>
+  </div>
+
+  {/* same grid, now conditional */}
+  {showPlatforms && (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      {['leetcode', 'codeforces', 'gfg'].map(p => (
+        <motion.div
+          key={p}
+          variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
+          initial="hidden"
+          animate="visible"
+        >
+          <PlatformCard
+            platform={p}
+            username={platforms[p]}
+            isConnected={!!platforms[p]}
+            onSave={u => savePlatform(p, u)}
+          />
+        </motion.div>
+      ))}
+    </div>
+  )}
+</section>
+
             </motion.section>
           </motion.div>
 
