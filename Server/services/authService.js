@@ -161,28 +161,47 @@ const loginUser = async (userData) => {
 }
 const refreshAccessToken = async (req) => {
   const token = req.cookies.refreshToken;
+  console.log('\n🌐 Refresh token from cookie:', token);
+
   if (!token) {
-    const error = new Error('Refresh token missing');
-    error.status = 401;
-    throw error;
+    console.log('❌ No refresh token found in cookies.');
+    throw { status: 401, message: 'Refresh token missing' };
   }
 
+  let decoded;
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await authRepository.findUserById(payload.id);
-    if (!user) {
-      const error = new Error('User not found');
-      error.status = 401;
-      throw error;
-    }
-
-    const newAccessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
-    return { accessToken: newAccessToken };
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('✅ Refresh token verified. Decoded:', decoded);
   } catch (err) {
-    const error = new Error('Invalid or expired refresh token');
-    error.status = 401;
-    throw error;
+    console.error('❌ JWT verification failed:', err.message);
+    throw { status: 401, message: 'Invalid or expired refresh token' };
   }
+
+  const user = await authRepository.findUserById(decoded.id);
+  if (!user) {
+    console.error('❌ User not found in DB with ID:', decoded.id);
+    throw { status: 401, message: 'User not found' };
+  }
+
+  console.log('✅ User found in DB:', user._id);
+  console.log('🔐 Token in DB:', user.refreshToken);
+  console.log('🔐 Token in cookie:', token);
+
+  if (user.refreshToken !== token) {
+    console.error('❌ Refresh token mismatch between cookie and DB.');
+    throw { status: 401, message: 'Refresh token does not match' };
+  }
+
+  // Create new access token
+  const newAccessToken = jwt.sign(
+    { id: user._id },
+    process.env.JWT_SECRET,
+    { expiresIn: '24h' }
+  );
+
+  console.log('✅ New access token generated:', newAccessToken);
+
+  return { accessToken: newAccessToken };
 };
 const updateProfile = async (userId, updates) => {
  
