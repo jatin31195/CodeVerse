@@ -25,6 +25,7 @@ router.post('/google-signup', authController.googleSignupHandler);
 router.post('/google-login',  authController.googleLoginHandler);
 router.post('/logout', authMiddleware, authController.logout);
 router.post('/refresh-token', authController.refreshAccessToken);
+router.post('/resend-otp', authController.resendOTP);
 
 
 module.exports = router;

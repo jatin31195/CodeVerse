@@ -159,6 +159,36 @@ const loginUser = async (userData) => {
 
   return user
 }
+const resendOTP = async (email) => {
+  const user = await authRepository.findUserByEmail(email);
+
+  if (!user) {
+    return { status: 404, message: "User not found." };
+  }
+
+  if (user.isVerified) {
+    return { status: 400, message: "User is already verified." };
+  }
+
+  const otp = generateOTP();
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+  await authRepository.updateUserOTP(email, otp, otpExpires);
+
+  const otpHtml = await loadTemplate("otpTemplate.html", {
+    OTP_CODE: otp,
+  });
+
+  await sendEmail(
+    user.email,
+    "CodeVerse Email Verification - Resend OTP",
+    `Hello ${user.username}, your new OTP is ${otp}. It expires in 10 minutes.`,
+    otpHtml
+  );
+
+  return { status: 200, message: "OTP resent successfully." };
+};
+
 const refreshAccessToken = async (req) => {
   const token = req.cookies.refreshToken;
   console.log('\n🌐 Refresh token from cookie:', token);
@@ -376,5 +406,6 @@ module.exports = {
   resetPassword,
   googleLogin,
   googleSignup,
-  refreshAccessToken
+  refreshAccessToken,
+  resendOTP
 };

@@ -51,21 +51,49 @@ const googleLoginHandler = async (req, res) => {
 
 const register = async (req, res) => {
   try {
-    const user = await authService.registerUser(req.body)
-    const payload = { id: user._id }
-    const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' })
-    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' })
-    await authRepository.setRefreshToken(user._id, refreshToken)
-    res
-      .cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 24 * 60 * 60 * 1000 })
-      .cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 })
+    const user = await authService.registerUser(req.body);
+
+   
+    const payload = { id: user._id };
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
+    await authRepository.setRefreshToken(user._id, refreshToken);
+
+    return res
+      .cookie('accessToken', accessToken, {
+        ...cookieOptions,
+        maxAge: 24 * 60 * 60 * 1000,
+      })
+      .cookie('refreshToken', refreshToken, {
+        ...cookieOptions,
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+      })
       .status(201)
-      .json({ message: 'User registered. Please check your email for OTP verification.', user })
-  } catch (error) {
-    console.error('Register error:', error)
-    res.status(error.status || 500).json({ message: error.message || 'Internal Server Error' })
+      .json({
+        message: 'User registered. Please check your email for OTP verification.',
+        user,
+      });
+  } catch (err) {
+    console.error('Register error:', err);
+
+    
+    if (err.message === 'Email already exists but not verified') {
+      const existingUser = await authRepository.findUserByEmail(req.body.email);
+      return res.status(400).json({
+        message: err.message,
+        user: {
+          email: existingUser.email,
+          isVerified: existingUser.isVerified,
+        },
+      });
+    }
+
+    
+    return res
+      .status(err.status || 500)
+      .json({ message: err.message || 'Internal Server Error' });
   }
-}
+};
 
 const login = async (req, res) => {
   try {
@@ -106,7 +134,16 @@ const logout = async (req, res) => {
   }
 };
 
-
+const resendOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const result = await authService.resendOTP(email);
+    return res.status(result.status).json({ message: result.message });
+  } catch (err) {
+    console.error("Resend OTP error:", err);
+    return res.status(500).json({ message: "Server error while resending OTP." });
+  }
+};
 const refreshAccessToken = async (req, res) => {
   try {
     const { accessToken } = await authService.refreshAccessToken(req);
@@ -266,4 +303,5 @@ module.exports = {
   googleSignupHandler,
   logout,
   refreshAccessToken,
+  resendOTP
 };
