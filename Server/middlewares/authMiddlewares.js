@@ -9,8 +9,16 @@ const authMiddleware = async (req, res, next) => {
         .status(401)
         .json({ error: "Access denied. No token provided." });
     }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { userId: decoded.id };
+    const user = await UserModel.findById(decoded.id);
+    if (!user || !user.isVerified) {
+      return res.status(403).json({
+        error: "Email not verified. Please verify your email to continue.",
+      });
+    }
+
+    req.user = { userId: decoded.id }; 
     next();
   } catch (error) {
     console.error("Auth middleware error:", error);
