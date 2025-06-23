@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Check,X  } from 'lucide-react';
@@ -21,6 +21,13 @@ const SignUpPage = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [signupEmail, setSignupEmail] = useState('');
+
+  useEffect(() => {
+  if (showVerification && !signupEmail && formData.email) {
+    setSignupEmail(formData.email);
+  }
+}, [showVerification, signupEmail, formData.email]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -48,12 +55,13 @@ const handleSubmit = async (e) => {
   setIsLoading(true);
 
   const payload = {
-    username: formData.username,
-    email: formData.email,
-    password: formData.password,
-    dateOfBirth: new Date(formData.dob).toISOString(),
-    gender: formData.gender,
-  };
+  username: formData.username.trim(),
+  email: formData.email.trim(),
+  password: formData.password.trim(), 
+  dateOfBirth: new Date(formData.dob).toISOString(),
+  gender: formData.gender,
+};
+
 
   try {
     const response = await apiRequest(
@@ -68,17 +76,15 @@ const handleSubmit = async (e) => {
     const data = response.data;
     localStorage.setItem('userEmail', data.user.email);
     setShowVerification(true);
-
+    setSignupEmail(payload.email);
   } catch (error) {
     if (error.response) {
       const data = error.response.data || {};
-      if (
-        data.message === 'Email already exists but not verified' &&
-        data.user &&
-        !data.user.isVerified
-      ) {
+      if (data.message === 'Email already exists but not verified' && 
+        data.user && !data.user.isVerified) {
         localStorage.setItem('userEmail', data.user.email);
         setShowVerification(true);
+        setSignupEmail(data.user.email);
       } else {
   
         toast.error(data.message || 'Registration failed');
@@ -95,6 +101,18 @@ const handleSubmit = async (e) => {
 };
 
 
+const handleResendOTP = async () => {
+  try {
+    const res = await apiRequest(`${BASE_URL}/api/auth/resend-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: { email: signupEmail }
+    });
+    toast.success(res.data.message);
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Failed to resend OTP");
+  }
+};
 
 
 const handleVerificationComplete = async (code) => {
@@ -107,7 +125,8 @@ const handleVerificationComplete = async (code) => {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: { email: formData.email, otp: code },
+       body: { email: signupEmail, otp: code }
+
       }
     );
     const data = response.data;
@@ -302,68 +321,74 @@ const handleGoogleSignUp = async (credentialResponse) => {
       </main>
 
      
-      {showVerification && (
-  <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50">
-    <div className="bg-white rounded p-6 w-96 relative">
-      
-      <button
-        className="absolute top-3 right-3 p-1 hover:bg-gray-200 rounded-full"
-        onClick={() => setShowVerification(false)}
-        aria-label="Close verification modal"
-      >
-        <X className="w-5 h-5 text-gray-600" />
-      </button>
-
-      <h3 className="text-xl font-bold mb-4 text-center">Verify your email</h3>
-
-      {verificationSuccess ? (
-        <div className="flex flex-col items-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-            <Check className="w-8 h-8 text-green-600" />
-          </div>
-          <p className="text-green-700 font-medium">Verification successful!</p>
-          <p className="text-gray-600">Your account has been created.</p>
-        </div>
-      ) : (
-        <>
-          <p className="text-center text-gray-600 mb-4">
-            We've sent a 6-digit verification code to your email.
-            <br />
-            Enter the code below to verify your account.
-          </p>
-          <input
-            type="text"
-            placeholder="Enter verification code"
-            value={verificationCode}
-            onChange={(e) => setVerificationCode(e.target.value)}
-            className="w-full h-11 px-4 py-2 rounded-lg border-2 border-gray-200 transition-all duration-300 outline-none focus:border-[#33C3F0] focus:ring-2 focus:ring-[#33C3F0]/20 text-center text-2xl"
-          />
-          <motion.button
-            onClick={() => handleVerificationComplete(verificationCode)}
-            className="w-full mt-4 px-6 py-2.5 rounded-lg font-medium text-white bg-gradient-to-r from-[#33C3F0] to-[#A374FF] transition-all duration-300 hover:shadow-lg active:scale-95"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            disabled={verificationLoading}
-          >
-            {verificationLoading ? "Verifying..." : "Verify"}
-          </motion.button>
-          <div className="text-center text-sm mt-4">
-            <p className="text-gray-600">
-              Didn't receive the code?{" "}
-              <button
-                type="button"
-                className="text-[#33C3F0] hover:text-[#A374FF] transition-colors"
-                disabled={verificationLoading}
-              >
-                Resend
-              </button>
-            </p>
-          </div>
-        </>
-      )}
-    </div>
-  </div>
-)}
+         {showVerification && (
+   <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50">
+     <div className="bg-white rounded p-6 w-96 relative">
+       
+       <button
+         className="absolute top-3 right-3 p-1 hover:bg-gray-200 rounded-full"
+         onClick={() => setShowVerification(false)}
+         aria-label="Close verification modal"
+       >
+         <X className="w-5 h-5 text-gray-600" />
+       </button>
+ 
+       <h3 className="text-xl font-bold mb-4 text-center">Verify your email</h3>
+ 
+       {verificationSuccess ? (
+         <div className="flex flex-col items-center">
+           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+             <Check className="w-8 h-8 text-green-600" />
+           </div>
+           <p className="text-green-700 font-medium">Verification successful!</p>
+           <p className="text-gray-600">Your account has been created.</p>
+         </div>
+       ) : (
+         <>
+           <p className="text-center text-gray-600 mb-4">
+   We've sent a 6-digit verification code to your email.
+   <br />
+   <span className="text-orange-500 font-medium">
+     Check your spam folder too (mark it as “Not Spam” to get future updates).
+   </span>
+   <br />
+   Enter the code below to verify your account.
+ </p>
+ 
+           <input
+             type="text"
+             placeholder="Enter verification code"
+             value={verificationCode}
+             onChange={(e) => setVerificationCode(e.target.value)}
+             className="w-full h-11 px-4 py-2 rounded-lg border-2 border-gray-200 transition-all duration-300 outline-none focus:border-[#33C3F0] focus:ring-2 focus:ring-[#33C3F0]/20 text-center text-2xl"
+           />
+           <motion.button
+             onClick={() => handleVerificationComplete(verificationCode)}
+             className="w-full mt-4 px-6 py-2.5 rounded-lg font-medium text-white bg-gradient-to-r from-[#33C3F0] to-[#A374FF] transition-all duration-300 hover:shadow-lg active:scale-95"
+             whileHover={{ scale: 1.02 }}
+             whileTap={{ scale: 0.98 }}
+             disabled={verificationLoading}
+           >
+             {verificationLoading ? "Verifying..." : "Verify"}
+           </motion.button>
+           <div className="text-center text-sm mt-4">
+             <p className="text-gray-600">
+               Didn't receive the code?{" "}
+               <button
+                 type="button"
+                 onClick={handleResendOTP}
+                 className="text-[#33C3F0] hover:text-[#A374FF] transition-colors cursor-pointer"
+                 disabled={verificationLoading}
+               >
+                 Resend
+               </button>
+             </p>
+           </div>
+         </>
+       )}
+     </div>
+   </div>
+ )}
 
     </div>
   );

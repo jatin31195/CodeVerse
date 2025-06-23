@@ -27,4 +27,13 @@ const getRefreshToken = async (userId) => {
   const user = await UserModel.findById(userId);
   return user ? user.refreshToken : null;
 };
-module.exports = { findUserByEmail, findUserByUsername, createUser ,findUserById,getUserProfile,setRefreshToken,getRefreshToken};
+const updateUserOTP = async (email, otp, otpExpires) => {
+  return await UserModel.findOneAndUpdate(
+    { email },
+    { otp, otpExpires },
+    { new: true }
+  );
+};
+module.exports = { findUserByEmail, findUserByUsername, createUser ,findUserById,getUserProfile,setRefreshToken,getRefreshToken,
+  updateUserOTP,
+};
