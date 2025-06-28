@@ -9,7 +9,7 @@ import { apiRequest } from '../utils/api';
 
 const navLinks = [
   { name: 'POTD Calendar', path: '/custom' },
-  { name: 'My Problems', path: '/my-problems' },
+  { name: 'My Lists', path: '/my-problems' },
   { name: 'Add Problem', path: '/add-problem' },
 ];
 
