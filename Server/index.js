@@ -9,6 +9,8 @@ const app = express();
 const server = http.createServer(app); 
 const cookieParser = require('cookie-parser');
 const { rateLimit } = require("express-rate-limit");
+const startBirthdayScheduler = require('./utils/birthdayScheduler');
+
 dbConnection();
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -29,6 +31,7 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json()); 
+
 app.use("/api", apiRoutes);
 
 const cron = require("node-cron");
@@ -47,8 +50,9 @@ cron.schedule('30 5 * * *', () => {
     potdServices.fetchAndStoreGFGPOTD();
     potdServices.fetchAndStoreCodeforcesPOTD();
   });
-startCleanupJob();
 
+startCleanupJob();
+startBirthdayScheduler();
 const io = initializeSocket(server);
 app.set('socketio', io);
 server.listen(serverConfig.PORT, '0.0.0.0', () => {
