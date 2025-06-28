@@ -9,7 +9,12 @@ const customPOTDListSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-
+  admins: [
+    {
+      type: String,
+      ref: "User",
+    },
+  ],
   name: {
     type: String,
     required: true,

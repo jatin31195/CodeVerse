@@ -5,6 +5,8 @@ const {
   getQuestionsFromList,
   updateListVisibility,
   getOwnLists,
+  addAdminToList,
+  removeAdminFromList,
 } = require("../../services/potdServices/customUserPOTD-service");
 
 const handleGetOwnLists = async (req, res) => {
@@ -33,29 +35,18 @@ const handleCreateList = async (req, res) => {
 const handleAddQuestion = async (req, res) => {
   const { platform, title, link, date, listId } = req.body;
   const userId = req.user.userId;
-
   if (!listId) {
-    return res
-      .status(400)
-      .json({ success: false, message: "listId is required" });
+    return res.status(400).json({ success: false, message: "listId is required" });
   }
-
   try {
-    const result = await addQuestionToList(userId, listId, {
-      platform,
-      title,
-      link,
-      date,
-    });
+    const result = await addQuestionToList(userId, listId, { platform, title, link, date });
     if (!result.success) {
       return res.status(403).json(result);
     }
     res.status(201).json(result);
   } catch (err) {
     console.error(err);
-    res
-      .status(500)
-      .json({ success: false, message: "Error adding question." });
+    res.status(500).json({ success: false, message: "Error adding question." });
   }
 };
 
@@ -96,6 +87,42 @@ const handleGetQuestionsFromList = async (req, res) => {
   }
 };
 
+const handleAddAdmin = async (req, res) => {
+  const { listId, adminEmail } = req.body;
+  const userId = req.user.userId;
+  if (!listId || !adminEmail) {
+    return res.status(400).json({ success: false, message: "listId and adminEmail are required" });
+  }
+  try {
+    const result = await addAdminToList(userId, listId, adminEmail);
+    if (!result.success) {
+      return res.status(403).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Error adding admin." });
+  }
+};
+
+const handleRemoveAdmin = async (req, res) => {
+  const { listId, adminEmail } = req.body;
+  const userId = req.user.userId;
+  if (!listId || !adminEmail) {
+    return res.status(400).json({ success: false, message: "listId and adminEmail are required" });
+  }
+  try {
+    const result = await removeAdminFromList(userId, listId, adminEmail);
+    if (!result.success) {
+      return res.status(403).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Error removing admin." });
+  }
+};
+
 module.exports = {
   handleCreateList,
   handleAddQuestion,
@@ -103,4 +130,6 @@ module.exports = {
   handleGetQuestionsFromList,
   handleUpdateListVisibility,
   handleGetOwnLists,
+  handleAddAdmin,
+  handleRemoveAdmin,
 };
