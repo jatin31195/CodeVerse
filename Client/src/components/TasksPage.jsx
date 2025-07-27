@@ -460,7 +460,7 @@ useEffect(() => {
 
 
       <main className="max-w-6xl mx-auto px-6 py-8">
-        <div className="fixed bottom-14 left-0 right-0 mx-auto bg-white/80 backdrop-blur-md shadow-md rounded-full px-4 py-2 text-sm text-gray-800 flex flex-wrap items-center gap-4 border border-gray-300 hover:shadow-lg transition-all duration-400 z-40 animate-pulse">
+        <div className="fixed bottom-14 left-0 right-0 mx-auto bg-white/80 backdrop-blur-md shadow-md rounded-full px-4 py-2 text-sm text-gray-800 flex flex-wrap items-center gap-4 border border-gray-300 hover:shadow-lg transition-all duration-400  animate-pulse">
   <span className="text-blue-600 font-semibold">Email Alerts:</span>
   <span>🕑 If end time is more than 5h → Reminder 2h before</span>
   <span>⏲ If end time is between 2–5h → Reminder 1h before</span>
