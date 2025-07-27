@@ -9,7 +9,12 @@ const customPOTDListSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-
+  admins: [
+    {
+      type: String,
+      ref: "User",
+    },
+  ],
   name: {
     type: String,
     required: true,
@@ -28,5 +33,5 @@ const customPOTDListSchema = new mongoose.Schema({
 
 // Enforce unique list name per user
 customPOTDListSchema.index({ createdBy: 1, name: 1 }, { unique: true });
-customPOTDListSchema.index({ createdAt: 1 }, { expireAfterSeconds: 3456000 });
+// customPOTDListSchema.index({ createdAt: 1 }, { expireAfterSeconds: 3456000 });
 module.exports = mongoose.model("CustomPOTDList", customPOTDListSchema);

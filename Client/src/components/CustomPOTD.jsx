@@ -15,7 +15,7 @@ import { apiRequest } from '../utils/api';
 
 const navLinks = [
   { name: 'POTD Calendar', path: '/custom' },
-  { name: 'My Problems', path: '/my-problems' },
+  { name: 'My Lists', path: '/my-problems' },
   { name: 'Add Problem', path: '/add-problem' },
 ];
 
@@ -262,117 +262,146 @@ export default function CustomPOTD() {
 
         {/* Calendar and Problems */}
         <div className="grid gap-8 md:grid-cols-3">
-          <motion.div className="md:col-span-2" variants={fadeIn} transition={{ delay: 0.6 }}>
-            <POTDCalendar
-              selectedDate={selectedDate}
-              onSelectDate={setSelectedDate}
-              platform={selectedProblems[0]?.platform?.toLowerCase() || 'other'}
-              showAddIcon={false}
-            />
-          </motion.div>
+  <motion.div
+    className="md:col-span-2"
+    variants={fadeIn}
+    transition={{ delay: 0.6 }}
+  >
+    <POTDCalendar
+      selectedDate={selectedDate}
+      onSelectDate={setSelectedDate}
+      platform={selectedProblems[0]?.platform?.toLowerCase() || 'other'}
+      showAddIcon={false}
+    />
+  </motion.div>
 
-          <motion.div
-            className="bg-white rounded-2xl shadow-xl"
-            whileHover={{ scale: 1.02 }}
-            variants={fadeIn}
-            transition={{ delay: 0.8 }}
-          >
-            <div
-              className={`p-4 rounded-t-2xl ${
-                selectedProblems.length
-                  ? 'bg-gradient-to-r from-purple-100 to-blue-100'
-                  : 'bg-gradient-to-r from-gray-100 to-gray-200'
-              }`}
-            >
-              <h2 className="text-xl font-semibold">{format(selectedDate, 'MMMM d, yyyy')}</h2>
-              <p className="text-gray-600">
-                {selectedProblems.length
-                  ? `${selectedProblems.length} Problem(s)`
-                  : 'No problem assigned'}
-              </p>
-            </div>
+  <motion.div
+    className="md:col-span-1 rounded-3xl shadow-2xl bg-gradient-to-br from-white to-gray-50 overflow-hidden"
+    whileHover={{ translateY: -4, shadow: '0 20px 40px rgba(0,0,0,0.1)' }}
+    variants={fadeIn}
+    transition={{ delay: 0.8 }}
+  >
 
-            {loadingProblems ? (
-              <div className="p-6 animate-pulse space-y-4">
-                <div className="h-6 bg-gray-200 rounded w-1/2" />
-                <div className="h-4 bg-gray-200 rounded w-1/3" />
-                <div className="h-4 bg-gray-200 rounded w-2/3" />
-              </div>
-            ) : (
-              <div className="p-6 space-y-6">
-                {selectedProblems.length ? (
-                  selectedProblems.map((prob) => {
-                    const isDone = doneProblemIds.includes(prob._id);
-                    return (
-                      <div key={prob._id} className="border-b pb-4">
-                        <h3 className="text-lg font-bold">{prob.title}</h3>
+    <div
+      className={`
+        p-6
+        ${selectedProblems.length
+          ? 'bg-gradient-to-r from-purple-100 to-blue-100'
+          : 'bg-gradient-to-r from-gray-100 to-gray-200'}
+      `}
+    >
+      <h2 className="text-2xl font-semibold text-gray-800">
+        {format(selectedDate, 'MMMM d, yyyy')}
+      </h2>
+      <p className="mt-1 text-gray-600">
+        {selectedProblems.length
+          ? `${selectedProblems.length} Problem${selectedProblems.length > 1 ? 's' : ''}`
+          : 'No problem assigned'}
+      </p>
+    </div>
 
-                        {/* badges: platform, tags, and now “Completed” */}
-                        <div className="flex flex-wrap gap-2 my-2">
-                          <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full font-medium text-sm">
-                            {prob.platform}
-                          </span>
-
-                          {prob.tags?.map((tag, i) => (
-                            <span
-                              key={i}
-                              className="px-2 py-1 bg-gray-200 text-gray-800 rounded-full text-sm"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-
-                          {isDone && (
-                            <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full font-medium text-sm">
-                              ✓ Completed
-                            </span>
-                          )}
-                        </div>
-
-                        {/* action buttons */}
-                        <div className="flex gap-2">
-                          {!isDone && (
-                            <>
-                              <Link to={prob.link} target="_blank">
-                                <motion.button
-                                  whileHover={{ scale: 1.03 }}
-                                  className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg font-semibold"
-                                >
-                                  <ExternalLink size={16} /> Solve on {prob.platform}
-                                </motion.button>
-                              </Link>
-                              <motion.button
-                                onClick={() => handleMarkDone(prob._id)}
-                                whileHover={{ scale: 1.03 }}
-                                className="flex items-center gap-2 border border-green-600 text-green-600 px-4 py-2 rounded-lg font-semibold"
-                              >
-                                Mark Done
-                              </motion.button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
+  
+    {loadingProblems ? (
+      <div className="p-6 animate-pulse space-y-4">
+        <div className="h-6 bg-gray-200 rounded w-1/2" />
+        <div className="h-4 bg-gray-200 rounded w-1/3" />
+        <div className="h-4 bg-gray-200 rounded w-2/3" />
+      </div>
+    ) : (
+      <div className="p-6 space-y-1">
+        {selectedProblems.length ? (
+          selectedProblems.map((prob) => {
+            const isDone = doneProblemIds.includes(prob._id);
+            return (
+              <div
+                key={prob._id}
+                className="p-4 bg-white rounded-l border border-gray-100 hover:shadow-lg transition-shadow"
+              >
+               
+                {isDone ? (
+                  <a
+                    href={prob.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xl font-semibold text-black hover:underline flex items-center gap-1"
+                  >
+                    {prob.title} <ExternalLink size={16} />
+                  </a>
                 ) : (
-                  <>
-                    <h3 className="text-2xl font-bold">
-                      Add problem for {format(selectedDate, 'MMMM d, yyyy')}
-                    </h3>
-                    <Link to={`/add-problem?date=${format(selectedDate, 'yyyy-MM-dd')}`}>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-5 py-2 rounded-lg font-semibold"
-                      >
-                        <Code size={18} /> Add Problem
-                      </motion.button>
-                    </Link>
-                  </>
+                  <h3 className="text-xl font-bold text-black">{prob.title}</h3>
                 )}
+
+               
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                    {prob.platform}
+                  </span>
+
+                  {prob.tags?.map((tag, i) => (
+                    <span
+                      key={i}
+                      className="px-2 py-1 bg-gray-200 text-gray-800 rounded-full text-sm"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+
+                  {isDone && (
+                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                      ✓ Completed
+                    </span>
+                  )}
+                </div>
+
+             
+                <div className="flex gap-3 mt-4">
+                  {!isDone && (
+                    <>
+                      <Link to={prob.link} target="_blank" className="flex-1">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="w-full flex justify-center items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-5 py-2 rounded-2xl font-semibold shadow-sm"
+                        >
+                          <ExternalLink size={16} /> Solve on {prob.platform}
+                        </motion.button>
+                      </Link>
+
+                      <motion.button
+                        onClick={() => handleMarkDone(prob._id)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="w-1/3 flex justify-center items-center gap-2 border-2 border-green-600 text-green-600 px-4 py-2 rounded-2xl font-semibold shadow-sm hover:bg-green-50 transition"
+                      >
+                        Mark Done
+                      </motion.button>
+                    </>
+                  )}
+                </div>
               </div>
-            )}
-          </motion.div>
-        </div>
+            );
+          })
+        ) : (
+          <div className="text-center space-y-4">
+            <h3 className="text-2xl font-bold text-black">
+              Add problem for {format(selectedDate, 'MMMM d, yyyy')}
+            </h3>
+            <Link to={`/add-problem?date=${format(selectedDate, 'yyyy-MM-dd')}`}>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg"
+              >
+                <Code size={18} /> Add Problem
+              </motion.button>
+            </Link>
+          </div>
+        )}
+      </div>
+    )}
+  </motion.div>
+</div>
+
 
         {/* Getting Started */}
         <motion.div className="mt-12" variants={fadeIn} transition={{ delay: 1.0 }}>

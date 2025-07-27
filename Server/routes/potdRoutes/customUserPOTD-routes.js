@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../../middlewares/authMiddlewares"); // Import auth middleware
+const authMiddleware = require("../../middlewares/authMiddlewares");
 
 const {
   handleCreateList,
@@ -8,14 +8,17 @@ const {
   handleGetPublicLists,
   handleGetQuestionsFromList,
   handleUpdateListVisibility,
-  handleGetOwnLists, // Import new handler
+  handleGetOwnLists,
+  handleAddAdmin,
+  handleRemoveAdmin,
 } = require("../../controllers/potdControllers/customUserPOTD-controller");
 
-// All routes that modify data should be protected by auth middleware
 router.post("/list", authMiddleware, handleCreateList);
 router.post("/list/add-question", authMiddleware, handleAddQuestion);
 router.patch("/list/:listId/visibility", authMiddleware, handleUpdateListVisibility);
-router.get('/lists', authMiddleware, handleGetOwnLists);
+router.post("/list/admin", authMiddleware, handleAddAdmin);
+router.delete("/list/admin", authMiddleware, handleRemoveAdmin);
+router.get("/lists", authMiddleware, handleGetOwnLists);
 router.get("/lists/public", handleGetPublicLists);
 router.get("/list/:listId/questions", handleGetQuestionsFromList);
 

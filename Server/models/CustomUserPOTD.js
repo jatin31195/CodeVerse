@@ -18,5 +18,5 @@ const customUserPOTDSchema = new mongoose.Schema({
 
 // One document per date per list
 customUserPOTDSchema.index({ list_id: 1, date: 1 }, { unique: true });
-customUserPOTDSchema.index({ addedAt: 1 }, { expireAfterSeconds: 3456000 });
+// customUserPOTDSchema.index({ addedAt: 1 }, { expireAfterSeconds: 3456000 });
 module.exports = mongoose.model("CustomUserPOTD", customUserPOTDSchema);
