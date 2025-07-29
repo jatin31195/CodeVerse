@@ -28,6 +28,7 @@ import ReportIssuePage from "./components/ReportIssuePage";
 import { apiRequest } from "./utils/api";
 import { BASE_URL } from "./config";
 import NewUserGuide from "./components/NewUserGuide";
+import ReactInterview from "./components/ReactInterview";
 
 const AppContent = () => {
   const [profileChecked, setProfileChecked] = useState(false);
@@ -35,8 +36,16 @@ const AppContent = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const publicPaths = ["/", "/login", "/signup"];
+    // Public paths that don't require authentication
+    const publicPaths = ["/", "/login", "/signup", "/interview/react"];
+    
     if (!publicPaths.includes(location.pathname)) {
+      setProfileChecked(true);
+      return;
+    }
+
+    // Skip authentication check for /interview/react route (updated path)
+    if (location.pathname === "/interview/react") {
       setProfileChecked(true);
       return;
     }
@@ -73,12 +82,15 @@ const AppContent = () => {
       />
 
       <Routes>
+        {/* Public routes - no authentication required */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/reset" element={<PasswordReset />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/interview/react" element={<ReactInterview/>}/> {/* Public route */}
 
+        {/* Protected routes - authentication required */}
         <Route path="/home" element={<Home />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/community" element={<RaiseTicket />} />
@@ -95,7 +107,8 @@ const AppContent = () => {
         <Route path="/my-problems" element={<MyProblem />} />
         <Route path="/add-problem" element={<AddProblem />} />
         <Route path="/report-issue" element={<ReportIssuePage />} />
-        <Route path="new-user-guide" element={<NewUserGuide/>}/>
+        <Route path="/new-user-guide" element={<NewUserGuide/>}/>
+        
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

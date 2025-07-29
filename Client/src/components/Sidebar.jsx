@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Home, Calendar, Star, Users, LayoutDashboard,
-  Clock, BookOpen, PlusCircle, Bug, PanelLeftClose,HelpCircle
+  Clock, BookOpen, PlusCircle, Bug, PanelLeftClose,HelpCircle,Code
 } from 'lucide-react';
 import { BASE_URL } from '../config';
 import { apiRequest } from '../utils/api';
@@ -53,6 +53,7 @@ const Sidebar = ({ toggleSidebar }) => {
     { title: 'Doubt Support', path: '/community', icon: Users },
     { title: 'Report Issue', path: '/report-issue', icon: Bug },
     { title: 'New User Guide', path: '/new-user-guide', icon: HelpCircle },
+    { title: 'React Interview', path: '/interview/react', icon: Code },
   ];
 
   return (
