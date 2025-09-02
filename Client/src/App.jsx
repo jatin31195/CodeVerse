@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
 import Dashboard from "./components/Dashboard";
 import RaiseTicket from "./components/RaiseTicket";
 import VideoMeeting from "./components/VideoMeeting";
@@ -28,6 +27,9 @@ import ReportIssuePage from "./components/ReportIssuePage";
 import { apiRequest } from "./utils/api";
 import { BASE_URL } from "./config";
 import NewUserGuide from "./components/NewUserGuide";
+import ReactInterview from "./components/ReactInterview";
+import InterviewHelp from "./components/InterviewHelp";
+import JavascriptInterview from "./components/JavascriptInterview";
 
 const AppContent = () => {
   const [profileChecked, setProfileChecked] = useState(false);
@@ -35,12 +37,13 @@ const AppContent = () => {
   const location = useLocation();
 
   useEffect(() => {
+
     const publicPaths = ["/", "/login", "/signup"];
+    
     if (!publicPaths.includes(location.pathname)) {
       setProfileChecked(true);
       return;
     }
-
     apiRequest(`${BASE_URL}/api/auth/profile`, { method: "GET" })
       .then((res) => {
         if (res.data?.data?.user) {
@@ -78,7 +81,6 @@ const AppContent = () => {
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/reset" element={<PasswordReset />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-
         <Route path="/home" element={<Home />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/community" element={<RaiseTicket />} />
@@ -95,7 +97,10 @@ const AppContent = () => {
         <Route path="/my-problems" element={<MyProblem />} />
         <Route path="/add-problem" element={<AddProblem />} />
         <Route path="/report-issue" element={<ReportIssuePage />} />
-        <Route path="new-user-guide" element={<NewUserGuide/>}/>
+        <Route path="/new-user-guide" element={<NewUserGuide/>}/>
+        <Route path="/interview/react" element={<ReactInterview/>}/> 
+        <Route path="/interview" element={<InterviewHelp/>}/>
+        <Route path="/interview/javascript" element={<JavascriptInterview/>}/> 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
