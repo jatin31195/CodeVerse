@@ -12,12 +12,12 @@ const { rateLimit } = require("express-rate-limit");
 const startBirthdayScheduler = require('./utils/birthdayScheduler');
 
 dbConnection();
-const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 100,
-  standardHeaders: "draft-7",
-  legacyHeaders: false
-});
+// const generalLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000,
+//   limit: 100,
+//   standardHeaders: "draft-7",
+//   legacyHeaders: false
+// });
 
 app.use(generalLimiter);
 const corsOptions = {

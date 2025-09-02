@@ -53,7 +53,7 @@ const Sidebar = ({ toggleSidebar }) => {
     { title: 'Doubt Support', path: '/community', icon: Users },
     { title: 'Report Issue', path: '/report-issue', icon: Bug },
     { title: 'New User Guide', path: '/new-user-guide', icon: HelpCircle },
-    { title: 'React Interview', path: '/interview/react', icon: Code },
+    { title: 'Interview Help', path: '/interview', icon: Code },
   ];
 
   return (
