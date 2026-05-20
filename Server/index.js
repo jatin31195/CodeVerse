@@ -20,8 +20,23 @@ dbConnection();
 // });
 
 // app.use(generalLimiter);
+const envFrontendUrlsRaw = serverConfig.FRONTEND_URLS || serverConfig.FRONTEND_URL;
+const envFrontendUrls = (envFrontendUrlsRaw || "")
+  .split(",")
+  .map((u) => u.trim())
+  .filter(Boolean);
+
+const defaultAllowedOrigins = [
+  "http://localhost:5173",
+  "https://code-verse-aonf.onrender.com",
+  "https://codeverse.solutions",
+  "https://www.codeverse.solutions",
+];
+
+const allowedOrigins = envFrontendUrls.length ? envFrontendUrls : defaultAllowedOrigins;
+
 const corsOptions = {
-  origin: ["http://localhost:5173","https://code-verse-aonf.onrender.com","https://codeverse.solutions","https://www.codeverse.solutions"],
+  origin: allowedOrigins,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
