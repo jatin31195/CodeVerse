@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import io from 'socket.io-client';
 import Peer from 'simple-peer';
 import {
   Phone, PhoneOff, MonitorUp, MonitorX, Mic, MicOff, Video, VideoOff
@@ -9,10 +8,7 @@ import {
 import { toast } from 'react-toastify';
 import { BASE_URL } from '../config';
 import { apiRequest } from '../utils/api';
-const socket = io('https://www.codeverse.solutions', {
-  transports: ['websocket'],
-  withCredentials: true,
-});
+import socket from './socket';
 
 
 const VideoMeeting = () => {
