@@ -123,7 +123,7 @@ const Home = () => {
 
 
    const getInitials = (name) =>
-    name
+    (name || "")
       .split(' ')
       .filter(Boolean)
       .map((n) => n[0])
@@ -241,7 +241,7 @@ const Home = () => {
                       />
                     ) : (
                       <span className="text-lg font-semibold text-black">
-                        {getInitials(user.username)}
+                        {getInitials(user.username || user.name)}
                       </span>
                     )}
                   </button>
@@ -354,7 +354,7 @@ const Home = () => {
 
                     <h4 className="font-semibold mb-2">Real‑Life Example</h4>
                     <ul className="list-disc list-inside text-gray-600 mb-4">
-  {leetProblem.realLifeExample
+  {String(leetProblem.realLifeExample || "")
     .split(/(?=\d+\.\s)/)
     .map((line, i) => line.trim() && <li key={i}>{line.trim()}</li>)}
 </ul>
