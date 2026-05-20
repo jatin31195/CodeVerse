@@ -1,6 +1,5 @@
 // src/pages/RaiseTicket.jsx
 import React, { useState, useEffect } from 'react';
-import io from 'socket.io-client';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../components/Header';
@@ -10,6 +9,7 @@ import { Check, ChevronDown } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { BASE_URL } from '../config';
 import { apiRequest } from '../utils/api';
+import socket from './socket';
 
 const getUserId = (user) => {
   if (!user) return "";
@@ -18,11 +18,6 @@ const getUserId = (user) => {
   if (user.$oid) return user.$oid.toString();
   return "";
 };
-
-const socket = io('https://www.codeverse.solutions', {
-  transports: ["websocket", "polling"],
-  withCredentials: true,
-});
 
 const RaiseTicket = () => {
   const navigate = useNavigate();
