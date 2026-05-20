@@ -1,1 +1,1 @@
-export const BASE_URL = "https://www.codeverse.solutions";
+export const BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
