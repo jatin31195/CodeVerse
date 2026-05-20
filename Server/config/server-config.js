@@ -7,4 +7,6 @@ module.exports = {
     MONGO_URL: process.env.MONGO_URL,
     JWT_SECRET : process.env.JWT_SECRET,
     OPENAI : process.env.OPENAI,
+    FRONTEND_URL: process.env.FRONTEND_URL,
+    FRONTEND_URLS: process.env.FRONTEND_URLS,
 }
