@@ -1,12 +1,13 @@
 const authService = require('../services/authService');
 const authRepository=require('../repositories/authRepository');
+
 const User=require('../models/User');
 const jwt = require('jsonwebtoken')
 const cookieOptions = {
   httpOnly: true,
   secure: true,
   sameSite: 'None',
-  domain: '.codeverse.solutions',
+  // domain: '.codeverse.solutions',
   path: '/',
 };
 
@@ -119,7 +120,7 @@ const logout = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: 'None',
-      domain: '.codeverse.solutions',
+      // domain: '.codeverse.solutions',
       path: '/'
     };
 
