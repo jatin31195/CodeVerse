@@ -47,6 +47,10 @@ app.options('*', cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json()); 
 
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 app.use("/api", apiRoutes);
 
 const cron = require("node-cron");
